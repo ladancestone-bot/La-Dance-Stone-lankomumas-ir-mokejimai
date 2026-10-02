@@ -103,7 +103,7 @@ function App() {
         {section === "dashboard" && <Dashboard role={role}/>}
         {section === "students" && <Students role={role}/>}
         {section === "groups" && <Groups role={role}/>}
-        {section === "attendance" && <Attendance role={role}/>}
+        {section === "attendance" && <Attendance />}
         {section === "payments" && <Payments role={role}/>}
         {section === "teachers" && <Teachers role={role}/>}
         {section === "settings" && <SettingsPage role={role}/>}
@@ -230,7 +230,7 @@ function Groups({ role }: { role: Role }) {
   {open&&<Modal title={editing?"Edit group":"Add group"} close={()=>setOpen(false)}><Field label="Group name" value={name} set={setName}/><Field label="Level" value={level} set={setLevel}/><label>Description</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>Cancel</button><button className="primary small-btn" onClick={save}>Save group</button></div></Modal>}</div>;
 }
 
-function Attendance({ role }: { role: Role }) {
+function Attendance() {
   const [groups,setGroups]=useState<Group[]>([]); const [groupId,setGroupId]=useState(""); const [date,setDate]=useState(new Date().toISOString().slice(0,10));
   const [students,setStudents]=useState<Student[]>([]); const [values,setValues]=useState<Record<string,AttendanceStatus>>({});
   const [error,setError]=useState("");
