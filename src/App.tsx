@@ -1,301 +1,133 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarCheck, CreditCard, LayoutDashboard, LogOut, Plus,
-  Settings, UserRound, Users, UsersRound, X
+  CalendarCheck, CreditCard, LayoutDashboard, LogOut, Plus, Settings,
+  UserRound, Users, UsersRound, X, Building2, UserPlus, ChevronRight,
+  Pencil, Trash2, History, Languages
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
 type Role = "admin" | "teacher";
-type Section = "dashboard" | "students" | "groups" | "attendance" | "payments" | "teachers" | "settings";
+type Lang = "lt" | "en" | "es";
+type Section = "dashboard" | "students" | "groups" | "attendance" | "payments" | "teachers" | "rentals" | "settings";
 type AttendanceStatus = "present" | "absent" | "sick";
+type PaymentMethod = "cash" | "bank_transfer" | "stripe";
 
 type Student = {
-  id: string; first_name: string; last_name: string; email: string | null;
-  phone: string | null; date_of_birth: string | null; parent_name: string | null;
-  parent_phone: string | null; parent_email: string | null; notes: string | null;
+  id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
+  date_of_birth: string | null; parent_name: string | null; parent_phone: string | null;
+  parent_email: string | null; notes: string | null;
 };
 type Group = { id: string; name: string; level: string | null; description: string | null };
 type Price = { id: string; name: string; amount: number; is_active: boolean };
 type Charge = {
-  id: string; student_id: string; group_id: string | null; amount_due: number;
-  amount_paid: number; status: string; due_date: string; month: string;
-  students?: { first_name: string; last_name: string } | null;
-  groups?: { name: string } | null;
+  id: string; student_id: string; group_id: string | null; amount_due: number; amount_paid: number;
+  status: string; due_date: string; month: string;
+  students?: { first_name: string; last_name: string } | null; groups?: { name: string } | null;
 };
+type Payment = {
+  id: string; monthly_charge_id: string; student_id: string; amount: number; payment_method: PaymentMethod;
+  paid_at: string; notes: string | null; received_by: string | null;
+};
+type DropLesson = { id:string; group_id:string; lesson_date:string; start_time:string; end_time:string|null; price:number; capacity:number|null; is_active:boolean; groups?:{name:string}|null };
+type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null };
+type Rental = { id:string; customer_name:string; email:string|null; phone:string|null; rental_type:string; starts_at:string; ends_at:string; price:number; payment_status:string; payment_method:PaymentMethod|null; notes:string|null; is_active:boolean };
 
-const nav: { id: Section; label: string; icon: any }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "students", label: "Students", icon: Users },
-  { id: "groups", label: "Groups", icon: UsersRound },
-  { id: "attendance", label: "Attendance", icon: CalendarCheck },
-  { id: "payments", label: "Payments", icon: CreditCard },
-  { id: "teachers", label: "Teachers", icon: UserRound },
-  { id: "settings", label: "Settings", icon: Settings },
+type TKey = keyof typeof translations.en;
+const translations = {
+  en: {
+    dashboard:"Dashboard", students:"Students", groups:"Groups", attendance:"Attendance", payments:"Payments", teachers:"Teachers", rentals:"Rentals", settings:"Settings",
+    studioManagement:"STUDIO MANAGEMENT", privateAccess:"Private access for La Dance Stone administrators and teachers.", signIn:"Send secure sign-in link", email:"Email", accessPending:"Access pending", noRole:"Your account is authenticated but has no studio role yet.", signOut:"Sign out",
+    activeStudents:"Active students", activeGroups:"Active groups", outstanding:"Outstanding", today:"Today's classes will appear here when the schedule is connected.",
+    searchStudents:"Search students…", addStudent:"Add student", edit:"Edit", save:"Save", cancel:"Cancel", firstName:"First name", lastName:"Last name", phone:"Phone", dob:"Date of birth", parentName:"Parent name", parentPhone:"Parent phone", parentEmail:"Parent email", notes:"Notes", noContact:"No contact", noGroup:"No group assigned", selectGroups:"Select groups",
+    addGroup:"Add group", editGroup:"Edit group", groupName:"Group name", level:"Level", description:"Description", groupManaged:"Groups are managed by the administrator.", groupDetail:"Group detail", members:"Students", groupAttendance:"Attendance", groupPayments:"Payments", back:"Back",
+    chooseGroup:"Choose group", noStudents:"No students in this group.", attendanceStatuses:"Attendance statuses are only Present, Absent and Sick.", present:"Present", absent:"Absent", sick:"Sick", newParticipants:"ONE-OFF LESSONS / NEW PARTICIPANTS", paymentStatus:"Payment status", markAttendance:"Mark attendance",
+    recordPayment:"Record payment", amount:"Amount", remaining:"Remaining", method:"Payment method", cash:"Cash", bank:"Bank transfer", stripe:"Stripe", paymentHistory:"Payment history", editPayment:"Edit payment", deletePayment:"Delete payment", noCharges:"No monthly charges yet.", noHistory:"No payment history.", confirmDelete:"Delete this payment?", teacherFinanceNote:"Teacher access is limited by database permissions to assigned students.",
+    inviteTeacher:"Invite teacher", addTeacher:"Add teacher", assignGroups:"Assign groups", sendInvitation:"Send invitation", substitutions:"Substitutions", addSubstitution:"Add substitution", substitute:"Substitute", starts:"Starts", ends:"Ends", saveAssignment:"Save assignments", noTeachers:"No active teachers yet.",
+    addRental:"Add rental", customer:"Customer", start:"Start", end:"End", rentalType:"Rental type", shortTerm:"Short term", longTerm:"Long term", price:"Price", pending:"Pending", paid:"Paid", cancelled:"Cancelled", saveRental:"Save rental", noRentals:"No rentals yet.",
+    pricing:"PRICING", studioPrices:"Studio prices", addPrice:"Add price", priceName:"Price name", monthlyAmount:"Monthly amount (€)", monthly:"Monthly", language:"Language", languageNote:"Choose the app language for this device.", savePrice:"Save price", editPrice:"Edit price", deactivate:"Deactivate", active:"Active", reload:"Reload", details:"Details", contact:"Contact",
+  },
+  lt: {
+    dashboard:"Skydelis", students:"Mokiniai", groups:"Grupės", attendance:"Lankomumas", payments:"Mokėjimai", teachers:"Mokytojai", rentals:"Nuoma", settings:"Nustatymai",
+    studioManagement:"STUDIJOS VALDYMAS", privateAccess:"Privati prieiga La Dance Stone administratoriams ir mokytojams.", signIn:"Siųsti saugią prisijungimo nuorodą", email:"El. paštas", accessPending:"Prieiga laukiama", noRole:"Paskyra patvirtinta, tačiau jai dar nepriskirta studijos rolė.", signOut:"Atsijungti",
+    activeStudents:"Aktyvūs mokiniai", activeGroups:"Aktyvios grupės", outstanding:"Neapmokėta", today:"Šiandienos pamokos bus rodomos, kai bus prijungtas tvarkaraštis.",
+    searchStudents:"Ieškoti mokinių…", addStudent:"Pridėti mokinį", edit:"Redaguoti", save:"Išsaugoti", cancel:"Atšaukti", firstName:"Vardas", lastName:"Pavardė", phone:"Telefonas", dob:"Gimimo data", parentName:"Tėvų vardas", parentPhone:"Tėvų telefonas", parentEmail:"Tėvų el. paštas", notes:"Pastabos", noContact:"Nėra kontaktų", noGroup:"Grupė nepriskirta", selectGroups:"Pasirinkite grupes",
+    addGroup:"Pridėti grupę", editGroup:"Redaguoti grupę", groupName:"Grupės pavadinimas", level:"Lygis", description:"Aprašymas", groupManaged:"Grupes valdo administratorius.", groupDetail:"Grupės informacija", members:"Mokiniai", groupAttendance:"Lankomumas", groupPayments:"Mokėjimai", back:"Atgal",
+    chooseGroup:"Pasirinkite grupę", noStudents:"Šioje grupėje mokinių nėra.", attendanceStatuses:"Lankomumo statusai: Dalyvavo, Nedalyvavo ir Serga.", present:"Dalyvavo", absent:"Nedalyvavo", sick:"Serga", newParticipants:"VIENKARTINĖS PAMOKOS / NAUJI DALYVIAI", paymentStatus:"Mokėjimo būsena", markAttendance:"Pažymėti lankomumą",
+    recordPayment:"Registruoti mokėjimą", amount:"Suma", remaining:"Likutis", method:"Mokėjimo būdas", cash:"Grynais", bank:"Bankiniu pavedimu", stripe:"Stripe", paymentHistory:"Mokėjimų istorija", editPayment:"Redaguoti mokėjimą", deletePayment:"Ištrinti mokėjimą", noCharges:"Mėnesinių mokėjimų nėra.", noHistory:"Mokėjimų istorijos nėra.", confirmDelete:"Ištrinti šį mokėjimą?", teacherFinanceNote:"Mokytojo prieiga ribojama jo grupių mokiniais pagal duomenų bazės teises.",
+    inviteTeacher:"Pakviesti mokytoją", addTeacher:"Pridėti mokytoją", assignGroups:"Priskirti grupes", sendInvitation:"Siųsti kvietimą", substitutions:"Pavadavimai", addSubstitution:"Pridėti pavadavimą", substitute:"Pavaduojantis mokytojas", starts:"Nuo", ends:"Iki", saveAssignment:"Išsaugoti priskyrimus", noTeachers:"Aktyvių mokytojų dar nėra.",
+    addRental:"Pridėti nuomą", customer:"Klientas", start:"Pradžia", end:"Pabaiga", rentalType:"Nuomos tipas", shortTerm:"Trumpalaikė", longTerm:"Ilgalaikė", price:"Kaina", pending:"Laukiama", paid:"Apmokėta", cancelled:"Atšaukta", saveRental:"Išsaugoti nuomą", noRentals:"Nuomų nėra.",
+    pricing:"KAINOS", studioPrices:"Studijos kainos", addPrice:"Pridėti kainą", priceName:"Kainos pavadinimas", monthlyAmount:"Mėnesio suma (€)", monthly:"Mėnesinis", language:"Kalba", languageNote:"Pasirinkite aplikacijos kalbą šiame įrenginyje.", savePrice:"Išsaugoti kainą", editPrice:"Redaguoti kainą", deactivate:"Deaktyvuoti", active:"Aktyvi", reload:"Atnaujinti", details:"Informacija", contact:"Kontaktai",
+  },
+  es: {
+    dashboard:"Panel", students:"Alumnos", groups:"Grupos", attendance:"Asistencia", payments:"Pagos", teachers:"Profesores", rentals:"Alquiler", settings:"Ajustes",
+    studioManagement:"GESTIÓN DEL ESTUDIO", privateAccess:"Acceso privado para administradores y profesores de La Dance Stone.", signIn:"Enviar enlace seguro", email:"Correo electrónico", accessPending:"Acceso pendiente", noRole:"Tu cuenta está autenticada pero aún no tiene un rol del estudio.", signOut:"Cerrar sesión",
+    activeStudents:"Alumnos activos", activeGroups:"Grupos activos", outstanding:"Pendiente", today:"Las clases de hoy aparecerán cuando se conecte el horario.",
+    searchStudents:"Buscar alumnos…", addStudent:"Añadir alumno", edit:"Editar", save:"Guardar", cancel:"Cancelar", firstName:"Nombre", lastName:"Apellido", phone:"Teléfono", dob:"Fecha de nacimiento", parentName:"Nombre del padre/madre", parentPhone:"Teléfono del padre/madre", parentEmail:"Correo del padre/madre", notes:"Notas", noContact:"Sin contacto", noGroup:"Sin grupo", selectGroups:"Seleccionar grupos",
+    addGroup:"Añadir grupo", editGroup:"Editar grupo", groupName:"Nombre del grupo", level:"Nivel", description:"Descripción", groupManaged:"Los grupos son gestionados por el administrador.", groupDetail:"Detalle del grupo", members:"Alumnos", groupAttendance:"Asistencia", groupPayments:"Pagos", back:"Volver",
+    chooseGroup:"Elegir grupo", noStudents:"No hay alumnos en este grupo.", attendanceStatuses:"Estados: Presente, Ausente y Enfermo.", present:"Presente", absent:"Ausente", sick:"Enfermo", newParticipants:"CLASES SUELTAS / NUEVOS PARTICIPANTES", paymentStatus:"Estado del pago", markAttendance:"Marcar asistencia",
+    recordPayment:"Registrar pago", amount:"Importe", remaining:"Restante", method:"Método de pago", cash:"Efectivo", bank:"Transferencia", stripe:"Stripe", paymentHistory:"Historial de pagos", editPayment:"Editar pago", deletePayment:"Eliminar pago", noCharges:"No hay cargos mensuales.", noHistory:"No hay historial de pagos.", confirmDelete:"¿Eliminar este pago?", teacherFinanceNote:"El acceso del profesor está limitado a sus alumnos mediante los permisos de la base de datos.",
+    inviteTeacher:"Invitar profesor", addTeacher:"Añadir profesor", assignGroups:"Asignar grupos", sendInvitation:"Enviar invitación", substitutions:"Sustituciones", addSubstitution:"Añadir sustitución", substitute:"Profesor sustituto", starts:"Desde", ends:"Hasta", saveAssignment:"Guardar asignaciones", noTeachers:"No hay profesores activos.",
+    addRental:"Añadir alquiler", customer:"Cliente", start:"Inicio", end:"Fin", rentalType:"Tipo de alquiler", shortTerm:"Corto plazo", longTerm:"Largo plazo", price:"Precio", pending:"Pendiente", paid:"Pagado", cancelled:"Cancelado", saveRental:"Guardar alquiler", noRentals:"No hay alquileres.",
+    pricing:"PRECIOS", studioPrices:"Precios del estudio", addPrice:"Añadir precio", priceName:"Nombre del precio", monthlyAmount:"Importe mensual (€)", monthly:"Mensual", language:"Idioma", languageNote:"Elige el idioma de la aplicación en este dispositivo.", savePrice:"Guardar precio", editPrice:"Editar precio", deactivate:"Desactivar", active:"Activa", reload:"Actualizar", details:"Detalles", contact:"Contacto",
+  }
+} as const;
+
+const nav: { id: Section; key: TKey; icon: any }[] = [
+  { id:"dashboard", key:"dashboard", icon:LayoutDashboard }, { id:"students", key:"students", icon:Users },
+  { id:"groups", key:"groups", icon:UsersRound }, { id:"attendance", key:"attendance", icon:CalendarCheck },
+  { id:"payments", key:"payments", icon:CreditCard }, { id:"teachers", key:"teachers", icon:UserRound },
+  { id:"rentals", key:"rentals", icon:Building2 }, { id:"settings", key:"settings", icon:Settings },
 ];
+const money = (n:number) => new Intl.NumberFormat("lt-LT", {style:"currency",currency:"EUR"}).format(n);
+const todayISO = () => new Date().toISOString().slice(0,10);
+function tx(lang:Lang,key:TKey){return translations[lang][key]}
 
-const money = (n: number) =>
-  new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(n);
-
-function App() {
-  const [session, setSession] = useState<any>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [section, setSection] = useState<Section>("dashboard");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!session?.user?.id) { setRole(null); return; }
-    supabase.from("user_roles").select("role").eq("user_id", session.user.id)
-      .then(({ data }) => {
-        const roles = data ?? [];
-        setRole(roles.some((r: any) => r.role === "admin") ? "admin" :
-          roles.some((r: any) => r.role === "teacher") ? "teacher" : null);
-      });
-  }, [session?.user?.id]);
-
-  async function login() {
-    setMessage("");
-    const { error } = await supabase.auth.signInWithOtp({
-      email, options: { shouldCreateUser: false }
-    });
-    setMessage(error ? error.message : "Check your email for the secure sign-in link.");
-  }
-
-  if (!session) return (
-    <main className="auth">
-      <section className="auth-card">
-        <div className="brand">LA DANCE STONE</div>
-        <div className="eyebrow">ATTENDANCE & PAYMENTS</div>
-        <h1>Studio management, in one place.</h1>
-        <p>Private access for La Dance Stone administrators and teachers.</p>
-        <label>Email</label>
-        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" />
-        <button className="primary" onClick={login} disabled={!email}>Send secure sign-in link</button>
-        {message && <div className="message">{message}</div>}
-      </section>
-    </main>
-  );
-
-  if (!role) return (
-    <main className="auth"><section className="auth-card">
-      <div className="brand">LA DANCE STONE</div>
-      <h1>Access pending</h1>
-      <p>Your account is authenticated but has no studio role yet.</p>
-      <button className="primary" onClick={() => supabase.auth.signOut()}>Sign out</button>
-    </section></main>
-  );
-
-  const current = nav.find(n => n.id === section)!;
-  return (
-    <div className="shell">
-      <header className="topbar">
-        <div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div>
-        <button className="round" onClick={() => supabase.auth.signOut()}><LogOut size={17}/></button>
-      </header>
-      <main className="content">
-        <div className="heading"><div className="eyebrow">STUDIO MANAGEMENT</div><h1>{current.label}</h1></div>
-        {section === "dashboard" && <Dashboard role={role}/>}
-        {section === "students" && <Students role={role}/>}
-        {section === "groups" && <Groups role={role}/>}
-        {section === "attendance" && <Attendance />}
-        {section === "payments" && <Payments role={role}/>}
-        {section === "teachers" && <Teachers role={role}/>}
-        {section === "settings" && <SettingsPage role={role}/>}
-      </main>
-      <nav className="nav">{nav.map(n => {
-        const Icon = n.icon;
-        return <button key={n.id} className={section === n.id ? "nav-btn active" : "nav-btn"} onClick={() => setSection(n.id)}>
-          <Icon size={18}/><span>{n.label}</span>
-        </button>
-      })}</nav>
-    </div>
-  );
+function App(){
+  const [session,setSession]=useState<any>(null); const [role,setRole]=useState<Role|null>(null); const [section,setSection]=useState<Section>("dashboard");
+  const [email,setEmail]=useState(""); const [message,setMessage]=useState("");
+  const [lang,setLang]=useState<Lang>(()=>(localStorage.getItem("lds-lang") as Lang)||"lt");
+  const t=(k:TKey)=>tx(lang,k);
+  useEffect(()=>{localStorage.setItem("lds-lang",lang)},[lang]);
+  useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
+  useEffect(()=>{if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
+  async function login(){setMessage("");const {error}=await supabase.auth.signInWithOtp({email,options:{shouldCreateUser:false}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."))}
+  if(!session)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS</div><h1>{lang==="lt"?"Studijos valdymas vienoje vietoje.":lang==="es"?"Gestión del estudio en un solo lugar.":"Studio management, in one place."}</h1><p>{t("privateAccess")}</p><label>{t("email")}</label><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="you@example.com"/><button className="primary" onClick={login} disabled={!email}>{t("signIn")}</button>{message&&<div className="message">{message}</div>}<div className="language-mini"><Languages size={14}/><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></div></section></main>;
+  if(!role)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><h1>{t("accessPending")}</h1><p>{t("noRole")}</p><button className="primary" onClick={()=>supabase.auth.signOut()}>{t("signOut")}</button></section></main>;
+  const current=nav.find(n=>n.id===section)!;
+  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions"><select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang}/>} {section==="students"&&<Students role={role} lang={lang}/>} {section==="groups"&&<Groups role={role} lang={lang}/>} {section==="attendance"&&<Attendance lang={lang}/>} {section==="payments"&&<Payments role={role} lang={lang}/>} {section==="teachers"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang}/>}</main><nav className="nav">{nav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
 
-function Dashboard({ role }: { role: Role }) {
-  const [students, setStudents] = useState(0);
-  const [groups, setGroups] = useState(0);
-  const [outstanding, setOutstanding] = useState(0);
+function Dashboard({role,lang}:{role:Role;lang:Lang}){const [students,setStudents]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0);useEffect(()=>{supabase.from("students").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setStudents(r.count??0));supabase.from("groups").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setGroups(r.count??0));supabase.from("monthly_charges").select("amount_due,amount_paid").then(({data})=>setOutstanding((data??[]).reduce((s:number,x:any)=>s+Number(x.amount_due)-Number(x.amount_paid),0)) )},[]);return <div className="stack"><div className="stats"><div className="stat"><span>{tx(lang,"activeStudents")}</span><b>{students}</b></div><div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{groups}</b></div><div className="stat"><span>{tx(lang,"outstanding")}</span><b>{role==="admin"?money(outstanding):"—"}</b></div></div><section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section></div>}
 
-  useEffect(() => {
-    supabase.from("students").select("id", { count: "exact", head: true }).eq("is_active", true)
-      .then(r => setStudents(r.count ?? 0));
-    supabase.from("groups").select("id", { count: "exact", head: true }).eq("is_active", true)
-      .then(r => setGroups(r.count ?? 0));
-    supabase.from("monthly_charges").select("amount_due,amount_paid")
-      .then(({ data }) => setOutstanding((data ?? []).reduce((s: number, x: any) => s + Number(x.amount_due) - Number(x.amount_paid), 0)));
-  }, []);
+function Students({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<Student[]>([]),[groups,setGroups]=useState<Group[]>([]),[memberships,setMemberships]=useState<Record<string,string[]>>({}),[search,setSearch]=useState(""),[open,setOpen]=useState(false),[detail,setDetail]=useState<Student|null>(null),[editing,setEditing]=useState<Student|null>(null),[selectedGroups,setSelectedGroups]=useState<string[]>([]),[form,setForm]=useState({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:""}),[error,setError]=useState("");
+  async function load(){const [s,g,m]=await Promise.all([supabase.from("students").select("*").eq("is_active",true).order("last_name"),supabase.from("groups").select("*").eq("is_active",true).order("name"),supabase.from("group_students").select("student_id,group_id").eq("is_active",true)]);if(s.error||g.error||m.error){setError((s.error||g.error||m.error)!.message);return}setRows((s.data??[]) as Student[]);setGroups((g.data??[]) as Group[]);const map:Record<string,string[]>={};(m.data??[]).forEach((x:any)=>map[x.student_id]=[...(map[x.student_id]??[]),x.group_id]);setMemberships(map)}
+  useEffect(()=>{load()},[]);const filtered=useMemo(()=>rows.filter(s=>`${s.first_name} ${s.last_name} ${s.email??""} ${s.phone??""}`.toLowerCase().includes(search.toLowerCase())),[rows,search]);
+  function create(){setDetail(null);setEditing(null);setSelectedGroups([]);setForm({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:""});setOpen(true)}
+  function edit(s:Student){setDetail(null);setEditing(s);setSelectedGroups(memberships[s.id]??[]);setForm({first_name:s.first_name,last_name:s.last_name,email:s.email??"",phone:s.phone??"",date_of_birth:s.date_of_birth??"",parent_name:s.parent_name??"",parent_phone:s.parent_phone??"",parent_email:s.parent_email??"",notes:s.notes??""});setOpen(true)}
+  async function save(){if(!form.first_name.trim()||!form.last_name.trim())return;const payload={...form,email:form.email||null,phone:form.phone||null,date_of_birth:form.date_of_birth||null,parent_name:form.parent_name||null,parent_phone:form.parent_phone||null,parent_email:form.parent_email||null,notes:form.notes||null};const r=editing?await supabase.from("students").update(payload).eq("id",editing.id).select().single():await supabase.from("students").insert(payload).select().single();if(r.error){setError(r.error.message);return}const id=(r.data as any).id;await supabase.from("group_students").update({is_active:false}).eq("student_id",id);if(selectedGroups.length)await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"});setOpen(false);await load()}
+  return <div className="stack">{error&&<div className="alert">{error}</div>}<div className="toolbar"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t("searchStudents")}/>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addStudent")}</button>}</div><section className="list">{filtered.map(s=>{const names=groups.filter(g=>(memberships[s.id]??[]).includes(g.id)).map(g=>g.name);return <article className="card clickable" key={s.id} onClick={()=>setDetail(s)}><div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||t("noContact")}</span><span>{names.join(" · ")||t("noGroup")}</span></div><div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(s)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div></article>})}</section>{detail&&<StudentDetail student={detail} groups={groups.filter(g=>(memberships[detail.id]??[]).includes(g.id))} lang={lang} close={()=>setDetail(null)}/>} {open&&<Modal title={editing?t("edit"):t("addStudent")} close={()=>setOpen(false)}><div className="form-grid"><Field label={t("firstName")} value={form.first_name} set={v=>setForm({...form,first_name:v})}/><Field label={t("lastName")} value={form.last_name} set={v=>setForm({...form,last_name:v})}/><Field label={t("email")} value={form.email} set={v=>setForm({...form,email:v})}/><Field label={t("phone")} value={form.phone} set={v=>setForm({...form,phone:v})}/><Field label={t("dob")} type="date" value={form.date_of_birth} set={v=>setForm({...form,date_of_birth:v})}/><Field label={t("parentName")} value={form.parent_name} set={v=>setForm({...form,parent_name:v})}/><Field label={t("parentPhone")} value={form.parent_phone} set={v=>setForm({...form,parent_phone:v})}/><Field label={t("parentEmail")} value={form.parent_email} set={v=>setForm({...form,parent_email:v})}/></div><label>{t("groups")}</label><div className="checks">{groups.map(g=><label className="check" key={g.id}><input type="checkbox" checked={selectedGroups.includes(g.id)} onChange={()=>setSelectedGroups(x=>x.includes(g.id)?x.filter(id=>id!==g.id):[...x,g.id])}/>{g.name}</label>)}</div><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div></Modal>}</div>}
 
-  return <div className="stack">
-    <div className="stats">
-      <div className="stat"><span>Active students</span><b>{students}</b></div>
-      <div className="stat"><span>Active groups</span><b>{groups}</b></div>
-      <div className="stat"><span>Outstanding</span><b>{role === "admin" ? money(outstanding) : "—"}</b></div>
-    </div>
-    <section className="panel empty"><CalendarCheck size={28}/><p>Today's classes will appear here when the schedule is connected.</p></section>
-  </div>;
-}
+function StudentDetail({student,groups,lang,close}:{student:Student;groups:Group[];lang:Lang;close:()=>void}){const t=(k:TKey)=>tx(lang,k);return <Modal title={`${student.first_name} ${student.last_name}`} close={close}><div className="detail-grid"><div><span className="detail-label">{t("contact")}</span><b>{student.email||"—"}</b><span>{student.phone||"—"}</span></div><div><span className="detail-label">{t("parentName")}</span><b>{student.parent_name||"—"}</b><span>{student.parent_email||student.parent_phone||"—"}</span></div><div><span className="detail-label">{t("dob")}</span><b>{student.date_of_birth||"—"}</b></div><div><span className="detail-label">{t("groups")}</span>{groups.length?groups.map(g=><span key={g.id}>{g.name}</span>):<span>—</span>}</div></div>{student.notes&&<><label>{t("notes")}</label><div className="note-box">{student.notes}</div></>}</Modal>}
 
-function Students({ role }: { role: Role }) {
-  const [rows, setRows] = useState<Student[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [memberships, setMemberships] = useState<Record<string,string[]>>({});
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Student | null>(null);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [form, setForm] = useState({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:""});
-  const [error, setError] = useState("");
+function Groups({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<Group[]>([]),[open,setOpen]=useState(false),[detail,setDetail]=useState<Group|null>(null),[editing,setEditing]=useState<Group|null>(null),[name,setName]=useState(""),[level,setLevel]=useState(""),[description,setDescription]=useState("");async function load(){const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name");setRows((data??[]) as Group[])}useEffect(()=>{load()},[]);function create(){setEditing(null);setName("");setLevel("");setDescription("");setOpen(true)}function edit(g:Group){setEditing(g);setName(g.name);setLevel(g.level??"");setDescription(g.description??"");setOpen(true)}async function save(){const p={name:name.trim(),level:level||null,description:description||null};const r=editing?await supabase.from("groups").update(p).eq("id",editing.id):await supabase.from("groups").insert(p);if(r.error)alert(r.error.message);else{setOpen(false);load()}}if(!rows.length)return <div className="stack">{role==="admin"&&<div className="toolbar"><span>{t("groupManaged")}</span><button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button></div>}<section className="panel empty"><p>{t("noStudents")}</p></section></div>;return <div className="stack"><div className="toolbar"><span>{t("groupManaged")}</span>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button>}</div><section className="list">{rows.map(g=><article className="card clickable" key={g.id} onClick={()=>setDetail(g)}><div><b>{g.name}</b><span>{g.level||"—"}</span><span>{g.description||""}</span></div><div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(g)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div></article>)}</section>{detail&&<GroupDetail group={detail} lang={lang} close={()=>setDetail(null)}/>} {open&&<Modal title={editing?t("editGroup"):t("addGroup")} close={()=>setOpen(false)}><Field label={t("groupName")} value={name} set={setName}/><Field label={t("level")} value={level} set={setLevel}/><label>{t("description")}</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div></Modal>}</div>}
 
-  async function load() {
-    const [s,g,m] = await Promise.all([
-      supabase.from("students").select("*").eq("is_active",true).order("last_name"),
-      supabase.from("groups").select("*").eq("is_active",true).order("name"),
-      supabase.from("group_students").select("student_id,group_id").eq("is_active",true)
-    ]);
-    if (s.error || g.error || m.error) { setError((s.error || g.error || m.error)!.message); return; }
-    setRows((s.data ?? []) as Student[]); setGroups((g.data ?? []) as Group[]);
-    const map: Record<string,string[]> = {};
-    (m.data ?? []).forEach((x:any) => { map[x.student_id] = [...(map[x.student_id] ?? []), x.group_id]; });
-    setMemberships(map);
-  }
-  useEffect(() => { load(); }, []);
+function GroupDetail({group,lang,close}:{group:Group;lang:Lang;close:()=>void}){const t=(k:TKey)=>tx(lang,k);const [students,setStudents]=useState<Student[]>([]),[charges,setCharges]=useState<Charge[]>([]),[tab,setTab]=useState<"students"|"attendance"|"payments">("students"),[date,setDate]=useState(todayISO());useEffect(()=>{(async()=>{const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",group.id).eq("is_active",true);const ids=(m??[]).map((x:any)=>x.student_id);if(ids.length){const {data:s}=await supabase.from("students").select("*").in("id",ids).order("last_name");setStudents((s??[]) as Student[])}const {data:c}=await supabase.from("monthly_charges").select("*,students(first_name,last_name),groups(name)").eq("group_id",group.id).order("due_date",{ascending:false});setCharges((c??[]) as Charge[])})()},[group.id]);return <Modal title={group.name} close={close}><div className="tabs"><button className={tab==="students"?"tab active":"tab"} onClick={()=>setTab("students")}>{t("members")}</button><button className={tab==="attendance"?"tab active":"tab"} onClick={()=>setTab("attendance")}>{t("groupAttendance")}</button><button className={tab==="payments"?"tab active":"tab"} onClick={()=>setTab("payments")}>{t("groupPayments")}</button></div>{tab==="students"&&<section className="list">{students.map(s=><article className="card" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||"—"}</span></div></article>)}{!students.length&&<div className="empty">{t("noStudents")}</div>}</section>}{tab==="attendance"&&<GroupAttendance groupId={group.id} students={students} date={date} setDate={setDate} lang={lang}/>} {tab==="payments"&&<section className="list">{charges.map(c=><article className="card" key={c.id}><div><b>{c.students?.first_name} {c.students?.last_name}</b><span>{c.due_date}</span></div><div><b>{money(Number(c.amount_due))}</b><span>{money(Number(c.amount_paid))} / {c.status}</span></div></article>)}{!charges.length&&<div className="empty">{t("noCharges")}</div>}</section>}</Modal>}
 
-  function create() {
-    setEditing(null); setSelectedGroups([]);
-    setForm({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:""});
-    setOpen(true);
-  }
-  function edit(s: Student) {
-    setEditing(s); setSelectedGroups(memberships[s.id] ?? []);
-    setForm({first_name:s.first_name,last_name:s.last_name,email:s.email??"",phone:s.phone??"",date_of_birth:s.date_of_birth??"",parent_name:s.parent_name??"",parent_phone:s.parent_phone??"",parent_email:s.parent_email??"",notes:s.notes??""});
-    setOpen(true);
-  }
-  async function save() {
-    if (!form.first_name.trim() || !form.last_name.trim()) return;
-    const payload = {...form, email: form.email || null, phone: form.phone || null, date_of_birth: form.date_of_birth || null, parent_name: form.parent_name || null, parent_phone: form.parent_phone || null, parent_email: form.parent_email || null, notes: form.notes || null};
-    const r = editing
-      ? await supabase.from("students").update(payload).eq("id",editing.id).select().single()
-      : await supabase.from("students").insert(payload).select().single();
-    if (r.error) { setError(r.error.message); return; }
-    const id = (r.data as any).id;
-    await supabase.from("group_students").update({is_active:false}).eq("student_id",id);
-    if (selectedGroups.length) await supabase.from("group_students").upsert(selectedGroups.map(group_id => ({student_id:id,group_id,is_active:true})), {onConflict:"student_id,group_id"});
-    setOpen(false); await load();
-  }
-  const filtered = useMemo(() => rows.filter(s => `${s.first_name} ${s.last_name} ${s.email??""} ${s.phone??""}`.toLowerCase().includes(search.toLowerCase())), [rows,search]);
+function GroupAttendance({groupId,students,date,setDate,lang}:{groupId:string;students:Student[];date:string;setDate:(v:string)=>void;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [values,setValues]=useState<Record<string,AttendanceStatus>>({});const [error,setError]=useState("");useEffect(()=>{supabase.from("attendance").select("student_id,status").eq("group_id",groupId).eq("attendance_date",date).then(({data})=>{const m:Record<string,AttendanceStatus>={};(data??[]).forEach((x:any)=>m[x.student_id]=x.status);setValues(m)})},[groupId,date]);async function setStatus(id:string,status:AttendanceStatus){setValues(v=>({...v,[id]:status}));const {error}=await supabase.from("attendance").upsert({student_id:id,group_id:groupId,attendance_date:date,status},{onConflict:"student_id,group_id,attendance_date"});if(error)setError(error.message)}return <div className="stack"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={values[s.id]===st?`att ${st} selected`:"att"} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}</section></div>}
 
-  return <div className="stack">
-    {error && <div className="alert">{error}</div>}
-    <div className="toolbar"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search students…"/>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/> Add student</button>}</div>
-    <section className="list">{filtered.map(s => {
-      const names = groups.filter(g=>(memberships[s.id]??[]).includes(g.id)).map(g=>g.name);
-      return <article className="card" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{s.email || s.phone || "No contact"}</span><span>{names.join(" · ") || "No group assigned"}</span></div>{role==="admin"&&<button className="secondary compact" onClick={()=>edit(s)}>Edit</button>}</article>;
-    })}</section>
-    {open && <Modal title={editing ? "Edit student" : "Add student"} close={()=>setOpen(false)}>
-      <div className="form-grid">
-        <Field label="First name" value={form.first_name} set={v=>setForm({...form,first_name:v})}/>
-        <Field label="Last name" value={form.last_name} set={v=>setForm({...form,last_name:v})}/>
-        <Field label="Email" value={form.email} set={v=>setForm({...form,email:v})}/>
-        <Field label="Phone" value={form.phone} set={v=>setForm({...form,phone:v})}/>
-        <Field label="Date of birth" type="date" value={form.date_of_birth} set={v=>setForm({...form,date_of_birth:v})}/>
-        <Field label="Parent name" value={form.parent_name} set={v=>setForm({...form,parent_name:v})}/>
-        <Field label="Parent phone" value={form.parent_phone} set={v=>setForm({...form,parent_phone:v})}/>
-        <Field label="Parent email" value={form.parent_email} set={v=>setForm({...form,parent_email:v})}/>
-      </div>
-      <label>Groups</label>
-      <div className="checks">{groups.map(g=><label className="check" key={g.id}><input type="checkbox" checked={selectedGroups.includes(g.id)} onChange={()=>setSelectedGroups(x=>x.includes(g.id)?x.filter(id=>id!==g.id):[...x,g.id])}/>{g.name}</label>)}</div>
-      <label>Notes</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/>
-      <div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>Cancel</button><button className="primary small-btn" onClick={save}>Save student</button></div>
-    </Modal>}
-  </div>;
-}
+function Attendance({lang}:{lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [groups,setGroups]=useState<Group[]>([]),[groupId,setGroupId]=useState(""),[date,setDate]=useState(todayISO()),[students,setStudents]=useState<Student[]>([]),[values,setValues]=useState<Record<string,AttendanceStatus>>({}),[dropLessons,setDropLessons]=useState<DropLesson[]>([]),[dropBookings,setDropBookings]=useState<DropBooking[]>([]),[error,setError]=useState("");async function loadGroups(){const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name");setGroups((data??[]) as Group[])}async function load(){if(!groupId){setStudents([]);return}const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",groupId).eq("is_active",true);const ids=(m??[]).map((x:any)=>x.student_id);if(ids.length){const {data:s}=await supabase.from("students").select("*").in("id",ids).eq("is_active",true).order("last_name");setStudents((s??[]) as Student[])}else setStudents([]);const {data:a}=await supabase.from("attendance").select("student_id,status").eq("group_id",groupId).eq("attendance_date",date);const map:Record<string,AttendanceStatus>={};(a??[]).forEach((x:any)=>map[x.student_id]=x.status);setValues(map)}async function loadDropins(){let q=supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");const {data:lessons}=await q;const ls=(lessons??[]) as DropLesson[];setDropLessons(ls);if(!ls.length){setDropBookings([]);return}const {data:bookings}=await supabase.from("drop_in_bookings").select("*").in("lesson_id",ls.map(x=>x.id));setDropBookings((bookings??[]) as DropBooking[])}useEffect(()=>{loadGroups()},[]);useEffect(()=>{load()},[groupId,date]);useEffect(()=>{loadDropins()},[date]);async function setStatus(id:string,status:AttendanceStatus){setValues(v=>({...v,[id]:status}));const {error}=await supabase.from("attendance").upsert({student_id:id,group_id:groupId,attendance_date:date,status},{onConflict:"student_id,group_id,attendance_date"});if(error)setError(error.message)}async function setDrop(id:string,status:AttendanceStatus){const {error}=await supabase.rpc("teacher_set_drop_in_attendance",{p_booking_id:id,p_status:status});if(error)setError(error.message);else setDropBookings(x=>x.map(b=>b.id===id?{...b,attendance_status:status}:b))}return <div className="stack"><section className="dropin-panel"><div><div className="eyebrow">{t("newParticipants")}</div><h2>{date}</h2></div>{dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <div className="dropin-lesson" key={l.id}><div><b>{l.groups?.name||"Group"}</b><span>{l.start_time.slice(0,5)}{l.end_time?`–${l.end_time.slice(0,5)}`:""} · {money(Number(l.price))}</span></div><div className="dropin-people">{bs.length?bs.map(b=><div className="dropin-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>{b.status} · {b.payment_method||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?`mini ${st}`:"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}</div></div>):<span className="muted small">{t("noStudents")}</span>}</div></div>})}{!dropLessons.length&&<span className="muted small">{lang==="lt"?"Šiandien vienkartinių dalyvių nėra.":lang==="es"?"No hay participantes de clase suelta hoy.":"No one-off participants today."}</span>}</section><div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?`att ${st} selected`:"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}{groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}</section><p className="muted small">{t("attendanceStatuses")}</p></div>}
 
-function Groups({ role }: { role: Role }) {
-  const [rows,setRows]=useState<Group[]>([]); const [open,setOpen]=useState(false); const [editing,setEditing]=useState<Group|null>(null);
-  const [name,setName]=useState(""); const [level,setLevel]=useState(""); const [description,setDescription]=useState("");
-  async function load(){const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name");setRows((data??[]) as Group[])}
-  useEffect(()=>{load()},[]);
-  function create(){setEditing(null);setName("");setLevel("");setDescription("");setOpen(true)}
-  function edit(g:Group){setEditing(g);setName(g.name);setLevel(g.level??"");setDescription(g.description??"");setOpen(true)}
-  async function save(){const p={name:name.trim(),level:level||null,description:description||null};const r=editing?await supabase.from("groups").update(p).eq("id",editing.id):await supabase.from("groups").insert(p);if(r.error)alert(r.error.message);else{setOpen(false);load()}}
-  if(role!=="admin") return <section className="panel empty"><p>Groups are managed by the administrator.</p></section>;
-  return <div className="stack"><div className="toolbar"><span>Dynamic groups — no names are hardcoded.</span><button className="secondary" onClick={create}><Plus size={16}/> Add group</button></div><section className="list">{rows.map(g=><article className="card" key={g.id}><div><b>{g.name}</b><span>{g.level||"No level"}</span><span>{g.description||""}</span></div><button className="secondary compact" onClick={()=>edit(g)}>Edit</button></article>)}</section>
-  {open&&<Modal title={editing?"Edit group":"Add group"} close={()=>setOpen(false)}><Field label="Group name" value={name} set={setName}/><Field label="Level" value={level} set={setLevel}/><label>Description</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>Cancel</button><button className="primary small-btn" onClick={save}>Save group</button></div></Modal>}</div>;
-}
+function Payments({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({});async function load(){const [c,p]=await Promise.all([supabase.from("monthly_charges").select("*,students(first_name,last_name),groups(name)").order("due_date",{ascending:false}),supabase.from("payments").select("*").order("paid_at",{ascending:false})]);if(c.error||p.error)setError((c.error||p.error)!.message);setCharges((c.data??[]) as Charge[]);setPayments((p.data??[]) as Payment[])}useEffect(()=>{load()},[]);async function savePayment(amount:number,method:PaymentMethod){if(!paymentCharge)return;const left=Number(paymentCharge.amount_due)-Number(paymentCharge.amount_paid);if(amount<=0||amount>left){setError(`${t("remaining")}: ${money(left)}`);return}const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:paymentCharge.id,p_amount:amount,p_payment_method:method});if(error)setError(error.message);else{setPaymentCharge(null);await load()}}async function updatePayment(amount:number,method:PaymentMethod){if(!editing)return;const {error}=await supabase.rpc("admin_update_payment",{p_payment_id:editing.id,p_amount:amount,p_payment_method:method,p_paid_at:editing.paid_at,p_notes:editing.notes});if(error)setError(error.message);else{setEditing(null);await load()}}async function removePayment(p:Payment){if(!confirm(t("confirmDelete")))return;const {error}=await supabase.rpc("admin_delete_payment",{p_payment_id:p.id});if(error)setError(error.message);else await load()}return <div className="stack">{error&&<div className="alert">{error}</div>}<section className="list">{charges.map(c=>{const left=Number(c.amount_due)-Number(c.amount_paid);const history=payments.filter(p=>p.monthly_charge_id===c.id);return <article className="card payment-card" key={c.id}><div><b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b><span>{c.groups?.name||"Studio"} · {c.due_date}</span><span>{money(Number(c.amount_paid))} paid · {money(left)} left</span></div><div className="pay-right"><b>{money(Number(c.amount_due))}</b><span className={`pill ${c.status}`}>{c.status.replace("_"," ")}</span>{left>0&&<button className="secondary compact" onClick={()=>setPaymentCharge(c)}><CreditCard size={13}/>{t("recordPayment")}</button>}<button className="ghost-link" onClick={()=>setShowHistory(x=>({...x,[c.id]:!x[c.id]}))}><History size={13}/>{t("paymentHistory")} ({history.length})</button></div>{showHistory[c.id]&&<div className="history-box">{history.length?history.map(p=><div className="history-row" key={p.id}><span>{new Date(p.paid_at).toLocaleDateString()} · {p.payment_method}</span><b>{money(Number(p.amount))}</b>{role==="admin"&&<div className="card-actions"><button className="icon-btn" title={t("editPayment")} onClick={()=>setEditing(p)}><Pencil size={14}/></button><button className="icon-btn danger" title={t("deletePayment")} onClick={()=>removePayment(p)}><Trash2 size={14}/></button></div>}</div>):<span className="muted small">{t("noHistory")}</span>}</div>}</article>})}{!charges.length&&<div className="empty">{t("noCharges")}</div>}</section>{role==="teacher"&&<p className="muted small">{t("teacherFinanceNote")}</p>}{paymentCharge&&<PaymentModal charge={paymentCharge} lang={lang} close={()=>setPaymentCharge(null)} save={savePayment}/>} {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}</div>}
 
-function Attendance() {
-  const [groups,setGroups]=useState<Group[]>([]); const [groupId,setGroupId]=useState(""); const [date,setDate]=useState(new Date().toISOString().slice(0,10));
-  const [students,setStudents]=useState<Student[]>([]); const [values,setValues]=useState<Record<string,AttendanceStatus>>({});
-  const [error,setError]=useState("");
-  useEffect(()=>{supabase.from("groups").select("*").eq("is_active",true).order("name").then(({data})=>setGroups((data??[]) as Group[]))},[]);
-  async function load(){
-    if(!groupId)return;
-    const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",groupId).eq("is_active",true);
-    const ids=(m??[]).map((x:any)=>x.student_id);
-    if(!ids.length){setStudents([]);return}
-    const {data:s}=await supabase.from("students").select("*").in("id",ids).eq("is_active",true).order("last_name");
-    setStudents((s??[]) as Student[]);
-    const {data:a}=await supabase.from("attendance").select("student_id,status").eq("group_id",groupId).eq("attendance_date",date);
-    const map:Record<string,AttendanceStatus>={};(a??[]).forEach((x:any)=>map[x.student_id]=x.status);setValues(map);
-  }
-  useEffect(()=>{load()},[groupId,date]);
-  async function setStatus(student_id:string,status:AttendanceStatus){
-    setValues(v=>({...v,[student_id]:status}));
-    const r=await supabase.from("attendance").upsert({student_id,group_id:groupId,attendance_date:date,status}, {onConflict:"student_id,group_id,attendance_date"});
-    if(r.error)setError(r.error.message);
-  }
-  if(!groups.length)return <section className="panel empty"><p>Create a group first.</p></section>;
-  return <div className="stack"><div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">Choose group</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(status=><button className={values[s.id]===status?`att ${status} selected`:"att"} key={status} onClick={()=>setStatus(s.id,status)}>{status[0].toUpperCase()+status.slice(1)}</button>)}</div></article>)}{groupId&&!students.length&&<div className="empty">No students in this group.</div>}</section><p className="muted small">Attendance statuses are only Present, Absent and Sick.</p></div>;
-}
+function PaymentModal({charge,lang,close,save}:{charge:Charge;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(Number(charge.amount_due)-Number(charge.amount_paid)));const [method,setMethod]=useState<PaymentMethod>("cash");return <Modal title={t("recordPayment")} close={close}><p><b>{charge.students?.first_name} {charge.students?.last_name}</b></p><Field label={`${t("amount")} · ${t("remaining")}: ${money(Number(charge.amount_due)-Number(charge.amount_paid))}`} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
+function PaymentEditModal({payment,lang,close,save}:{payment:Payment;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(payment.amount));const [method,setMethod]=useState<PaymentMethod>(payment.payment_method);return <Modal title={t("editPayment")} close={close}><Field label={t("amount")} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
 
-function Payments({ role }: { role: Role }) {
-  const [charges,setCharges]=useState<Charge[]>([]); const [error,setError]=useState("");
-  async function load(){let q=supabase.from("monthly_charges").select("*,students(first_name,last_name),groups(name)").order("due_date",{ascending:false});const {data,error}=await q;if(error)setError(error.message);setCharges((data??[]) as Charge[])}
-  useEffect(()=>{load()},[]);
-  async function record(c:Charge){
-    const amount=prompt(`Payment amount (remaining ${money(Number(c.amount_due)-Number(c.amount_paid))})`);
-    const n=Number(amount);if(!Number.isFinite(n)||n<=0)return;
-    const method=prompt("Method: cash, bank_transfer or stripe","cash") as any;
-    if(!["cash","bank_transfer","stripe"].includes(method))return;
-    const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:c.id,p_amount:n,p_method:method});
-    if(error)setError(error.message);else load();
-  }
-  return <div className="stack">{error&&<div className="alert">{error}</div>}<section className="list">{charges.map(c=>{const left=Number(c.amount_due)-Number(c.amount_paid);return <article className="card" key={c.id}><div><b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b><span>{c.groups?.name||"Studio"} · Due {c.due_date}</span><span>{money(Number(c.amount_paid))} paid · {money(left)} left</span></div><div className="pay-right"><b>{money(Number(c.amount_due))}</b><span className={`pill ${c.status}`}>{c.status.replace("_"," ")}</span>{left>0&&<button className="secondary compact" onClick={()=>record(c)}>Record payment</button>}</div></article>})}{!charges.length&&<div className="empty">No monthly charges yet.</div>}</section>{role==="teacher"&&<p className="muted small">Teacher access is limited by database RLS to assigned students.</p>}</div>;
-}
+function Teachers({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<any[]>([]),[groups,setGroups]=useState<Group[]>([]),[invite,setInvite]=useState(false),[open,setOpen]=useState<any|null>(null),[selected,setSelected]=useState<string[]>([]),[first,setFirst]=useState(""),[last,setLast]=useState(""),[email,setEmail]=useState(""),[subs,setSubs]=useState<any[]>([]),[subOpen,setSubOpen]=useState(false),[subForm,setSubForm]=useState({group_id:"",teacher_id:"",starts_on:todayISO(),ends_on:todayISO(),notes:""}),[error,setError]=useState("");async function load(){const [tq,gq,aq,sq]=await Promise.all([supabase.from("teachers").select("id,profile_id,profiles(first_name,last_name,email)").eq("is_active",true),supabase.from("groups").select("*").eq("is_active",true).order("name"),supabase.from("group_teachers").select("teacher_id,group_id"),supabase.from("teacher_substitutions").select("*,groups(name),teachers(id,profiles(first_name,last_name))").order("starts_on",{ascending:false})]);setRows(tq.data??[]);setGroups((gq.data??[]) as Group[]);setSubs(sq.data??[]);const map:Record<string,string[]>={};(aq.data??[]).forEach((x:any)=>map[x.teacher_id]=[...(map[x.teacher_id]??[]),x.group_id]);setOpen((o:any)=>o?{...o,map}:o)}useEffect(()=>{if(role==="admin")load()},[role]);async function send(){const {error}=await supabase.functions.invoke("invite-teacher",{body:{first_name:first,last_name:last,email}});if(error)setError(error.message);else{setInvite(false);setFirst("");setLast("");setEmail("");load()}}async function save(){if(!open)return;await supabase.from("group_teachers").delete().eq("teacher_id",open.id);if(selected.length)await supabase.from("group_teachers").insert(selected.map((group_id,i)=>({teacher_id:open.id,group_id,is_primary:i===0})));setOpen(null);load()}async function saveSub(){const {error}=await supabase.from("teacher_substitutions").insert(subForm);if(error)setError(error.message);else{setSubOpen(false);setSubForm({group_id:"",teacher_id:"",starts_on:todayISO(),ends_on:todayISO(),notes:""});load()}}async function deleteSub(id:string){if(!confirm(lang==="lt"?"Ištrinti pavadavimą?":lang==="es"?"¿Eliminar la sustitución?":"Delete substitution?"))return;const {error}=await supabase.from("teacher_substitutions").delete().eq("id",id);if(error)setError(error.message);else load()}if(role!=="admin")return <section className="panel empty"><p>{t("groupManaged")}</p></section>;return <div className="stack">{error&&<div className="alert">{error}</div>}<div className="toolbar"><span>{t("assignGroups")}</span><button className="secondary" onClick={()=>setInvite(true)}><Plus size={16}/>{t("addTeacher")}</button></div><section className="list">{rows.map(tch=><article className="card" key={tch.id}><div><b>{tch.profiles?.first_name} {tch.profiles?.last_name}</b><span>{tch.profiles?.email}</span></div><button className="secondary compact" onClick={async()=>{const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",tch.id);setSelected((data??[]).map((x:any)=>x.group_id));setOpen(tch)}}>{t("assignGroups")}</button></article>)}</section>{!rows.length&&<div className="empty">{t("noTeachers")}</div>}<section className="panel"><div className="panel-head"><div><div className="eyebrow">{t("substitutions")}</div><h2>{t("substitutions")}</h2></div><button className="secondary" onClick={()=>setSubOpen(true)}><UserPlus size={16}/>{t("addSubstitution")}</button></div><div className="list">{subs.map(s=><article className="card" key={s.id}><div><b>{s.groups?.name}</b><span>{s.teachers?.profiles?.first_name} {s.teachers?.profiles?.last_name}</span><span>{s.starts_on} → {s.ends_on}</span></div><button className="icon-btn danger" onClick={()=>deleteSub(s.id)}><Trash2 size={14}/></button></article>)}{!subs.length&&<span className="muted small">—</span>}</div></section>{invite&&<Modal title={t("inviteTeacher")} close={()=>setInvite(false)}><Field label={t("firstName")} value={first} set={setFirst}/><Field label={t("lastName")} value={last} set={setLast}/><Field label={t("email")} value={email} set={setEmail}/><div className="actions"><button className="secondary" onClick={()=>setInvite(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={send}>{t("sendInvitation")}</button></div></Modal>}{open&&<Modal title={`${open.profiles?.first_name} ${open.profiles?.last_name}`} close={()=>setOpen(null)}><div className="checks">{groups.map(g=><label className="check" key={g.id}><input type="checkbox" checked={selected.includes(g.id)} onChange={()=>setSelected(x=>x.includes(g.id)?x.filter(id=>id!==g.id):[...x,g.id])}/>{g.name}</label>)}</div><div className="actions"><button className="secondary" onClick={()=>setOpen(null)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("saveAssignment")}</button></div></Modal>}{subOpen&&<Modal title={t("addSubstitution")} close={()=>setSubOpen(false)}><label>{t("groups")}</label><select value={subForm.group_id} onChange={e=>setSubForm({...subForm,group_id:e.target.value})}><option value="">—</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><label>{t("substitute")}</label><select value={subForm.teacher_id} onChange={e=>setSubForm({...subForm,teacher_id:e.target.value})}><option value="">—</option>{rows.map(r=><option key={r.id} value={r.id}>{r.profiles?.first_name} {r.profiles?.last_name}</option>)}</select><div className="form-grid"><Field label={t("starts")} type="date" value={subForm.starts_on} set={v=>setSubForm({...subForm,starts_on:v})}/><Field label={t("ends")} type="date" value={subForm.ends_on} set={v=>setSubForm({...subForm,ends_on:v})}/></div><div className="actions"><button className="secondary" onClick={()=>setSubOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={saveSub}>{t("save")}</button></div></Modal>}</div>}
 
-function Teachers({ role }: { role: Role }) {
-  const [rows,setRows]=useState<any[]>([]); const [groups,setGroups]=useState<Group[]>([]); const [open,setOpen]=useState<any>(null); const [selected,setSelected]=useState<string[]>([]);
-  const [first,setFirst]=useState("");const [last,setLast]=useState("");const [email,setEmail]=useState("");const [invite,setInvite]=useState(false);
-  async function load(){const [t,g,a]=await Promise.all([supabase.from("teachers").select("id,profiles(first_name,last_name,email)").eq("is_active",true),supabase.from("groups").select("*").eq("is_active",true).order("name"),supabase.from("group_teachers").select("teacher_id,group_id")]);setRows(t.data??[]);setGroups((g.data??[]) as Group[]);const map:Record<string,string[]>={};(a.data??[]).forEach((x:any)=>map[x.teacher_id]=[...(map[x.teacher_id]??[]),x.group_id]);setOpen((o:any)=>o?{...o,map}:o)}
-  useEffect(()=>{load()},[]);
-  async function send(){const {error}=await supabase.functions.invoke("invite-teacher",{body:{first_name:first,last_name:last,email}});if(error)alert(error.message);else{setInvite(false);setFirst("");setLast("");setEmail("");load()}}
-  async function save(){if(!open)return;await supabase.from("group_teachers").delete().eq("teacher_id",open.id);if(selected.length)await supabase.from("group_teachers").insert(selected.map((group_id,i)=>({teacher_id:open.id,group_id,is_primary:i===0})));setOpen(null);load()}
-  if(role!=="admin")return <section className="panel empty"><p>Teacher accounts are managed by the administrator.</p></section>;
-  return <div className="stack"><div className="toolbar"><span>Invite teachers and assign only their groups.</span><button className="secondary" onClick={()=>setInvite(true)}><Plus size={16}/> Add teacher</button></div><section className="list">{rows.map(t=><article className="card" key={t.id}><div><b>{t.profiles?.first_name} {t.profiles?.last_name}</b><span>{t.profiles?.email}</span></div><button className="secondary compact" onClick={async()=>{const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",t.id);setSelected((data??[]).map((x:any)=>x.group_id));setOpen(t)}}>Assign groups</button></article>)}</section>
-  {invite&&<Modal title="Invite teacher" close={()=>setInvite(false)}><Field label="First name" value={first} set={setFirst}/><Field label="Last name" value={last} set={setLast}/><Field label="Email" value={email} set={setEmail}/><div className="actions"><button className="secondary" onClick={()=>setInvite(false)}>Cancel</button><button className="primary small-btn" onClick={send}>Send invitation</button></div></Modal>}
-  {open&&<Modal title={`${open.profiles?.first_name} ${open.profiles?.last_name}`} close={()=>setOpen(null)}><p>Select groups for this teacher.</p><div className="checks">{groups.map(g=><label className="check" key={g.id}><input type="checkbox" checked={selected.includes(g.id)} onChange={()=>setSelected(x=>x.includes(g.id)?x.filter(id=>id!==g.id):[...x,g.id])}/>{g.name}</label>)}</div><div className="actions"><button className="secondary" onClick={()=>setOpen(null)}>Cancel</button><button className="primary small-btn" onClick={save}>Save assignments</button></div></Modal>}</div>;
-}
+function Rentals({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<Rental[]>([]),[open,setOpen]=useState(false),[form,setForm]=useState({customer_name:"",email:"",phone:"",rental_type:"short_term",starts_at:"",ends_at:"",price:"",payment_status:"pending",payment_method:"",notes:""}),[error,setError]=useState("");async function load(){const {data,error}=await supabase.from("studio_rentals").select("*").eq("is_active",true).order("starts_at");if(error)setError(error.message);setRows((data??[]) as Rental[])}useEffect(()=>{if(role==="admin")load()},[role]);async function save(){const {error}=await supabase.from("studio_rentals").insert({customer_name:form.customer_name,email:form.email||null,phone:form.phone||null,rental_type:form.rental_type,starts_at:new Date(form.starts_at).toISOString(),ends_at:new Date(form.ends_at).toISOString(),price:Number(form.price)||0,payment_status:form.payment_status,payment_method:form.payment_method||null,notes:form.notes||null});if(error)setError(error.message);else{setOpen(false);load()}}if(role!=="admin")return <section className="panel empty"><p>{t("groupManaged")}</p></section>;return <div className="stack">{error&&<div className="alert">{error}</div>}<div className="toolbar"><span>{t("rentals")}</span><button className="secondary" onClick={()=>setOpen(true)}><Plus size={16}/>{t("addRental")}</button></div><section className="list">{rows.map(r=><article className="card" key={r.id}><div><b>{r.customer_name}</b><span>{new Date(r.starts_at).toLocaleString()} → {new Date(r.ends_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span><span>{r.rental_type} · {money(Number(r.price))}</span></div><div className="pay-right"><span className={`pill ${r.payment_status}`}>{r.payment_status}</span><b>{r.payment_method||"—"}</b></div></article>)}{!rows.length&&<div className="empty">{t("noRentals")}</div>}</section>{open&&<Modal title={t("addRental")} close={()=>setOpen(false)}><Field label={t("customer")} value={form.customer_name} set={v=>setForm({...form,customer_name:v})}/><div className="form-grid"><Field label={t("email")} value={form.email} set={v=>setForm({...form,email:v})}/><Field label={t("phone")} value={form.phone} set={v=>setForm({...form,phone:v})}/><div><label>{t("rentalType")}</label><select value={form.rental_type} onChange={e=>setForm({...form,rental_type:e.target.value})}><option value="short_term">{t("shortTerm")}</option><option value="long_term">{t("longTerm")}</option></select></div><Field label={t("price")} value={form.price} set={v=>setForm({...form,price:v})} type="number"/><Field label={t("start")} value={form.starts_at} set={v=>setForm({...form,starts_at:v})} type="datetime-local"/><Field label={t("end")} value={form.ends_at} set={v=>setForm({...form,ends_at:v})} type="datetime-local"/></div><div className="form-grid"><div><label>{t("paymentStatus")}</label><select value={form.payment_status} onChange={e=>setForm({...form,payment_status:e.target.value})}><option value="pending">{t("pending")}</option><option value="paid">{t("paid")}</option><option value="cancelled">{t("cancelled")}</option></select></div><div><label>{t("method")}</label><select value={form.payment_method} onChange={e=>setForm({...form,payment_method:e.target.value})}><option value="">—</option><option value="cash">{t("cash")}</option><option value="bank_transfer">{t("bank")}</option><option value="stripe">Stripe</option></select></div></div><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("saveRental")}</button></div></Modal>}</div>}
 
-function SettingsPage({ role }: { role: Role }) {
-  const [prices,setPrices]=useState<Price[]>([]);const [open,setOpen]=useState(false);const [name,setName]=useState("");const [amount,setAmount]=useState("");
-  async function load(){const {data}=await supabase.from("prices").select("*").eq("is_active",true).order("amount");setPrices((data??[]) as Price[])}
-  useEffect(()=>{load()},[]);
-  if(role!=="admin")return <section className="panel empty"><p>Settings are available to administrators only.</p></section>;
-  async function save(){const n=Number(amount);if(!name||!Number.isFinite(n)||n<0)return;const {error}=await supabase.from("prices").insert({name,amount:n,currency:"EUR",billing_period:"monthly"});if(error)alert(error.message);else{setOpen(false);setName("");setAmount("");load()}}
-  return <div className="stack"><section className="panel"><div className="panel-head"><div><div className="eyebrow">PRICING</div><h2>Studio prices</h2></div><button className="secondary" onClick={()=>setOpen(true)}><Plus size={16}/> Add price</button></div><div className="list">{prices.map(p=><article className="card" key={p.id}><div><b>{p.name}</b><span>Monthly · EUR</span></div><b>{money(Number(p.amount))}</b></article>)}</div></section>{open&&<Modal title="Add price" close={()=>setOpen(false)}><Field label="Price name" value={name} set={setName}/><Field label="Monthly amount (€)" value={amount} set={setAmount} type="number"/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>Cancel</button><button className="primary small-btn" onClick={save}>Save price</button></div></Modal>}</div>;
-}
+function SettingsPage({role,lang,setLang}:{role:Role;lang:Lang;setLang:(v:Lang)=>void}){const t=(k:TKey)=>tx(lang,k);const [prices,setPrices]=useState<Price[]>([]),[open,setOpen]=useState(false),[editing,setEditing]=useState<Price|null>(null),[name,setName]=useState(""),[amount,setAmount]=useState("");async function load(){const {data}=await supabase.from("prices").select("*").eq("is_active",true).order("amount");setPrices((data??[]) as Price[])}useEffect(()=>{load()},[]);if(role!=="admin")return <div className="stack"><section className="panel"><div className="panel-head"><div><div className="eyebrow">{t("language")}</div><h2>{t("language")}</h2></div></div><p className="muted">{t("languageNote")}</p><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></section></div>;function create(){setEditing(null);setName("");setAmount("");setOpen(true)}function edit(p:Price){setEditing(p);setName(p.name);setAmount(String(p.amount));setOpen(true)}async function save(){const n=Number(amount);if(!name||!Number.isFinite(n)||n<0)return;const r=editing?await supabase.from("prices").update({name,amount:n}).eq("id",editing.id):await supabase.from("prices").insert({name,amount:n,currency:"EUR",billing_period:"monthly"});if(r.error)alert(r.error.message);else{setOpen(false);load()}}async function deactivate(p:Price){await supabase.from("prices").update({is_active:false}).eq("id",p.id);load()}return <div className="stack"><section className="panel"><div className="panel-head"><div><div className="eyebrow">{t("pricing")}</div><h2>{t("studioPrices")}</h2></div><button className="secondary" onClick={create}><Plus size={16}/>{t("addPrice")}</button></div><div className="list">{prices.map(p=><article className="card" key={p.id}><div><b>{p.name}</b><span>{t("monthly")} · EUR</span></div><div className="card-actions"><b>{money(Number(p.amount))}</b><button className="icon-btn" onClick={()=>edit(p)}><Pencil size={14}/></button><button className="icon-btn danger" onClick={()=>deactivate(p)}><Trash2 size={14}/></button></div></article>)}</div></section><section className="panel"><div className="panel-head"><div><div className="eyebrow"><Languages size={13}/></div><h2>{t("language")}</h2></div></div><p className="muted">{t("languageNote")}</p><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></section>{open&&<Modal title={editing?t("editPrice"):t("addPrice")} close={()=>setOpen(false)}><Field label={t("priceName")} value={name} set={setName}/><Field label={t("monthlyAmount")} value={amount} set={setAmount} type="number"/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("savePrice")}</button></div></Modal>}</div>}
 
-function Field({label,value,set,type="text"}:{label:string,value:string,set:(v:string)=>void,type?:string}) {
-  return <div><label>{label}</label><input type={type} value={value} onChange={e=>set(e.target.value)}/></div>;
-}
-function Modal({title,close,children}:{title:string,close:()=>void,children:any}) {
-  return <div className="backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}><section className="modal"><div className="modal-head"><h2>{title}</h2><button className="round" onClick={close}><X size={17}/></button></div>{children}</section></div>;
-}
+function Field({label,value,set,type="text"}:{label:string;value:string;set:(v:string)=>void;type?:string}){return <div><label>{label}</label><input type={type} value={value} onChange={e=>set(e.target.value)}/></div>}
+function Modal({title,close,children}:{title:string;close:()=>void;children:any}){return <div className="backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}><section className="modal"><div className="modal-head"><h2>{title}</h2><button className="round" onClick={close}><X size={17}/></button></div>{children}</section></div>}
 export default App;
