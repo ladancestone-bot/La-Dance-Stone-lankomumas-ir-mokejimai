@@ -76,7 +76,6 @@ const translations = {
 const nav: { id: Section; key: TKey; icon: any }[] = [
   { id:"dashboard", key:"dashboard", icon:LayoutDashboard },
   { id:"attendance", key:"attendance", icon:CalendarCheck },
-  { id:"payments", key:"payments", icon:CreditCard },
   { id:"students", key:"students", icon:Users },
   { id:"teachers", key:"teachers", icon:UserRound },
   { id:"rentals", key:"rentals", icon:Building2 },
