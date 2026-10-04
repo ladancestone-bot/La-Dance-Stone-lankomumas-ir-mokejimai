@@ -135,30 +135,39 @@ function App(){
 }
 
 function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
-  const team=[
-    {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:"udraite.dan@gmail.com"},
-    {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS",email:null},
-    {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM",email:null},
-    {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG",email:null},
-    {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB",email:null},
-  ];
-  const own=team.find(x=>x.email?.toLowerCase()===email.toLowerCase());
+  const [team,setTeam]=useState<any[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  useEffect(()=>{
+    let alive=true;
+    supabase.from("teachers").select("id,profiles(first_name,last_name,email)").eq("is_active",true).then(({data,error})=>{
+      if(!alive)return;
+      if(error)setError(error.message);
+      setTeam(data??[]);
+      setLoading(false);
+    });
+    return()=>{alive=false};
+  },[]);
+  const own=team.find(x=>String(x.profiles?.email??"").toLowerCase()===email.toLowerCase());
+  const fullName=(person:any)=>`${person.profiles?.first_name??""} ${person.profiles?.last_name??""}`.trim();
+  const initials=(person:any)=>fullName(person).split(" ").filter(Boolean).map((x:string)=>x[0]).join("").slice(0,2).toUpperCase()||"?";
   return <main className="profile-entry">
     <section className="profile-entry-inner">
       <div className="eyebrow">LA DANCE STONE ŠOKIŲ STUDIJA</div>
       <h1>{lang==="lt"?"Kas jūs?":lang==="es"?"¿Quién eres?":"Who are you?"}</h1>
       <p className="profile-intro">{lang==="lt"?"Pasirinkite savo profilį, kad patektumėte į studijos valdymą.":lang==="es"?"Elige tu perfil para entrar a la gestión del estudio.":"Choose your profile to enter studio management."}</p>
-      <div className="profile-list">
+      {loading?<div className="empty">...</div>:error?<div className="alert">{error}</div>:<div className="profile-list">
         {team.map(person=>{
-          const active=own?.name===person.name;
-          return <button key={person.name} className={active?"profile-card active":"profile-card"} disabled={!active} onClick={onContinue}>
-            <span className="profile-avatar">{person.initials}</span>
-            <span className="profile-copy"><b>{person.name}</b><small>{person.role}</small>{active&&<em>{lang==="lt"?"Jūsų profilis":lang==="es"?"Tu perfil":"Your profile"}</em>}</span>
+          const active=own?.id===person.id;
+          const name=fullName(person);
+          return <button key={person.id} className={active?"profile-card active":"profile-card"} disabled={!active} onClick={onContinue}>
+            <span className="profile-avatar">{initials(person)}</span>
+            <span className="profile-copy"><b>{name}</b><small>{lang==="lt"?"Mokytojas / Treneris":lang==="es"?"Profesor / Entrenador":"Teacher / Trainer"}</small>{active&&<em>{lang==="lt"?"Jūsų profilis":lang==="es"?"Tu perfil":"Your profile"}</em>}</span>
             {active&&<ChevronRight size={20}/>}
           </button>
         })}
-      </div>
-      {!own&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
+      </div>}
+      {!loading&&!error&&!own&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
       <button className="ghost-link profile-exit" onClick={onSignOut}><LogOut size={15}/>{lang==="lt"?"Atsijungti":lang==="es"?"Cerrar sesión":"Sign out"}</button>
     </section>
   </main>
