@@ -135,14 +135,22 @@ function App(){
 }
 
 function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
-  const team=[
-    {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ"},
-    {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS"},
-    {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM"},
-    {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG"},
-    {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB"},
-  ];
-  const own=team.find(x=>x.name.toLowerCase().includes(email.split("@")[0].toLowerCase()))||null;
+  const [team,setTeam]=useState<Array<{name:string;role:string;initials:string;email:string|null}>>([]);
+  useEffect(()=>{
+    supabase.from("teachers").select("profiles(first_name,last_name,email)").eq("is_active",true).then(({data})=>{
+      const rows=(data??[]) as any[];
+      const mapped=rows.map(r=>{const p=r.profiles||{};const name=[p.first_name,p.last_name].filter(Boolean).join(" ");return {name,role:"Mokytojas / Treneris",initials:name.split(" ").map((x:string)=>x[0]).join("").slice(0,2).toUpperCase(),email:p.email||null}}).filter(x=>x.name);
+      const fallback=[
+        {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:null},
+        {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS",email:null},
+        {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM",email:null},
+        {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG",email:null},
+        {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB",email:null},
+      ];
+      setTeam(mapped.length?mapped:fallback);
+    });
+  },[]);
+  const own=team.find(x=>x.email?.toLowerCase()===email.toLowerCase());
   return <main className="profile-entry">
     <section className="profile-entry-inner">
       <div className="eyebrow">LA DANCE STONE ŠOKIŲ STUDIJA</div>
@@ -158,10 +166,10 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
           </button>
         })}
       </div>
+      {!own&&team.length>0&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
       <button className="ghost-link profile-exit" onClick={onSignOut}><LogOut size={15}/>{lang==="lt"?"Atsijungti":lang==="es"?"Cerrar sesión":"Sign out"}</button>
     </section>
   </main>}
-
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
 function Dashboard({role,lang}:{role:Role;lang:Lang}){const [students,setStudents]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0);useEffect(()=>{supabase.from("students").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setStudents(r.count??0));supabase.from("groups").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setGroups(r.count??0));supabase.from("monthly_charges").select("amount_due,amount_paid").then(({data})=>setOutstanding((data??[]).reduce((s:number,x:any)=>s+Number(x.amount_due)-Number(x.amount_paid),0)) )},[]);return <div className="stack"><div className="stats"><div className="stat"><span>{tx(lang,"activeStudents")}</span><b>{students}</b></div><div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{groups}</b></div><div className="stat"><span>{tx(lang,"outstanding")}</span><b>{role==="admin"?money(outstanding):"—"}</b></div></div><section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section></div>}
