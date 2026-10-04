@@ -23,7 +23,7 @@ type Price = { id: string; name: string; amount: number; is_active: boolean };
 type Charge = {
   id: string; student_id: string; group_id: string | null; amount_due: number; amount_paid: number;
   status: string; due_date: string; month: string;
-  students?: { first_name: string; last_name: string } | null; groups?: { name: string } | null;
+  students?: { first_name: string; last_name: string; email?: string | null; phone?: string | null; parent_email?: string | null; parent_phone?: string | null } | null; groups?: { name: string } | null;
 };
 type Payment = {
   id: string; monthly_charge_id: string; student_id: string; amount: number; payment_method: PaymentMethod;
@@ -395,7 +395,6 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   async function updatePayment(amount:number,method:PaymentMethod){if(!editing)return;const rpc=role==="teacher"?"teacher_update_payment":"admin_update_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:editing.id,p_amount:amount,p_payment_method:method,p_paid_at:editing.paid_at,p_notes:editing.notes});if(error)setError(error.message);else{setEditing(null);await load()}}
   async function removePayment(p:Payment){if(!confirm(t("confirmDelete")))return;const rpc=role==="teacher"?"teacher_delete_payment":"admin_delete_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:p.id});if(error)setError(error.message);else await load()}
 
-  const contact=(s:Charge["students"])=>s?.email||s?.phone||s?.parent_email||s?.parent_phone||"—";
   return <div className="stack">
     {error&&<div className="alert">{error}</div>}
     <div className="card payment-filters">
