@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck, CreditCard, LayoutDashboard, LogOut, Plus, Settings,
-  UserRound, Users, UsersRound, X, Building2, UserPlus, ChevronRight, Settings,
+  UserRound, Users, UsersRound, X, Building2, UserPlus, ChevronRight,
   Pencil, Trash2, History, Languages
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
