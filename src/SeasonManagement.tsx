@@ -22,20 +22,25 @@ export default function SeasonManagement({ seasonId, onSeasonCreated }: Props) {
   const [prices, setPrices] = useState<Option[]>([]);
 
   async function load() {
-    const [s, g, st, t, sg, p] = await Promise.all([
+    const [s, g, st, t] = await Promise.all([
       supabase.from("seasons").select("id,name,is_active").order("starts_on", { ascending: false, nullsFirst: false }),
       supabase.from("groups").select("id,name").eq("is_active", true).order("name"),
       supabase.from("students").select("id,first_name,last_name").eq("is_active", true).order("last_name"),
       supabase.from("teachers").select("id,profiles(first_name,last_name)").eq("is_active", true),
-      supabase.from("season_groups").select("id,name,group_id").eq("season_id", seasonId).eq("is_active", true).order("name"),
-      supabase.from("season_prices").select("id,name").eq("season_id", seasonId).eq("is_active", true).order("name"),
     ]);
+    const sg = seasonId
+      ? await supabase.from("season_groups").select("id,name,group_id").eq("season_id", seasonId).eq("is_active", true).order("name")
+      : { data: [], error: null };
+    const p = seasonId
+      ? await supabase.from("season_prices").select("id,name").eq("season_id", seasonId).eq("is_active", true).order("name")
+      : { data: [], error: null };
     const error = s.error || g.error || st.error || t.error || sg.error || p.error;
     if (error) setMessage(error.message);
+    else setMessage("");
     setSeasons((s.data ?? []) as Array<Option & { is_active: boolean }>);
     setGroups((g.data ?? []) as Option[]);
-    setStudents((st.data ?? []).map((x: any) => ({ id: x.id, name: `${x.first_name} ${x.last_name}` })));
-    setTeachers((t.data ?? []).map((x: any) => ({ id: x.id, name: `${x.profiles?.first_name ?? ""} ${x.profiles?.last_name ?? ""}`.trim() })));
+    setStudents((st.data ?? []).map((x: any) => ({ id: x.id, name: x.first_name + " " + x.last_name })));
+    setTeachers((t.data ?? []).map((x: any) => ({ id: x.id, name: ((x.profiles?.first_name ?? "") + " " + (x.profiles?.last_name ?? "")).trim() })));
     setConfigs((sg.data ?? []) as Array<Option & { group_id: string }>);
     setPrices((p.data ?? []) as Option[]);
   }
