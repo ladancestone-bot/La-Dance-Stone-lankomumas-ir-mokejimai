@@ -353,53 +353,62 @@ function GroupAttendance({groupId,students,date,setDate,lang,seasonId}:{groupId:
 
 function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [groups,setGroups]=useState<Group[]>([]),[groupId,setGroupId]=useState(""),[date,setDate]=useState(todayISO()),[students,setStudents]=useState<Student[]>([]),[values,setValues]=useState<Record<string,AttendanceStatus>>({}),[dropLessons,setDropLessons]=useState<DropLesson[]>([]),[dropBookings,setDropBookings]=useState<DropBooking[]>([]),[error,setError]=useState("");async function loadGroups(){let q:any=supabase.from("groups").select("*").eq("is_active",true).order("name");if(seasonId){const {data:configs}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);const ids=(configs??[]).map(x=>x.group_id);if(!ids.length){setGroups([]);setGroupId("");return}q=q.in("id",ids)}const {data}=await q;const rows=(data??[]) as Group[];setGroups(rows);if(!rows.some(g=>g.id===groupId))setGroupId("")}async function load(){if(!groupId){setStudents([]);return}let ids:string[]=[];if(seasonId){const {data:config}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",groupId).maybeSingle();if(config){const {data:m}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("season_group_id",config.id).eq("is_active",true);ids=(m??[]).map(x=>x.student_id)}}else{const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",groupId).eq("is_active",true);ids=(m??[]).map((x:any)=>x.student_id)}if(ids.length){const {data:s}=await supabase.from("students").select("*").in("id",ids).eq("is_active",true).order("last_name");setStudents((s??[]) as Student[])}else setStudents([]);try{setValues(await loadEffectiveAttendance(groupId,date))}catch(e){setError((e as Error).message)}}async function loadDropins(){let q=supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");const {data:lessons}=await q;const ls=(lessons??[]) as DropLesson[];setDropLessons(ls);if(!ls.length){setDropBookings([]);return}const {data:bookings}=await supabase.from("drop_in_bookings").select("*").in("lesson_id",ls.map(x=>x.id));setDropBookings((bookings??[]) as DropBooking[])}useEffect(()=>{loadGroups()},[seasonId]);useEffect(()=>{load()},[groupId,date,seasonId]);useEffect(()=>{loadDropins()},[date]);async function setStatus(id:string,status:AttendanceStatus){setError("");try{await recordAttendanceStatus(id,groupId,date,status,seasonId);setValues(v=>({...v,[id]:status}))}catch(e){setError((e as Error).message)}}async function setDrop(id:string,status:AttendanceStatus){const {error}=await supabase.rpc("teacher_set_drop_in_attendance",{p_booking_id:id,p_status:status});if(error)setError(error.message);else setDropBookings(x=>x.map(b=>b.id===id?{...b,attendance_status:status}:b))}return <div className="stack"><section className="dropin-panel"><div><div className="eyebrow">{t("newParticipants")}</div><h2>{date}</h2></div>{dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <div className="dropin-lesson" key={l.id}><div><b>{l.groups?.name||"Group"}</b><span>{l.start_time.slice(0,5)}{l.end_time?`–${l.end_time.slice(0,5)}`:""} · {money(Number(l.price))}</span></div><div className="dropin-people">{bs.length?bs.map(b=><div className="dropin-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>{b.status} · {b.payment_method||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?`mini ${st}`:"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}</div></div>):<span className="muted small">{t("noStudents")}</span>}</div></div>})}{!dropLessons.length&&<span className="muted small">{lang==="lt"?"Šiandien vienkartinių dalyvių nėra.":lang==="es"?"No hay participantes de clase suelta hoy.":"No one-off participants today."}</span>}</section><div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?`att ${st} selected`:"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}{groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}</section><p className="muted small">{t("attendanceStatuses")}</p></div>}
 
-function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){const t=(k:TKey)=>tx(lang,k);const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth);
+function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){
+  const t=(k:TKey)=>tx(lang,k);
+  const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
+  const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth);
 
-async function load(){let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name),groups(name)").eq("month",`${selectedMonth}-01`);if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);if(fixedGroupId)chargeQuery=chargeQuery.eq("group_id",fixedGroupId);const c=await chargeQuery.order("due_date",{ascending:false});const chargeRows=c.data??[];const p=chargeRows.length?await supabase.from("payments").select("*").in("monthly_charge_id",chargeRows.map((row:any)=>row.id)).order("paid_at",{ascending:false}):{data:[],error:null};if(c.error||p.error)setError((c.error||p.error)!.message);else setError("");setCharges(chargeRows as Charge[]);setPayments((p.data??[]) as Payment[])}
+  async function loadGroups(){
+    let list:Group[]=[];
+    if(role==="admin"){
+      const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name"); list=(data??[]) as Group[];
+    }else{
+      const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",(await supabase.from("teachers").select("id,profile_id,profiles(email)").eq("profiles.email",undefined)).data?.[0]?.id||"");
+      const ids=(data??[]).map((x:any)=>x.group_id);
+      if(ids.length){const {data:g}=await supabase.from("groups").select("*").in("id",ids).eq("is_active",true).order("name");list=(g??[]) as Group[]}
+    }
+    setGroups(list);
+  }
 
-useEffect(()=>{load()},[selectedMonth,seasonId]);
+  async function load(){
+    let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone),groups(name)").eq("month",`${selectedMonth}-01`);
+    if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
+    const groupFilter=fixedGroupId||((selectedGroupId&&selectedGroupId!=="all")?selectedGroupId:"");
+    if(groupFilter)chargeQuery=chargeQuery.eq("group_id",groupFilter);
+    const c=await chargeQuery.order("due_date",{ascending:false});
+    const chargeRows=c.data??[];
+    const p=chargeRows.length?await supabase.from("payments").select("*").in("monthly_charge_id",chargeRows.map((row:any)=>row.id)).order("paid_at",{ascending:false}):{data:[],error:null};
+    if(c.error||p.error)setError((c.error||p.error)!.message);else setError("");
+    setCharges(chargeRows as Charge[]);setPayments((p.data??[]) as Payment[]);
+  }
+  useEffect(()=>{loadGroups()},[role,seasonId]);
+  useEffect(()=>{if(fixedGroupId)setSelectedGroupId(fixedGroupId)},[fixedGroupId]);
+  useEffect(()=>{load()},[selectedMonth,seasonId,selectedGroupId,fixedGroupId]);
 
-async function savePayment(amount:number,method:PaymentMethod){if(!paymentCharge)return;const left=Number(paymentCharge.amount_due)-Number(paymentCharge.amount_paid);if(amount<=0||amount>left){setError(`${t("remaining")}: ${money(left)}`);return}const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:paymentCharge.id,p_amount:amount,p_payment_method:method});if(error)setError(error.message);else{setPaymentCharge(null);await load()}}
+  async function savePayment(amount:number,method:PaymentMethod){if(!paymentCharge)return;const left=Number(paymentCharge.amount_due)-Number(paymentCharge.amount_paid);if(amount<=0||amount>left){setError(`${t("remaining")}: ${money(left)}`);return}const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:paymentCharge.id,p_amount:amount,p_payment_method:method});if(error)setError(error.message);else{setPaymentCharge(null);await load()}}
+  async function updatePayment(amount:number,method:PaymentMethod){if(!editing)return;const rpc=role==="teacher"?"teacher_update_payment":"admin_update_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:editing.id,p_amount:amount,p_payment_method:method,p_paid_at:editing.paid_at,p_notes:editing.notes});if(error)setError(error.message);else{setEditing(null);await load()}}
+  async function removePayment(p:Payment){if(!confirm(t("confirmDelete")))return;const rpc=role==="teacher"?"teacher_delete_payment":"admin_delete_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:p.id});if(error)setError(error.message);else await load()}
 
-async function updatePayment(amount:number,method:PaymentMethod){if(!editing)return;const rpc=role==="teacher"?"teacher_update_payment":"admin_update_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:editing.id,p_amount:amount,p_payment_method:method,p_paid_at:editing.paid_at,p_notes:editing.notes});if(error)setError(error.message);else{setEditing(null);await load()}}
-
-async function removePayment(p:Payment){if(!confirm(t("confirmDelete")))return;const rpc=role==="teacher"?"teacher_delete_payment":"admin_delete_payment";const {error}=await supabase.rpc(rpc,{p_payment_id:p.id});if(error)setError(error.message);else await load()}
-
-return <div className="stack">
-{error&&<div className="alert">{error}</div>}
-
-<div className="card">
-<label className="field">
-<span>Mėnuo</span>
- <input type="month" value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}/>
-</label>
-</div>
-
-<section className="list">
-{charges.map(c=>{const left=Number(c.amount_due)-Number(c.amount_paid);const history=payments.filter(p=>p.monthly_charge_id===c.id);return <article className="card payment-card" key={c.id}>
-<div><b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b><span>{c.groups?.name||"Studio"} · {c.due_date}</span><span>{t("price")}: {money(Number(c.amount_due))}</span><span>{t("paid")}: {money(Number(c.amount_paid))}</span><span>{t("remaining")}: {money(left)}</span></div>
-<div className="pay-right">
-<b>{money(Number(c.amount_due))}</b>
-<span className={`pill ${c.status}`}>{c.status.replace("_"," ")}</span>
-{left>0&&<button className="secondary compact" onClick={()=>setPaymentCharge(c)}><CreditCard size={13}/>{t("recordPayment")}</button>}
-<button className="ghost-link" onClick={()=>setShowHistory(x=>({...x,[c.id]:!x[c.id]}))}><History size={13}/>{t("paymentHistory")} ({history.length})</button>
-</div>
-{showHistory[c.id]&&<div className="history-box">{history.length?history.map(p=><div className="history-row" key={p.id}>
-<span>{new Date(p.paid_at).toLocaleDateString()} · {p.payment_method}</span>
-<b>{money(Number(p.amount))}</b>
-{(role==="admin"||role==="teacher")&&<div className="card-actions">
-<button className="icon-btn" title={t("editPayment")} onClick={()=>setEditing(p)}><Pencil size={14}/></button>
-<button className="icon-btn danger" title={t("deletePayment")} onClick={()=>removePayment(p)}><Trash2 size={14}/></button>
-</div>}
-</div>):<span className="muted small">{t("noHistory")}</span>}</div>}
-</article>})}
-{!charges.length&&<div className="empty">{t("noCharges")}</div>}
-</section>
-
-{role==="teacher"&&<p className="muted small">{t("teacherFinanceNote")}</p>}
-{paymentCharge&&<PaymentModal charge={paymentCharge} lang={lang} close={()=>setPaymentCharge(null)} save={savePayment}/>}
-{editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
-</div>}
+  const contact=(s:Charge["students"])=>s?.email||s?.phone||s?.parent_email||s?.parent_phone||"—";
+  return <div className="stack">
+    {error&&<div className="alert">{error}</div>}
+    <div className="card payment-filters">
+      {!fixedGroupId&&<label className="field"><span>Grupė</span><select value={selectedGroupId} onChange={e=>setSelectedGroupId(e.target.value)}><option value="all">Visos grupės</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
+      <label className="field"><span>Mėnuo</span><input type="month" value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}/></label>
+    </div>
+    <section className="list">
+      {charges.map(c=>{const left=Number(c.amount_due)-Number(c.amount_paid);const history=payments.filter(p=>p.monthly_charge_id===c.id);return <article className="card payment-card" key={c.id}>
+        <div><b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b><span>{c.groups?.name||"Studio"} · {c.due_date}</span><span>{t("price")}: {money(Number(c.amount_due))}</span><span>{t("paid")}: {money(Number(c.amount_paid))}</span><span>{t("remaining")}: {money(left)}</span><span className="payment-contact">📧 {c.students?.email||c.students?.parent_email||"—"} · ☎ {c.students?.phone||c.students?.parent_phone||"—"}</span></div>
+        <div className="pay-right"><b>{money(Number(c.amount_due))}</b><span className={`pill ${c.status}`}>{c.status.replace("_"," ")}</span>{left>0&&<button className="secondary compact" onClick={()=>setPaymentCharge(c)}><CreditCard size={13}/>{t("recordPayment")}</button>}<button className="ghost-link" onClick={()=>setShowHistory(x=>({...x,[c.id]:!x[c.id]}))}><History size={13}/>{t("paymentHistory")} ({history.length})</button></div>
+        {showHistory[c.id]&&<div className="history-box">{history.length?history.map(p=><div className="history-row" key={p.id}><span>{new Date(p.paid_at).toLocaleDateString()} · {p.payment_method}</span><b>{money(Number(p.amount))}</b>{(role==="admin"||role==="teacher")&&<div className="card-actions"><button className="icon-btn" title={t("editPayment")} onClick={()=>setEditing(p)}><Pencil size={14}/></button><button className="icon-btn danger" title={t("deletePayment")} onClick={()=>removePayment(p)}><Trash2 size={14}/></button></div>}</div>):<span className="muted small">{t("noHistory")}</span>}</div>}
+      </article>})}
+      {!charges.length&&<div className="empty">{t("noCharges")}</div>}
+    </section>
+    {role==="teacher"&&<p className="muted small">{t("teacherFinanceNote")}</p>}
+    {paymentCharge&&<PaymentModal charge={paymentCharge} lang={lang} close={()=>setPaymentCharge(null)} save={savePayment}/>}
+    {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
+  </div>
+}
 function PaymentModal({charge,lang,close,save}:{charge:Charge;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(Number(charge.amount_due)-Number(charge.amount_paid)));const [method,setMethod]=useState<PaymentMethod>("cash");return <Modal title={t("recordPayment")} close={close}><p><b>{charge.students?.first_name} {charge.students?.last_name}</b></p><Field label={`${t("amount")} · ${t("remaining")}: ${money(Number(charge.amount_due)-Number(charge.amount_paid))}`} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
 function PaymentEditModal({payment,lang,close,save}:{payment:Payment;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(payment.amount));const [method,setMethod]=useState<PaymentMethod>(payment.payment_method);return <Modal title={t("editPayment")} close={close}><Field label={t("amount")} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
 
