@@ -118,6 +118,7 @@ function App(){
   const [seasons,setSeasons]=useState<Array<{id:string;name:string}>>([]); const [seasonId,setSeasonId]=useState("");
   const [email,setEmail]=useState(""); const [message,setMessage]=useState("");
   const [lang,setLang]=useState<Lang>(()=>(localStorage.getItem("lds-lang") as Lang)||"lt");
+  const [teacherProfileChosen,setTeacherProfileChosen]=useState(false);
   const t=(k:TKey)=>tx(lang,k);
   useEffect(()=>{localStorage.setItem("lds-lang",lang)},[lang]);
   useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
@@ -127,10 +128,39 @@ function App(){
   async function login(){setMessage("");const {error}=await supabase.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:window.location.origin}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."))}
   if(!session)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS</div><h1>{lang==="lt"?"Studijos valdymas vienoje vietoje.":lang==="es"?"Gestión del estudio en un solo lugar.":"Studio management, in one place."}</h1><p>{t("privateAccess")}</p><label>{t("email")}</label><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="you@example.com"/><button className="primary" onClick={login} disabled={!email}>{t("signIn")}</button>{message&&<div className="message">{message}</div>}<div className="language-mini"><Languages size={14}/><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></div></section></main>;
   if(!role)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><h1>{t("accessPending")}</h1><p>{t("noRole")}</p><button className="primary" onClick={()=>supabase.auth.signOut()}>{t("signOut")}</button></section></main>;
+  if(role==="teacher"&&!teacherProfileChosen)return <TeacherProfileChooser lang={lang} email={session.user.email||""} onContinue={()=>setTeacherProfileChosen(true)} onSignOut={()=>supabase.auth.signOut()}/>;
   const visibleNav=nav;
   const current=visibleNav.find(n=>n.id===section)??visibleNav[0];
   return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>} {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
+
+function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
+  const team=[
+    {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ"},
+    {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS"},
+    {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM"},
+    {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG"},
+    {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB"},
+  ];
+  const own=team.find(x=>x.name.toLowerCase().includes(email.split("@")[0].toLowerCase()))||null;
+  return <main className="profile-entry">
+    <section className="profile-entry-inner">
+      <div className="eyebrow">LA DANCE STONE ŠOKIŲ STUDIJA</div>
+      <h1>{lang==="lt"?"Kas jūs?":lang==="es"?"¿Quién eres?":"Who are you?"}</h1>
+      <p className="profile-intro">{lang==="lt"?"Pasirinkite savo profilį, kad patektumėte į studijos valdymą.":lang==="es"?"Elige tu perfil para entrar a la gestión del estudio.":"Choose your profile to enter studio management."}</p>
+      <div className="profile-list">
+        {team.map(person=>{
+          const active=own?.name===person.name;
+          return <button key={person.name} className={active?"profile-card active":"profile-card"} disabled={!active} onClick={onContinue}>
+            <span className="profile-avatar">{person.initials}</span>
+            <span className="profile-copy"><b>{person.name}</b><small>{person.role}</small>{active&&<em>{lang==="lt"?"Jūsų profilis":lang==="es"?"Tu perfil":"Your profile"}</em>}</span>
+            {active&&<ChevronRight size={20}/>}
+          </button>
+        })}
+      </div>
+      <button className="ghost-link profile-exit" onClick={onSignOut}><LogOut size={15}/>{lang==="lt"?"Atsijungti":lang==="es"?"Cerrar sesión":"Sign out"}</button>
+    </section>
+  </main>}
 
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
