@@ -74,10 +74,14 @@ const translations = {
 } as const;
 
 const nav: { id: Section; key: TKey; icon: any }[] = [
-  { id:"dashboard", key:"dashboard", icon:LayoutDashboard }, { id:"students", key:"students", icon:Users },
-  { id:"groups", key:"groups", icon:UsersRound }, { id:"attendance", key:"attendance", icon:CalendarCheck },
-  { id:"payments", key:"payments", icon:CreditCard }, { id:"teachers", key:"teachers", icon:UserRound },
-  { id:"rentals", key:"rentals", icon:Building2 }, { id:"settings", key:"settings", icon:Settings },
+  { id:"dashboard", key:"dashboard", icon:LayoutDashboard },
+  { id:"groups", key:"groups", icon:UsersRound },
+  { id:"attendance", key:"attendance", icon:CalendarCheck },
+  { id:"payments", key:"payments", icon:CreditCard },
+  { id:"students", key:"students", icon:Users },
+  { id:"teachers", key:"teachers", icon:UserRound },
+  { id:"rentals", key:"rentals", icon:Building2 },
+  { id:"settings", key:"settings", icon:Settings },
 ];
 const money = (n:number) => new Intl.NumberFormat("lt-LT", {style:"currency",currency:"EUR"}).format(n);
 const todayISO = () => new Date().toISOString().slice(0,10);
@@ -127,7 +131,7 @@ function App(){
   async function login(){setMessage("");const {error}=await supabase.auth.signInWithOtp({email,options:{shouldCreateUser:false}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."))}
   if(!session)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS</div><h1>{lang==="lt"?"Studijos valdymas vienoje vietoje.":lang==="es"?"Gestión del estudio en un solo lugar.":"Studio management, in one place."}</h1><p>{t("privateAccess")}</p><label>{t("email")}</label><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="you@example.com"/><button className="primary" onClick={login} disabled={!email}>{t("signIn")}</button>{message&&<div className="message">{message}</div>}<div className="language-mini"><Languages size={14}/><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></div></section></main>;
   if(!role)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><h1>{t("accessPending")}</h1><p>{t("noRole")}</p><button className="primary" onClick={()=>supabase.auth.signOut()}>{t("signOut")}</button></section></main>;
-  const visibleNav=role==="admin"?nav:nav.filter(n=>["dashboard","groups","attendance","payments","settings"].includes(n.id));
+  const visibleNav=role==="admin"?nav:nav.filter(n=>["dashboard","groups","attendance","payments"].includes(n.id));
   const current=visibleNav.find(n=>n.id===section)??visibleNav[0];
   return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
@@ -146,7 +150,45 @@ function StudentDetail({student,groups,lang,close}:{student:Student;groups:Group
 
 function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<Group[]>([]),[open,setOpen]=useState(false),[detail,setDetail]=useState<Group|null>(null),[editing,setEditing]=useState<Group|null>(null),[name,setName]=useState(""),[level,setLevel]=useState(""),[description,setDescription]=useState("");async function load(){let query:any=supabase.from("groups").select("*").eq("is_active",true).order("name");if(seasonId){const {data:configs,error}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);if(error){alert(error.message);return}const ids=(configs??[]).map(x=>x.group_id);if(!ids.length){setRows([]);return}query=query.in("id",ids)}const {data,error}=await query;if(error)alert(error.message);setRows((data??[]) as Group[])}useEffect(()=>{load()},[seasonId]);function create(){setEditing(null);setName("");setLevel("");setDescription("");setOpen(true)}function edit(g:Group){setEditing(g);setName(g.name);setLevel(g.level??"");setDescription(g.description??"");setOpen(true)}async function save(){const p={name:name.trim(),level:level||null,description:description||null};let r:any;if(seasonId){if(editing){r=await supabase.from("season_groups").update({name:p.name,category:p.level}).eq("season_id",seasonId).eq("group_id",editing.id)}else{const created=await supabase.from("groups").insert(p).select("id").single();if(created.error){alert(created.error.message);return}r=await supabase.from("season_groups").insert({season_id:seasonId,group_id:created.data.id,name:p.name,category:p.level})}}else r=editing?await supabase.from("groups").update(p).eq("id",editing.id):await supabase.from("groups").insert(p);if(r.error)alert(r.error.message);else{setOpen(false);load()}}if(!rows.length)return <div className="stack">{role==="admin"&&<div className="toolbar"><span>{t("groupManaged")}</span><button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button></div>}<section className="panel empty"><p>{seasonId?"No groups are configured for this period yet.":t("noStudents")}</p></section></div>;return <div className="stack"><div className="toolbar"><span>{t("groupManaged")}</span>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button>}</div><section className="list">{rows.map(g=><article className="card clickable" key={g.id} onClick={()=>setDetail(g)}><div><b>{g.name}</b><span>{g.level||"—"}</span><span>{g.description||""}</span></div><div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(g)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div></article>)}</section>{detail&&<GroupDetail group={detail} lang={lang} seasonId={seasonId} close={()=>setDetail(null)}/>} {open&&<Modal title={editing?t("editGroup"):t("addGroup")} close={()=>setOpen(false)}><Field label={t("groupName")} value={name} set={setName}/><Field label={t("level")} value={level} set={setLevel}/><label>{t("description")}</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div></Modal>}</div>}
 
-function GroupDetail({group,lang,seasonId,close}:{group:Group;lang:Lang;seasonId:string;close:()=>void}){const t=(k:TKey)=>tx(lang,k);const [students,setStudents]=useState<Student[]>([]),[charges,setCharges]=useState<Charge[]>([]),[tab,setTab]=useState<"students"|"attendance"|"payments">("students"),[date,setDate]=useState(todayISO());useEffect(()=>{(async()=>{let ids:string[]=[];if(seasonId){const {data:config}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",group.id).maybeSingle();if(config){const {data:m}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("season_group_id",config.id).eq("is_active",true);ids=(m??[]).map(x=>x.student_id)}}else{const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",group.id).eq("is_active",true);ids=(m??[]).map((x:any)=>x.student_id)}if(ids.length){const {data:s}=await supabase.from("students").select("*").in("id",ids).order("last_name");setStudents((s??[]) as Student[])}else setStudents([]);let q:any=supabase.from("monthly_charges").select("*,students(first_name,last_name),groups(name)").eq("group_id",group.id).order("due_date",{ascending:false});if(seasonId)q=q.eq("season_id",seasonId);const {data:c}=await q;setCharges((c??[]) as Charge[])})()},[group.id,seasonId]);return <Modal title={group.name} close={close}><div className="tabs"><button className={tab==="students"?"tab active":"tab"} onClick={()=>setTab("students")}>{t("members")}</button><button className={tab==="attendance"?"tab active":"tab"} onClick={()=>setTab("attendance")}>{t("groupAttendance")}</button><button className={tab==="payments"?"tab active":"tab"} onClick={()=>setTab("payments")}>{t("groupPayments")}</button></div>{tab==="students"&&<section className="list">{students.map(s=><article className="card" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||"—"}</span></div></article>)}{!students.length&&<div className="empty">{t("noStudents")}</div>}</section>}{tab==="attendance"&&<GroupAttendance groupId={group.id} students={students} date={date} setDate={setDate} lang={lang} seasonId={seasonId}/>} {tab==="payments"&&<section className="list">{charges.map(c=><article className="card" key={c.id}><div><b>{c.students?.first_name} {c.students?.last_name}</b><span>{c.due_date}</span></div><div><b>{money(Number(c.amount_due))}</b><span>{money(Number(c.amount_paid))} / {c.status}</span></div></article>)}{!charges.length&&<div className="empty">{t("noCharges")}</div>}</section>}</Modal>}
+function GroupDetail({group,lang,seasonId,close}:{group:Group;lang:Lang;seasonId:string;close:()=>void}){
+  const t=(k:TKey)=>tx(lang,k);
+  const [students,setStudents]=useState<Student[]>([]);
+  useEffect(()=>{(async()=>{
+    let ids:string[]=[];
+    if(seasonId){
+      const {data:config}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",group.id).maybeSingle();
+      if(config){
+        const {data:m}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("season_group_id",config.id).eq("is_active",true);
+        ids=(m??[]).map(x=>x.student_id);
+      }
+    }else{
+      const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",group.id).eq("is_active",true);
+      ids=(m??[]).map((x:any)=>x.student_id);
+    }
+    if(ids.length){
+      const {data:s}=await supabase.from("students").select("*").in("id",ids).order("last_name");
+      setStudents((s??[]) as Student[]);
+    }else setStudents([]);
+  })()},[group.id,seasonId]);
+  return <Modal title={group.name} close={close}>
+    <div className="group-detail-head">
+      <div><div className="eyebrow">{t("groupDetail")}</div><h2>{group.name}</h2></div>
+      <span className="count-badge">{students.length} {t("members").toLowerCase()}</span>
+    </div>
+    <div className="detail-grid">
+      <div><span className="detail-label">{t("level")}</span><span>{group.level||"—"}</span></div>
+      <div><span className="detail-label">{t("members")}</span><span>{students.length}</span></div>
+    </div>
+    {group.description&&<div className="note-box" style={{marginTop:12}}>{group.description}</div>}
+    <section className="list group-roster">
+      {students.map(s=><article className="card" key={s.id}>
+        <div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||t("noContact")}</span></div>
+        <ChevronRight size={17} className="muted-icon"/>
+      </article>)}
+      {!students.length&&<div className="empty">{t("noStudents")}</div>}
+    </section>
+  </Modal>
+}
 
 function GroupAttendance({groupId,students,date,setDate,lang,seasonId}:{groupId:string;students:Student[];date:string;setDate:(v:string)=>void;lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [values,setValues]=useState<Record<string,AttendanceStatus>>({});const [error,setError]=useState("");useEffect(()=>{loadEffectiveAttendance(groupId,date).then(setValues).catch(e=>setError(e.message))},[groupId,date]);async function setStatus(id:string,status:AttendanceStatus){setError("");try{await recordAttendanceStatus(id,groupId,date,status,seasonId);setValues(v=>({...v,[id]:status}))}catch(e){setError((e as Error).message)}}return <div className="stack"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={values[s.id]===st?`att ${st} selected`:"att"} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}</section></div>}
 
