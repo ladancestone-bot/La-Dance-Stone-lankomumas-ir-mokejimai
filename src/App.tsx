@@ -122,7 +122,7 @@ function App(){
   const t=(k:TKey)=>tx(lang,k);
   useEffect(()=>{localStorage.setItem("lds-lang",lang)},[lang]);
   useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
-  useEffect(()=>{if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
+  useEffect(()=>{setTeacherProfileChosen(false);if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
   useEffect(()=>{if(!role){setSeasons([]);setSeasonId("");return}supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data,error})=>{if(error){setSeasons([]);return}const items=(data??[]) as Array<{id:string;name:string}>;setSeasons(items);setSeasonId(current=>items.some(s=>s.id===current)?current:"")})},[role]);
   useEffect(()=>{if(role==="teacher"&&["students","teachers","rentals"].includes(section))setSection("dashboard")},[role,section]);
   async function login(){setMessage("");const {error}=await supabase.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:window.location.origin}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."))}
@@ -135,21 +135,13 @@ function App(){
 }
 
 function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
-  const [team,setTeam]=useState<Array<{name:string;role:string;initials:string;email:string|null}>>([]);
-  useEffect(()=>{
-    supabase.from("teachers").select("profiles(first_name,last_name,email)").eq("is_active",true).then(({data})=>{
-      const rows=(data??[]) as any[];
-      const mapped=rows.map(r=>{const p=r.profiles||{};const name=[p.first_name,p.last_name].filter(Boolean).join(" ");return {name,role:"Mokytojas / Treneris",initials:name.split(" ").map((x:string)=>x[0]).join("").slice(0,2).toUpperCase(),email:p.email||null}}).filter(x=>x.name);
-      const fallback=[
-        {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:"udraite.dan@gmail.com"},
-        {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS",email:null},
-        {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM",email:null},
-        {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG",email:null},
-        {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB",email:null},
-      ];
-      setTeam(mapped.length?mapped:fallback);
-    });
-  },[]);
+  const team=[
+    {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:"udraite.dan@gmail.com"},
+    {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS",email:null},
+    {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM",email:null},
+    {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG",email:null},
+    {name:"Izabelė Baravykaitė",role:"Asistentė",initials:"IB",email:null},
+  ];
   const own=team.find(x=>x.email?.toLowerCase()===email.toLowerCase());
   return <main className="profile-entry">
     <section className="profile-entry-inner">
@@ -166,10 +158,12 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
           </button>
         })}
       </div>
-      {!own&&team.length>0&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
+      {!own&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
       <button className="ghost-link profile-exit" onClick={onSignOut}><LogOut size={15}/>{lang==="lt"?"Atsijungti":lang==="es"?"Cerrar sesión":"Sign out"}</button>
     </section>
-  </main>}
+  </main>
+}
+
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
 function Dashboard({role,lang}:{role:Role;lang:Lang}){const [students,setStudents]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0);useEffect(()=>{supabase.from("students").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setStudents(r.count??0));supabase.from("groups").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setGroups(r.count??0));supabase.from("monthly_charges").select("amount_due,amount_paid").then(({data})=>setOutstanding((data??[]).reduce((s:number,x:any)=>s+Number(x.amount_due)-Number(x.amount_paid),0)) )},[]);return <div className="stack"><div className="stats"><div className="stat"><span>{tx(lang,"activeStudents")}</span><b>{students}</b></div><div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{groups}</b></div><div className="stat"><span>{tx(lang,"outstanding")}</span><b>{role==="admin"?money(outstanding):"—"}</b></div></div><section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section></div>}
