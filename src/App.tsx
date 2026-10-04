@@ -141,7 +141,7 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
       const rows=(data??[]) as any[];
       const mapped=rows.map(r=>{const p=r.profiles||{};const name=[p.first_name,p.last_name].filter(Boolean).join(" ");return {name,role:"Mokytojas / Treneris",initials:name.split(" ").map((x:string)=>x[0]).join("").slice(0,2).toUpperCase(),email:p.email||null}}).filter(x=>x.name);
       const fallback=[
-        {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:null},
+        {name:"Danguolė Ūdraitė",role:"Mokytoja / Treneris",initials:"DŪ",email:"udraite.dan@gmail.com"},
         {name:"Gabija Staponaitė",role:"Mokytoja / Treneris",initials:"GS",email:null},
         {name:"Susanna Maggio",role:"Mokytoja / Treneris",initials:"SM",email:null},
         {name:"Victor Gil Mendez",role:"Mokytojas / Treneris",initials:"VG",email:null},
