@@ -153,6 +153,8 @@ function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){cons
 function GroupDetail({group,lang,seasonId,close}:{group:Group;lang:Lang;seasonId:string;close:()=>void}){
   const t=(k:TKey)=>tx(lang,k);
   const [students,setStudents]=useState<Student[]>([]);
+  const [tab,setTab]=useState<"students"|"attendance"|"payments">("students");
+  const [date,setDate]=useState(todayISO);
   useEffect(()=>{(async()=>{
     let ids:string[]=[];
     if(seasonId){
@@ -171,22 +173,17 @@ function GroupDetail({group,lang,seasonId,close}:{group:Group;lang:Lang;seasonId
     }else setStudents([]);
   })()},[group.id,seasonId]);
   return <Modal title={group.name} close={close}>
-    <div className="group-detail-head">
-      <div><div className="eyebrow">{t("groupDetail")}</div><h2>{group.name}</h2></div>
-      <span className="count-badge">{students.length} {t("members").toLowerCase()}</span>
-    </div>
-    <div className="detail-grid">
-      <div><span className="detail-label">{t("level")}</span><span>{group.level||"—"}</span></div>
-      <div><span className="detail-label">{t("members")}</span><span>{students.length}</span></div>
-    </div>
+    <div className="group-detail-head"><div><div className="eyebrow">{t("groupDetail")}</div><h2>{group.name}</h2></div><span className="count-badge">{students.length} {t("members").toLowerCase()}</span></div>
+    <div className="detail-grid"><div><span className="detail-label">{t("level")}</span><span>{group.level||"—"}</span></div><div><span className="detail-label">{t("members")}</span><span>{students.length}</span></div></div>
     {group.description&&<div className="note-box" style={{marginTop:12}}>{group.description}</div>}
-    <section className="list group-roster">
-      {students.map(s=><article className="card" key={s.id}>
-        <div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||t("noContact")}</span></div>
-        <ChevronRight size={17} className="muted-icon"/>
-      </article>)}
-      {!students.length&&<div className="empty">{t("noStudents")}</div>}
-    </section>
+    <div className="group-tabs">
+      <button className={tab==="students"?"group-tab active":"group-tab"} onClick={()=>setTab("students")}>{t("members")}</button>
+      <button className={tab==="attendance"?"group-tab active":"group-tab"} onClick={()=>setTab("attendance")}>{t("groupAttendance")}</button>
+      <button className={tab==="payments"?"group-tab active":"group-tab"} onClick={()=>setTab("payments")}>{t("groupPayments")}</button>
+    </div>
+    {tab==="students"&&<section className="list group-roster">{students.map(s=><article className="card" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{s.email||s.phone||t("noContact")}</span></div><ChevronRight size={17} className="muted-icon"/></article>)}{!students.length&&<div className="empty">{t("noStudents")}</div>}</section>}
+    {tab==="attendance"&&<GroupAttendance groupId={group.id} students={students} date={date} setDate={setDate} lang={lang} seasonId={seasonId}/>}
+    {tab==="payments"&&<Payments role="teacher" lang={lang} seasonId={seasonId} fixedGroupId={group.id}/>}
   </Modal>
 }
 
