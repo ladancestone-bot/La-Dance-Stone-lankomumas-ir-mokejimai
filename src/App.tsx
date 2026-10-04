@@ -187,7 +187,88 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){co
 
 function StudentDetail({student,groups,lang,close}:{student:Student;groups:Group[];lang:Lang;close:()=>void}){const t=(k:TKey)=>tx(lang,k);return <Modal title={`${student.first_name} ${student.last_name}`} close={close}><div className="detail-grid"><div><span className="detail-label">{t("contact")}</span><b>{student.email||"—"}</b><span>{student.phone||"—"}</span></div><div><span className="detail-label">{t("parentName")}</span><b>{student.parent_name||"—"}</b><span>{student.parent_email||student.parent_phone||"—"}</span></div><div><span className="detail-label">{t("dob")}</span><b>{student.date_of_birth||"—"}</b></div><div><span className="detail-label">{t("groups")}</span>{groups.length?groups.map(g=><span key={g.id}>{g.name}</span>):<span>—</span>}</div></div>{student.notes&&<><label>{t("notes")}</label><div className="note-box">{student.notes}</div></>}</Modal>}
 
-function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [rows,setRows]=useState<Group[]>([]),[open,setOpen]=useState(false),[detail,setDetail]=useState<Group|null>(null),[editing,setEditing]=useState<Group|null>(null),[name,setName]=useState(""),[level,setLevel]=useState(""),[description,setDescription]=useState("");async function load(){let query:any=supabase.from("groups").select("*").eq("is_active",true).order("name");if(seasonId){const {data:configs,error}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);if(error){alert(error.message);return}const ids=(configs??[]).map(x=>x.group_id);if(!ids.length){setRows([]);return}query=query.in("id",ids)}const {data,error}=await query;if(error)alert(error.message);setRows((data??[]) as Group[])}useEffect(()=>{load()},[seasonId]);function create(){setEditing(null);setName("");setLevel("");setDescription("");setOpen(true)}function edit(g:Group){setEditing(g);setName(g.name);setLevel(g.level??"");setDescription(g.description??"");setOpen(true)}async function save(){const p={name:name.trim(),level:level||null,description:description||null};let r:any;if(seasonId){if(editing){r=await supabase.from("season_groups").update({name:p.name,category:p.level}).eq("season_id",seasonId).eq("group_id",editing.id)}else{const created=await supabase.from("groups").insert(p).select("id").single();if(created.error){alert(created.error.message);return}r=await supabase.from("season_groups").insert({season_id:seasonId,group_id:created.data.id,name:p.name,category:p.level})}}else r=editing?await supabase.from("groups").update(p).eq("id",editing.id):await supabase.from("groups").insert(p);if(r.error)alert(r.error.message);else{setOpen(false);load()}}if(!rows.length)return <div className="stack">{role==="admin"&&<div className="toolbar"><span>{t("groupManaged")}</span><button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button></div>}<section className="panel empty"><p>{seasonId?"No groups are configured for this period yet.":t("noStudents")}</p></section></div>;return <div className="stack"><div className="toolbar"><span>{t("groupManaged")}</span>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button>}</div><section className="list">{rows.map(g=><article className="card clickable" key={g.id} onClick={()=>setDetail(g)}><div><b>{g.name}</b><span>{g.level||"—"}</span><span>{g.description||""}</span></div><div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(g)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div></article>)}</section>{detail&&<GroupDetail group={detail} role={role} lang={lang} seasonId={seasonId} close={()=>setDetail(null)}/>} {open&&<Modal title={editing?t("editGroup"):t("addGroup")} close={()=>setOpen(false)}><Field label={t("groupName")} value={name} set={setName}/><Field label={t("level")} value={level} set={setLevel}/><label>{t("description")}</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div></Modal>}</div>}
+function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
+  const t=(k:TKey)=>tx(lang,k);
+  const [rows,setRows]=useState<Group[]>([]),[open,setOpen]=useState(false),[detail,setDetail]=useState<Group|null>(null),[editing,setEditing]=useState<Group|null>(null);
+  const [name,setName]=useState(""),[level,setLevel]=useState(""),[description,setDescription]=useState("");
+  const [teachers,setTeachers]=useState<any[]>([]),[teacherId,setTeacherId]=useState("");
+  const [day1,setDay1]=useState("1"),[start1,setStart1]=useState("16:00"),[end1,setEnd1]=useState("17:00");
+  const [day2,setDay2]=useState("3"),[start2,setStart2]=useState("16:00"),[end2,setEnd2]=useState("17:00");
+  const weekdays=[["1","Pirmadienis"],["2","Antradienis"],["3","Trečiadienis"],["4","Ketvirtadienis"],["5","Penktadienis"],["6","Šeštadienis"],["7","Sekmadienis"]];
+  async function load(){
+    let query:any=supabase.from("groups").select("*").eq("is_active",true).order("name");
+    if(seasonId){
+      const {data:configs,error}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);
+      if(error){alert(error.message);return}
+      const ids=(configs??[]).map(x=>x.group_id); if(!ids.length){setRows([]);return} query=query.in("id",ids);
+      const {data:ts}=await supabase.from("teachers").select("id,profiles(first_name,last_name,email)").eq("is_active",true);
+      setTeachers(ts??[]);
+    }
+    const {data,error}=await query; if(error){alert(error.message);return} setRows((data??[]) as Group[]);
+  }
+  useEffect(()=>{load()},[seasonId]);
+  function create(){setEditing(null);setName("");setLevel("");setDescription("");setTeacherId("");setDay1("1");setStart1("16:00");setEnd1("17:00");setDay2("3");setStart2("16:00");setEnd2("17:00");setOpen(true)}
+  async function edit(g:Group){
+    setEditing(g);setName(g.name);setLevel(g.level??"");setDescription(g.description??"");setTeacherId("");setDay1("1");setStart1("16:00");setEnd1("17:00");setDay2("3");setStart2("16:00");setEnd2("17:00");
+    if(seasonId){
+      const {data:sg}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",g.id).maybeSingle();
+      if(sg){
+        const [{data:st},{data:ss}]=await Promise.all([
+          supabase.from("season_group_teachers").select("teacher_id").eq("season_group_id",sg.id).eq("is_primary",true).maybeSingle(),
+          supabase.from("season_group_schedules").select("weekday,starts_at,ends_at").eq("season_group_id",sg.id).order("weekday")
+        ]);
+        setTeacherId(st?.teacher_id??"");
+        const slots=ss??[];
+        if(slots[0]){setDay1(String(slots[0].weekday));setStart1(String(slots[0].starts_at).slice(0,5));setEnd1(String(slots[0].ends_at).slice(0,5))}
+        if(slots[1]){setDay2(String(slots[1].weekday));setStart2(String(slots[1].starts_at).slice(0,5));setEnd2(String(slots[1].ends_at).slice(0,5))}
+      }
+    }
+    setOpen(true)
+  }
+  async function save(){
+    const p={name:name.trim(),level:level||null,description:description||null}; if(!p.name)return;
+    if(seasonId){
+      let groupId=editing?.id;
+      if(editing){
+        const up=await supabase.from("groups").update(p).eq("id",editing.id); if(up.error){alert(up.error.message);return}
+      }else{
+        const created=await supabase.from("groups").insert(p).select("id").single(); if(created.error){alert(created.error.message);return} groupId=created.data.id;
+      }
+      const sg=await supabase.from("season_groups").upsert({season_id:seasonId,group_id:groupId,name:p.name,category:p.level,is_active:true},{onConflict:"season_id,group_id"}).select("id").single();
+      if(sg.error){alert(sg.error.message);return}
+      await supabase.from("season_group_teachers").delete().eq("season_group_id",sg.data.id);
+      if(teacherId)await supabase.from("season_group_teachers").insert({season_group_id:sg.data.id,teacher_id:teacherId,is_primary:true});
+      await supabase.from("season_group_schedules").delete().eq("season_group_id",sg.data.id);
+      const slots=[
+        {weekday:Number(day1),starts_at:start1,ends_at:end1},
+        ...(day2&&start2&&end2&&day2!==day1?[{weekday:Number(day2),starts_at:start2,ends_at:end2}]:[])
+      ].filter(x=>x.starts_at<x.ends_at);
+      if(slots.length)await supabase.from("season_group_schedules").insert(slots.map(x=>({...x,season_group_id:sg.data.id})));
+    }else{
+      const r=editing?await supabase.from("groups").update(p).eq("id",editing.id):await supabase.from("groups").insert(p);
+      if(r.error){alert(r.error.message);return}
+    }
+    setOpen(false);await load()
+  }
+  const teacherName=(x:any)=>`${x.profiles?.first_name??""} ${x.profiles?.last_name??""}`.trim();
+  if(!rows.length)return <div className="stack">{role==="admin"&&<div className="toolbar"><span>{seasonId?"Sezono grupės":"Grupės"}</span><button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button></div>}<section className="panel empty"><p>{seasonId?"Šiam sezonui grupės dar nesukonfigūruotos.":"Grupių nėra."}</p></section></div>;
+  return <div className="stack">
+    <div className="toolbar"><span>{seasonId?"Sezono grupės":"Grupės"}</span>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button>}</div>
+    <section className="list">{rows.map(g=><article className="card clickable" key={g.id} onClick={()=>setDetail(g)}>
+      <div><b>{g.name}</b><span>{g.level||"—"}</span><span>{g.description||""}</span></div>
+      <div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(g)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div>
+    </article>)}</section>
+    {detail&&<GroupDetail group={detail} role={role} lang={lang} seasonId={seasonId} close={()=>setDetail(null)}/>}
+    {open&&<Modal title={editing?t("editGroup"):t("addGroup")} close={()=>setOpen(false)}>
+      <Field label={t("groupName")} value={name} set={setName}/><Field label={t("level")} value={level} set={setLevel}/>
+      {seasonId&&<><label>Treneris</label><select value={teacherId} onChange={e=>setTeacherId(e.target.value)}><option value="">— Pasirinkite trenerį —</option>{teachers.map(x=><option key={x.id} value={x.id}>{teacherName(x)}</option>)}</select>
+      <div className="form-grid"><div><label>1 diena</label><select value={day1} onChange={e=>setDay1(e.target.value)}>{weekdays.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></div><Field label="Nuo" type="time" value={start1} set={setStart1}/><Field label="Iki" type="time" value={end1} set={setEnd1}/></div>
+      <div className="form-grid"><div><label>2 diena</label><select value={day2} onChange={e=>setDay2(e.target.value)}>{weekdays.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></div><Field label="Nuo" type="time" value={start2} set={setStart2}/><Field label="Iki" type="time" value={end2} set={setEnd2}/></div></>}
+      <label>{t("description")}</label><textarea value={description} onChange={e=>setDescription(e.target.value)}/>
+      <div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div>
+    </Modal>}
+  </div>
+}
 
 function GroupDetail({group,role,lang,seasonId,close}:{group:Group;role:Role;lang:Lang;seasonId:string;close:()=>void}){
   const t=(k:TKey)=>tx(lang,k);
