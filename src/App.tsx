@@ -363,9 +363,15 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     if(role==="admin"){
       const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name"); list=(data??[]) as Group[];
     }else{
-      const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",(await supabase.from("teachers").select("id,profile_id,profiles(email)").eq("profiles.email",undefined)).data?.[0]?.id||"");
-      const ids=(data??[]).map((x:any)=>x.group_id);
-      if(ids.length){const {data:g}=await supabase.from("groups").select("*").in("id",ids).eq("is_active",true).order("name");list=(g??[]) as Group[]}
+      const {data:{user}}=await supabase.auth.getUser();
+      if(user?.id){
+        const {data:teacher}=await supabase.from("teachers").select("id").eq("profile_id",user.id).maybeSingle();
+        if(teacher){
+          const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",teacher.id);
+          const ids=(data??[]).map((x:any)=>x.group_id);
+          if(ids.length){const {data:g}=await supabase.from("groups").select("*").in("id",ids).eq("is_active",true).order("name");list=(g??[]) as Group[]}
+        }
+      }
     }
     setGroups(list);
   }
