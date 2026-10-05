@@ -187,8 +187,70 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
 
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
-function Dashboard({role,lang}:{role:Role;lang:Lang}){const [students,setStudents]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0);useEffect(()=>{supabase.from("students").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setStudents(r.count??0));supabase.from("groups").select("id",{count:"exact",head:true}).eq("is_active",true).then(r=>setGroups(r.count??0));supabase.from("monthly_charges").select("amount_due,amount_paid").then(({data})=>setOutstanding((data??[]).reduce((s:number,x:any)=>s+Number(x.amount_due)-Number(x.amount_paid),0)) )},[]);return <div className="stack"><div className="stats"><div className="stat"><span>{tx(lang,"activeStudents")}</span><b>{students}</b></div><div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{groups}</b></div><div className="stat"><span>{tx(lang,"outstanding")}</span><b>{role==="admin"?money(outstanding):"—"}</b></div></div><section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section></div>}
-
+function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
+  const [monthlyClients,setMonthlyClients]=useState(0),[oneOffClients,setOneOffClients]=useState(0),[oneOffBookings,setOneOffBookings]=useState(0),[rentalClients,setRentalClients]=useState(0),[rentals,setRentals]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0),[loading,setLoading]=useState(true);
+  function clientKey(row:any){
+    if(row.student_id)return "student:"+row.student_id;
+    const email=String(row.email??"").trim().toLowerCase();
+    const phone=String(row.phone??"").replace(/\\D/g,"");
+    const name=(String(row.first_name??"")+" "+String(row.last_name??"")).trim().toLowerCase();
+    return email?"email:"+email:phone?"phone:"+phone:name?"name:"+name:"row:"+row.id;
+  }
+  useEffect(()=>{
+    let alive=true;
+    async function load(){
+      setLoading(true);
+      const [gq,oq,rq]=await Promise.all([
+        supabase.from("groups").select("id",{count:"exact",head:true}).eq("is_active",true),
+        supabase.from("drop_in_bookings").select("id,student_id,email,phone,first_name,last_name").neq("status","cancelled"),
+        supabase.from("studio_rentals").select("id,customer_name,email,phone").eq("is_active",true)
+      ]);
+      let monthly=0;
+      if(seasonId){
+        const {data}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("is_active",true);
+        monthly=new Set((data??[]).map((x:any)=>x.student_id).filter(Boolean)).size;
+      }else{
+        const {data}=await supabase.from("group_students").select("student_id").eq("is_active",true);
+        monthly=new Set((data??[]).map((x:any)=>x.student_id).filter(Boolean)).size;
+      }
+      const oneOffRows=oq.data??[];
+      const rentalRows=rq.data??[];
+      if(!alive)return;
+      setMonthlyClients(monthly);
+      setOneOffClients(new Set(oneOffRows.map(clientKey)).size);
+      setOneOffBookings(oneOffRows.length);
+      setRentalClients(new Set(rentalRows.map((x:any)=>{
+        const email=String(x.email??"").trim().toLowerCase();
+        const phone=String(x.phone??"").replace(/\\D/g,"");
+        const name=String(x.customer_name??"").trim().toLowerCase();
+        return email?"email:"+email:phone?"phone:"+phone:name?"name:"+name:"row:"+x.id;
+      })).size);
+      setRentals(rentalRows.length);
+      setGroups(gq.count??0);
+      const {data:charges}=await supabase.from("monthly_charges").select("amount_due,amount_paid");
+      setOutstanding((charges??[]).reduce((s:number,x:any)=>s+Math.max(0,Number(x.amount_due)-Number(x.amount_paid)),0));
+      setLoading(false);
+    }
+    load();
+    return()=>{alive=false};
+  },[seasonId]);
+  return <div className="stack">
+    {role==="admin"&&<section className="client-overview">
+      <div className="client-overview-head"><div><div className="eyebrow">KLIENTŲ APŽVALGA</div><h2>Klientai pagal paslaugą</h2><p>Šokių abonementai, vienkartinės pamokos ir studijos nuoma skaičiuojami atskirai.</p></div></div>
+      <div className="client-segments">
+        <article className="client-segment"><div className="client-segment-icon"><Users size={20}/></div><div><span>Mėnesiniai šokių klientai</span><b>{loading?"—":monthlyClients}</b><small>Aktyvūs šio sezono mokiniai</small></div></article>
+        <article className="client-segment"><div className="client-segment-icon"><CalendarCheck size={20}/></div><div><span>Vienkartinių pamokų klientai</span><b>{loading?"—":oneOffClients}</b><small>{oneOffBookings} vienkartinės rezervacijos</small></div></article>
+        <article className="client-segment"><div className="client-segment-icon"><Building2 size={20}/></div><div><span>Nuomos klientai</span><b>{loading?"—":rentalClients}</b><small>{rentals} nuomos rezervacijos</small></div></article>
+      </div>
+    </section>}
+    <section className="stats">
+      <div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{loading?"—":groups}</b></div>
+      <div className="stat"><span>{tx(lang,"outstanding")}</span><b>{loading?"—":money(outstanding)}</b></div>
+      <div className="stat"><span>Šokių klientai šį sezoną</span><b>{loading?"—":monthlyClients}</b></div>
+    </section>
+    <section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section>
+  </div>
+}
 function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [rows,setRows]=useState<Student[]>([]),[groups,setGroups]=useState<Group[]>([]),[memberships,setMemberships]=useState<Record<string,string[]>>({}),[search,setSearch]=useState(""),[category,setCategory]=useState<"all"|"children"|"adults">("all"),[selectedGroupFilter,setSelectedGroupFilter]=useState("all"),[open,setOpen]=useState(false),[detail,setDetail]=useState<Student|null>(null),[editing,setEditing]=useState<Student|null>(null),[selectedGroups,setSelectedGroups]=useState<string[]>([]),[form,setForm]=useState({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:"",payment_preference:""}),[error,setError]=useState("");
