@@ -117,3 +117,103 @@ input[type="month"],input[type="date"],input[type="datetime-local"]{min-width:0;
   .payment-summary{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
   .summary-card{overflow:hidden}
 }
+
+/* Responsive system — phones, tablets and small laptops */
+html{width:100%;overflow-x:hidden}
+body{width:100%;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%}
+.content{width:100%;max-width:1180px;margin-inline:auto}
+.panel,.stat,.card,.context-panel,.dropin-panel,.profile-card,.modal{min-width:0}
+.card>div,.panel-head>*{min-width:0}
+.card b,.card span,.panel p{overflow-wrap:anywhere}
+
+/* Large phones / tablets */
+@media (max-width:899px){
+  .topbar{padding-inline:clamp(14px,3vw,28px)}
+  .content{padding-inline:clamp(14px,4vw,32px)}
+  .stats{gap:10px}
+  .panel{padding:clamp(16px,3vw,22px)}
+  .toolbar,.filters{flex-wrap:wrap}
+  .toolbar>input{min-width:0}
+  .group-detail-head,.section-headline{flex-wrap:wrap}
+  .context-actions{max-width:100%}
+}
+
+/* Tablets portrait / large phones */
+@media (max-width:700px){
+  .shell{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+  .topbar{min-height:72px}
+  .topbar .brand{font-size:11px}
+  .top-actions{min-width:0}
+  .top-actions .lang-select{max-width:82px}
+  .content{padding-top:22px;padding-bottom:24px}
+  .heading{margin-bottom:18px}
+  h1{font-size:clamp(32px,9vw,46px)}
+  h2{font-size:clamp(25px,7vw,32px)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{min-height:96px;padding:15px}
+  .stat b{font-size:23px}
+  .panel{border-radius:20px}
+  .toolbar,.filters,.actions,.panel-head{width:100%}
+  .toolbar>*,.filters>*{min-width:0}
+  .form-grid{grid-template-columns:1fr}
+  .modal{width:100%;max-width:100%;max-height:calc(100dvh - 24px);padding:20px;border-radius:24px}
+  .backdrop{padding:12px}
+  .detail-grid{grid-template-columns:1fr}
+  .actions{flex-direction:column}
+  .actions>*{width:100%;max-width:100%}
+  .nav{padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-bottom:max(7px,env(safe-area-inset-bottom))}
+  .nav-btn{min-width:72px}
+  .group-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .student-category-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .method-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .attendance-actions{grid-template-columns:1fr}
+}
+
+/* Narrow phones */
+@media (max-width:520px){
+  .topbar{gap:8px;padding-inline:12px}
+  .topbar .brand{letter-spacing:.13em}
+  .top-actions{gap:5px}
+  .top-actions .round{width:40px;height:40px}
+  .content{padding-inline:12px}
+  .stats{gap:8px}
+  .stat{padding:13px;border-radius:18px}
+  .stat b{font-size:20px}
+  .card{padding:13px 14px;border-radius:18px;gap:10px}
+  .card-actions{flex:0 0 auto}
+  .card-actions .compact{padding-inline:10px}
+  .student-group-header{padding:12px 13px}
+  .group-detail-head{gap:8px}
+  .context-panel{padding:15px;border-radius:20px}
+  .context-actions{display:grid;grid-template-columns:1fr}
+  .context-actions>*{width:100%}
+  .workflow-grid,.summary-grid{gap:8px}
+  .payment-card{padding:13px}
+  .payment-card .pay-right{grid-template-columns:1fr}
+  .payment-card .pay-right>b,.payment-card .pay-right .pill{grid-column:auto}
+  .student-payment-actions{grid-template-columns:1fr}
+  .method-grid{grid-template-columns:1fr}
+  .profile-entry{padding-inline:12px}
+  .profile-card{min-width:0}
+}
+
+/* Very small phones */
+@media (max-width:380px){
+  .topbar{padding-inline:10px}
+  .topbar .brand{font-size:10px;letter-spacing:.1em}
+  .top-actions .lang-select{max-width:68px;padding-inline:8px}
+  .content{padding-inline:10px}
+  .nav-btn{min-width:64px;padding-inline:5px;font-size:8px}
+  .stat{padding:11px}
+  .stat b{font-size:18px}
+  .card-actions .compact{font-size:11px;padding-inline:8px}
+  .student-group-header b{font-size:13px}
+  .modal{padding:16px;border-radius:20px}
+}
+
+/* Touch targets and safe-area support */
+@media (pointer:coarse){
+  button,.nav-btn,.tab,.group-tab,.student-category,.att,.check{min-height:44px}
+  input,select,textarea{min-height:46px}
+}
