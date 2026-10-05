@@ -17,7 +17,7 @@ const BILLING_TEST_MODE = true;
 type Student = {
   id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
   date_of_birth: string | null; parent_name: string | null; parent_phone: string | null;
-  parent_email: string | null; notes: string | null;
+  parent_email: string | null; notes: string | null; payment_preference?: string | null;
 };
 type Group = { id: string; name: string; level: string | null; description: string | null };
 type Price = { id: string; name: string; amount: number; is_active: boolean };
