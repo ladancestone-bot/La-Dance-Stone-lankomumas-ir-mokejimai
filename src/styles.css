@@ -241,10 +241,11 @@ img,svg,video,canvas{max-width:100%}
   .stripe-payment-side{min-width:105px}
 }
 
-.rental-card{align-items:flex-start}
+.rental-payment-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.rental-payment-summary>div{padding:17px 18px;border:1px solid #d9c7ad99;border-radius:20px;background:#fbf8f2e8;display:grid;gap:5px}.rental-payment-summary span{font-size:12px;color:var(--taupe);font-weight:600}.rental-payment-summary b{font-size:25px;color:var(--espresso)}.rental-payment-summary small{font-size:11px;color:#9a8b7d}.rental-filters{display:flex;gap:7px;overflow-x:auto}.rental-filters button{border:1px solid #d9c7ad99;background:#fbf8f2e8;color:var(--taupe);border-radius:999px;padding:8px 13px;font-size:12px;font-weight:600;white-space:nowrap}.rental-filters button.active{background:var(--sand);color:var(--espresso);border-color:#d1b990}.rental-card{align-items:flex-start}
 .rental-card>.pay-right{flex:0 0 auto;min-width:210px}
 .rental-card>.pay-right .actions{justify-content:flex-end}
 .client-segments{grid-template-columns:1fr}.client-overview{padding:17px}.client-overview-head h2{font-size:24px}.client-segment{padding:15px}.client-segment b{font-size:27px}
+.rental-payment-summary{grid-template-columns:1fr 1fr}.rental-payment-summary>div{padding:14px}.rental-payment-summary b{font-size:21px}
 @media(max-width:700px){
   .rental-card{display:grid;grid-template-columns:1fr;gap:14px}
   .rental-card>.pay-right{width:100%;min-width:0;align-items:stretch;border-top:1px solid #d9c7ad66;padding-top:13px}
