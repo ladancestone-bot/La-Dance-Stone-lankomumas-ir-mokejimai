@@ -360,7 +360,22 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
   const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null);
   async function loadGroups(){let list:Group[]=[];if(role==="admin"){const {data}=await supabase.from("groups").select("*").eq("is_active",true).order("name");list=(data??[]) as Group[]}else{const {data:{user}}=await supabase.auth.getUser();if(user?.id){const {data:teacher}=await supabase.from("teachers").select("id").eq("profile_id",user.id).maybeSingle();if(teacher){const {data}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",teacher.id);const ids=(data??[]).map((x:any)=>x.group_id);if(ids.length){const {data:g}=await supabase.from("groups").select("*").in("id",ids).eq("is_active",true).order("name");list=(g??[]) as Group[]}}}}setGroups(list)}
-  async function load(){let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone),groups(name)").eq("month",`${selectedMonth}-01`);if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);const groupFilter=fixedGroupId||((selectedGroupId&&selectedGroupId!=="all")?selectedGroupId:"");if(groupFilter)chargeQuery=chargeQuery.eq("group_id",groupFilter);const c=await chargeQuery.order("due_date",{ascending:false});const chargeRows=c.data??[];const p=chargeRows.length?await supabase.from("payments").select("*").in("monthly_charge_id",chargeRows.map((row:any)=>row.id)).order("paid_at",{ascending:false}):{data:[],error:null};if(c.error||p.error)setError((c.error||p.error)!.message);else setError("");setCharges(chargeRows as Charge[]);setPayments((p.data??[]) as Payment[])}
+  async function load(){
+    setError("");
+    if(role==="admin"){
+      const {error:ensureError}=await supabase.rpc("ensure_monthly_charges",{p_month:selectedMonth+"-01"});
+      if(ensureError){setError(ensureError.message);return;}
+    }
+    let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone),groups(name)").eq("month",selectedMonth+"-01");
+    if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
+    const groupFilter=fixedGroupId||((selectedGroupId&&selectedGroupId!=="all")?selectedGroupId:"");
+    if(groupFilter)chargeQuery=chargeQuery.eq("group_id",groupFilter);
+    const c=await chargeQuery.order("due_date",{ascending:false});
+    const chargeRows=c.data??[];
+    const p=chargeRows.length?await supabase.from("payments").select("*").in("monthly_charge_id",chargeRows.map((row:any)=>row.id)).order("paid_at",{ascending:false}):{data:[],error:null};
+    if(c.error||p.error)setError((c.error||p.error)!.message);else setError("");
+    setCharges(chargeRows as Charge[]);setPayments((p.data??[]) as Payment[])
+  }
   useEffect(()=>{loadGroups()},[role,seasonId]);useEffect(()=>{if(fixedGroupId)setSelectedGroupId(fixedGroupId)},[fixedGroupId]);useEffect(()=>{load()},[selectedMonth,seasonId,selectedGroupId,fixedGroupId]);
   async function createInvoice(charge:Charge){setInvoiceBusy(charge.id);setError("");const {data,error:fnError}=await supabase.functions.invoke("create-saskaita123-invoice",{body:{monthly_charge_id:charge.id}});setInvoiceBusy(null);if(fnError){let detail=fnError.message;try{const response=(fnError as any).context as Response|undefined;if(response){const body=await response.clone().json().catch(()=>null);if(body?.error)detail=String(body.error);else if(body?.message)detail=String(body.message);}}catch{}setError(detail);return}if(data?.error){setError(String(data.error));return}await load()}
   async function savePayment(amount:number,method:PaymentMethod){if(!paymentCharge)return;const left=Number(paymentCharge.amount_due)-Number(paymentCharge.amount_paid);if(amount<=0||amount>left){setError(`${t("remaining")}: ${money(left)}`);return}const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:paymentCharge.id,p_amount:amount,p_payment_method:method});if(error)setError(error.message);else{setPaymentCharge(null);await load()}}
