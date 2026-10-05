@@ -547,7 +547,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
       <div className="summary-card"><span>Apmokėta</span><b>{money(totalPaid)}</b></div>
       <div className="summary-card"><span>Liko</span><b>{money(totalRemaining)}</b></div>
       <div className="summary-card"><span>Statusas</span><b>{paidCount}/{charges.length}</b></div>
-    </section>
+    </section>}
     {role==="admin"&&<section className="payment-summary">
       <div className="summary-card"><span>💵 {t("cashTotal")}</span><b>{money(cashTotal)}</b></div>
       <div className="summary-card"><span>🏦 {t("bankTotal")}</span><b>{money(bankTotal)}</b></div>
