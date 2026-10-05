@@ -1,20 +1,25 @@
 import Stripe from "npm:stripe@^22";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { apiVersion: "2025-03-31.basil" });
+const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: "2025-03-31.basil" }) : null;
+const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!stripe) return json({ error: "Stripe server key is not configured in Supabase." }, 503);
   let body: any;
-  try { body = await req.json(); } catch { return new Response("Invalid JSON", { status: 400 }); }
+  try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
 
   const kind = body?.payment_kind;
   const payer = body?.payer ?? {};
 
   if (kind === "rental") {
     const rentalId = String(body?.rental_id || "");
-    if (!rentalId) return Response.json({ error: "rental_id is required" }, { status: 400 });
+    if (!rentalId) return json({ error: "rental_id is required" }, { status: 400 });
 
     const { data: rental, error } = await supabase
       .from("studio_rentals")
@@ -22,11 +27,11 @@ Deno.serve(async (req) => {
       .eq("id", rentalId)
       .maybeSingle();
 
-    if (error || !rental) return Response.json({ error: "Rental not found" }, { status: 404 });
-    if (rental.payment_status === "paid") return Response.json({ error: "This rental is already paid" }, { status: 400 });
+    if (error || !rental) return json({ error: "Rental not found" }, { status: 404 });
+    if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, { status: 400 });
 
     const email = String(payer.email || rental.customer_email || "").trim();
-    if (!email) return Response.json({ error: "Customer email is required" }, { status: 400 });
+    if (!email) return json({ error: "Customer email is required" }, { status: 400 });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -55,12 +60,12 @@ Deno.serve(async (req) => {
       stripe_payment_status: "unpaid",
     }).eq("id", rentalId);
 
-    return Response.json({ checkout_url: session.url, session_id: session.id });
+    return json({ checkout_url: session.url, session_id: session.id });
   }
 
   const chargeId = body?.monthly_charge_id;
   if (kind !== "monthly_charge" || !chargeId) {
-    return Response.json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, { status: 400 });
+    return json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, { status: 400 });
   }
 
   const { data: charge, error } = await supabase
@@ -68,13 +73,13 @@ Deno.serve(async (req) => {
     .select("id,student_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
     .eq("id", chargeId).maybeSingle();
 
-  if (error || !charge) return Response.json({ error: "Monthly charge not found" }, { status: 404 });
+  if (error || !charge) return json({ error: "Monthly charge not found" }, { status: 404 });
 
   const remaining = Number(charge.amount_due) - Number(charge.amount_paid);
-  if (remaining <= 0) return Response.json({ error: "This charge is already paid" }, { status: 400 });
+  if (remaining <= 0) return json({ error: "This charge is already paid" }, { status: 400 });
 
   const email = String(payer.email || charge.students?.parent_email || charge.students?.email || "").trim();
-  if (!email) return Response.json({ error: "Payer email is required" }, { status: 400 });
+  if (!email) return json({ error: "Payer email is required" }, { status: 400 });
 
   const fullName = String(payer.full_name || charge.students?.parent_name || ((charge.students?.first_name || "") + " " + (charge.students?.last_name || ""))).trim();
   let payerId: string | null = null;
@@ -82,7 +87,7 @@ Deno.serve(async (req) => {
   if (existingPayer) payerId = existingPayer.id;
   else {
     const { data: newPayer, error: payerError } = await supabase.from("payers").insert({ full_name: fullName || "Payer", email, phone: payer.phone || null }).select("id").single();
-    if (payerError) return Response.json({ error: "Could not create payer" }, { status: 500 });
+    if (payerError) return json({ error: "Could not create payer" }, { status: 500 });
     payerId = newPayer.id;
   }
   await supabase.from("monthly_charges").update({ payer_id: payerId }).eq("id", chargeId);
@@ -96,5 +101,5 @@ Deno.serve(async (req) => {
     success_url: body.success_url || "https://lankomumas-ir-mokejimas.netlify.app/?payment=success",
     cancel_url: body.cancel_url || "https://lankomumas-ir-mokejimas.netlify.app/?payment=cancelled",
   });
-  return Response.json({ checkout_url: session.url, session_id: session.id });
+  return json({ checkout_url: session.url, session_id: session.id });
 });
