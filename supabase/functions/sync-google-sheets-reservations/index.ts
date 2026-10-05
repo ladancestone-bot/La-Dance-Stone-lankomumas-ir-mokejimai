@@ -143,7 +143,7 @@ async function syncLessonBooking(row: any) {
   const sourceSheet = clean(row.source_sheet);
   const sourceRow = Number(row.source_row);
   const name = clean(row.name);
-  const existing = await sb(`drop_in_bookings?select=id&source=eq.google_sheets&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
+  const existing = await sb(`drop_in_bookings?select=id&source=eq.website&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
 
   const studentId = await findOrCreateStudent(row);
   const year = parseIsoDate(row.date) ? Number(parseIsoDate(row.date)!.slice(0, 4)) : new Date().getUTCFullYear();
@@ -183,7 +183,7 @@ async function syncLessonBooking(row: any) {
     lesson_id: lessonId, student_id: studentId, first_name: person.first_name, last_name: person.last_name,
     email: clean(row.email) || null, phone: clean(row.phone) || null,
     status: paymentIsPaid(row.payment) ? "paid" : "pending",
-    payment_method: null, source: "google_sheets", source_sheet: sourceSheet, source_row: sourceRow,
+    payment_method: null, source: "website", source_sheet: sourceSheet, source_row: sourceRow,
     updated_at: new Date().toISOString(),
   };
 
@@ -206,7 +206,7 @@ async function syncRental(row: any) {
   const sourceSheet = clean(row.source_sheet);
   const sourceRow = Number(row.source_row);
   const name = clean(row.name);
-  const existing = await sb(`studio_rentals?select=id&source=eq.google_sheets&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
+  const existing = await sb(`studio_rentals?select=id&source=eq.website&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
 
   const submittedDate = parseIsoDate(row.date);
   const year = submittedDate ? Number(submittedDate.slice(0, 4)) : new Date().getUTCFullYear();
