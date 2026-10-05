@@ -425,28 +425,58 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     await load();
   }
 
+  async function syncInvoice123(chargeId:string){
+    const {data,error:fnError}=await supabase.functions.invoke("create-saskaita123-invoice",{body:{monthly_charge_id:chargeId}});
+    if(fnError){
+      let detail=fnError.message;
+      try{
+        const response=(fnError as any).context as Response|undefined;
+        if(response){
+          const body=await response.clone().json().catch(()=>null);
+          if(body?.error)detail=String(body.error);else if(body?.message)detail=String(body.message);
+        }
+      }catch{}
+      throw new Error(detail);
+    }
+    if(data?.error)throw new Error(String(data.error));
+    return data;
+  }
+
   async function savePayment(amount:number,method:PaymentMethod){
     if(!paymentCharge)return;
     const left=Number(paymentCharge.amount_due)-Number(paymentCharge.amount_paid);
-    if(amount<=0||amount>left){setError(`${t("remaining")}: ${money(left)}`);return}
+    if(amount<=0||amount>left){setError(t("remaining")+": "+money(left));return}
     const {error}=await supabase.rpc("record_payment",{p_monthly_charge_id:paymentCharge.id,p_amount:amount,p_payment_method:method});
-    if(error)setError(error.message);else{setPaymentCharge(null);await load()}
+    if(error){setError(error.message);return}
+    const chargeId=paymentCharge.id;
+    setPaymentCharge(null);
+    if(method!=="cash"){
+      try{await syncInvoice123(chargeId)}
+      catch(e){setError("Mokėjimas LDS išsaugotas, bet Sąskaita123 sinchronizavimas nepavyko: "+(e as Error).message)}
+    }
+    await load();
   }
-
   async function updatePayment(amount:number,method:PaymentMethod){
     if(!editing)return;
     const rpc=role==="teacher"?"teacher_update_payment":"admin_update_payment";
     const {error}=await supabase.rpc(rpc,{p_payment_id:editing.id,p_amount:amount,p_payment_method:method,p_paid_at:editing.paid_at,p_notes:editing.notes});
-    if(error)setError(error.message);else{setEditing(null);await load()}
+    if(error){setError(error.message);return}
+    const chargeId=editing.monthly_charge_id;
+    setEditing(null);
+    try{await syncInvoice123(chargeId)}catch(e){
+      if(method!=="cash")setError("Mokėjimas LDS atnaujintas, bet Sąskaita123 sinchronizavimas nepavyko: "+(e as Error).message);
+    }
+    await load();
   }
 
   async function removePayment(p:Payment){
     if(!confirm(t("confirmDelete")))return;
     const rpc=role==="teacher"?"teacher_delete_payment":"admin_delete_payment";
     const {error}=await supabase.rpc(rpc,{p_payment_id:p.id});
-    if(error)setError(error.message);else await load();
+    if(error){setError(error.message);return}
+    try{await syncInvoice123(p.monthly_charge_id)}catch{}
+    await load();
   }
-
   const totalDue=charges.reduce((sum,c)=>sum+Number(c.amount_due),0);
   const totalPaid=charges.reduce((sum,c)=>sum+Number(c.amount_paid),0);
   const totalRemaining=Math.max(0,totalDue-totalPaid);
