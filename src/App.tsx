@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck, CreditCard, LayoutDashboard, LogOut, Plus, Settings,
   UserRound, Users, UsersRound, X, Building2, UserPlus, ChevronRight,
-  Pencil, Trash2, History, Languages
+  Pencil, Trash2, History, Languages, RefreshCw
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import SeasonManagement from "./SeasonManagement";
@@ -32,6 +32,11 @@ type Charge = {
 type Payment = {
   id: string; monthly_charge_id: string; student_id: string; amount: number; payment_method: PaymentMethod;
   paid_at: string; notes: string | null; received_by: string | null;
+};
+type StripePayment = {
+  id:string; stripe_payment_id:string; amount:number; currency:string; status:string;
+  payer_name:string|null; payer_email:string|null; paid_at:string|null; payment_kind:string;
+  monthly_charge_id:string|null; rental_id:string|null; drop_in_booking_id:string|null;
 };
 type DropLesson = { id:string; group_id:string; lesson_date:string; start_time:string; end_time:string|null; price:number; capacity:number|null; is_active:boolean; groups?:{name:string}|null };
 type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null };
@@ -401,6 +406,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){const t=(k:TKey
 function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
+  const [stripePayments,setStripePayments]=useState<StripePayment[]>([]),[stripeBusy,setStripeBusy]=useState(false);
   const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null),[addingMonth,setAddingMonth]=useState(false);
 
   async function loadGroups(){
@@ -444,6 +450,19 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
 
   useEffect(()=>{loadGroups()},[role,seasonId]);
   useEffect(()=>{if(fixedGroupId)setSelectedGroupId(fixedGroupId)},[fixedGroupId]);
+  async function loadStripePayments(){
+    const {data,error}=await supabase.from("stripe_payments").select("*").order("paid_at",{ascending:false}).limit(20);
+    if(error)setError(error.message); else setStripePayments((data??[]) as StripePayment[]);
+  }
+  async function syncStripePayments(){
+    setStripeBusy(true);setError("");
+    const {data,error:fnError}=await supabase.functions.invoke("sync-stripe-payments",{body:{days:180}});
+    if(fnError){setStripeBusy(false);setError(fnError.message||"Stripe sinchronizacija nepavyko.");return}
+    if(data?.error){setStripeBusy(false);setError(String(data.error));return}
+    await Promise.all([loadStripePayments(),load()]);
+    setStripeBusy(false);
+  }
+  useEffect(()=>{if(role==="admin")loadStripePayments()},[role]);
   useEffect(()=>{load()},[selectedMonth,seasonId,selectedGroupId,fixedGroupId]);
 
   async function addMonth(){
@@ -557,6 +576,19 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
       <div className="summary-card"><span>💳 {t("cardTotal")}</span><b>{money(cardTotal)}</b></div>
       <div className="summary-card"><span>{t("totalReceived")}</span><b>{money(cashTotal+bankTotal+cardTotal)}</b></div>
     </section>}
+    {role==="admin"&&<section className="stripe-ledger">
+      <div className="stripe-ledger-head">
+        <div><div className="eyebrow">STRIPE</div><h2>Stripe mokėjimai</h2><p>Kas realiai apmokėjo per Stripe. <b>5 € = grupės rezervacijos mokestis.</b></p></div>
+        <button className="secondary small-btn" onClick={syncStripePayments} disabled={stripeBusy}><RefreshCw size={14} className={stripeBusy?"spin":""}/>{stripeBusy?"Sinchronizuojama…":"Sinchronizuoti Stripe"}</button>
+      </div>
+      <div className="stripe-ledger-list">
+        {stripePayments.map(p=><div className="stripe-payment-row" key={p.stripe_payment_id}>
+          <div className="stripe-payment-main"><b>{p.payer_name||"Nežinomas klientas"}</b><span>{p.payer_email||"—"}</span><small>{p.paid_at?new Date(p.paid_at).toLocaleString("lt-LT",{dateStyle:"medium",timeStyle:"short"}):"—"}</small></div>
+          <div className="stripe-payment-side"><b>{money(Number(p.amount))}</b><span className="stripe-kind">{p.payment_kind==="reservation_fee"?"Grupės rezervacijos mokestis":p.payment_kind==="rental"?"Studijos nuoma":p.payment_kind==="monthly_charge"?"Mėnesinis mokėjimas":p.payment_kind==="drop_in"?"Vienkartinė pamoka":"Stripe mokėjimas"}</span><span className="stripe-paid">Apmokėta</span></div>
+        </div>)}
+        {!stripePayments.length&&<div className="empty">Stripe mokėjimų dar nėra. Paspausk „Sinchronizuoti Stripe“.</div>}
+      </div>
+    </section>
 
     <section className="list">
       {charges.map(c=>{
