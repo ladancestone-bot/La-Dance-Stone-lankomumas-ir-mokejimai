@@ -202,12 +202,16 @@ async function syncLessonBooking(row: any) {
   return { status: "created", source_row: sourceRow, booking_id: inserted[0].id, name };
 }
 
+function rentalHours(start: Date, end: Date, durationValue: unknown) {
+  const duration = parseAmount(durationValue);
+  if (duration && duration > 0) return duration;
+  return Math.max(0.5, Math.round(((end.getTime() - start.getTime()) / 3600000) * 100) / 100);
+}
+
 async function syncRental(row: any) {
   const sourceSheet = clean(row.source_sheet);
   const sourceRow = Number(row.source_row);
   const name = clean(row.name);
-  const existing = await sb(`studio_rentals?select=id&source=eq.website&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
-
   const submittedDate = parseIsoDate(row.date);
   const year = submittedDate ? Number(submittedDate.slice(0, 4)) : new Date().getUTCFullYear();
   const m = norm(row.day).match(/(sausio|vasario|kovo|balandzio|geguzes|birzelio|liepos|rugpjucio|rugsejo|spalio|lapkricio|gruodzio)\s+(\d{1,2})\s*d/);
@@ -226,17 +230,28 @@ async function syncRental(row: any) {
   let end = range.end ? new Date(`${rentalDate}T${range.end}Z`) : new Date(start.getTime() + 3600000);
   if (end <= start) end = new Date(end.getTime() + 86400000);
 
+  const hours = rentalHours(start, end, row.duration);
+  const price = Math.round(hours * 20 * 100) / 100;
+
+  // Match the exact Sheets row first. If an older import used another source value,
+  // reuse the existing rental by customer + exact start/end instead of creating a duplicate.
+  const sourceMatches = await sb(`studio_rentals?select=id&source=eq.google_sheets&source_sheet=eq.${encodeURIComponent(sourceSheet)}&source_row=eq.${sourceRow}&limit=1`);
+  let existing = sourceMatches;
+  if (!existing?.length) {
+    existing = await sb(`studio_rentals?select=id&customer_name=ilike.${encodeURIComponent(name)}&starts_at=eq.${encodeURIComponent(start.toISOString())}&ends_at=eq.${encodeURIComponent(end.toISOString())}&is_active=eq.true&limit=1`);
+  }
+
   const payload = {
     customer_name: name || "Nežinomas klientas",
     customer_email: clean(row.email) || null,
     customer_phone: clean(row.phone) || null,
     rental_type: rentalTypeFromPurpose(row.purpose),
     starts_at: start.toISOString(), ends_at: end.toISOString(),
-    price: parseAmount(row.price) ?? 0,
+    price,
     payment_status: paymentIsPaid(row.payment) ? "paid" : "pending",
     payment_method: null, is_active: true, source: "google_sheets",
     source_sheet: sourceSheet, source_row: sourceRow,
-    notes: clean(row.duration) ? `Trukmė: ${clean(row.duration)}` : null,
+    notes: clean(row.duration) ? `Trukmė: ${clean(row.duration)} · 20 €/val.` : "20 €/val.",
     updated_at: new Date().toISOString(),
   };
 
@@ -244,13 +259,13 @@ async function syncRental(row: any) {
     await sb(`studio_rentals?id=eq.${existing[0].id}`, {
       method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(payload),
     });
-    return { status: "updated", source_row: sourceRow, rental_id: existing[0].id, name };
+    return { status: "updated", source_row: sourceRow, rental_id: existing[0].id, name, hours, price };
   }
 
   const inserted = await sb("studio_rentals", {
     method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload),
   });
-  return { status: "created", source_row: sourceRow, rental_id: inserted[0].id, name };
+  return { status: "created", source_row: sourceRow, rental_id: inserted[0].id, name, hours, price };
 }
 
 Deno.serve(async (req) => {
@@ -271,7 +286,7 @@ Deno.serve(async (req) => {
     const result = {
       ok: true, reservations_received: reservations.length, rentals_received: rentals.length,
       reservations_created: 0, reservations_updated: 0, rentals_created: 0, rentals_updated: 0,
-      needs_review: 0, errors: [] as unknown[],
+      needs_review: 0, review_items: [] as unknown[], errors: [] as unknown[],
     };
 
     for (const row of reservations) {
@@ -279,7 +294,10 @@ Deno.serve(async (req) => {
         const r = await syncLessonBooking(row);
         if (r.status === "created") result.reservations_created++;
         else if (r.status === "updated") result.reservations_updated++;
-        else result.needs_review++;
+        else {
+          result.needs_review++;
+          result.review_items.push({ type: "reservation", source_row: row?.source_row, name: row?.name, reason: r.reason });
+        }
       } catch (e) {
         result.errors.push({ type: "reservation", source_row: row?.source_row, error: e instanceof Error ? e.message : String(e) });
       }
@@ -290,7 +308,10 @@ Deno.serve(async (req) => {
         const r = await syncRental(row);
         if (r.status === "created") result.rentals_created++;
         else if (r.status === "updated") result.rentals_updated++;
-        else result.needs_review++;
+        else {
+          result.needs_review++;
+          result.review_items.push({ type: "rental", source_row: row?.source_row, name: row?.name, reason: r.reason });
+        }
       } catch (e) {
         result.errors.push({ type: "rental", source_row: row?.source_row, error: e instanceof Error ? e.message : String(e) });
       }
