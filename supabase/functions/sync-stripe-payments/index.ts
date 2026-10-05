@@ -1,9 +1,10 @@
 import Stripe from "npm:stripe@^22";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
-  apiVersion: "2025-03-31.basil",
-});
+const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: "2025-03-31.basil" }) : null;
+const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -138,7 +139,9 @@ async function listSucceededPaymentIntents(since: number) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!stripe) return json({ error: "Stripe server key is not configured in Supabase." }, 503);
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -309,7 +312,7 @@ Deno.serve(async (req) => {
       synced++;
     }
 
-    return Response.json({
+    return json({
       ok: true,
       synced,
       linked,
@@ -319,6 +322,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 });
