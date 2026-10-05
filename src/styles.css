@@ -28,3 +28,16 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.auth{min-height
 .profile-copy em{font:600 11px/1 Jost,sans-serif;color:var(--cocoa);font-style:normal;margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
 .profile-exit{margin-top:22px}
 @media(max-width:600px){.profile-entry{padding:28px 16px 40px}.profile-entry-inner{padding-top:8px}.profile-entry h1{font-size:56px}.profile-intro{font-size:16px}.profile-card{border-radius:22px;padding:12px 14px;gap:13px}.profile-avatar{width:54px;height:54px;flex-basis:54px}.profile-copy b{font-size:17px}.profile-copy small{font-size:13px}}
+
+
+.student-category-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;background:var(--sand);border:1px solid var(--beige);border-radius:18px}
+.student-category{border:0;background:transparent;color:var(--taupe);font:600 13px Jost,sans-serif;border-radius:13px;padding:11px 8px}
+.student-category.active{background:var(--linen);color:var(--espresso);box-shadow:0 2px 8px #3a2a2010}
+.students-summary{font-size:12px;color:var(--taupe);padding:2px 4px}
+.student-groups-list{display:grid;gap:18px}
+.student-group-section{display:grid;gap:8px}
+.student-group-header{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:14px 16px;border:1px solid var(--beige);border-radius:20px;background:var(--sand);color:var(--espresso)}
+.student-group-header span{display:grid;gap:3px}
+.student-group-header b{font:700 15px Jost,sans-serif}
+.student-group-header small{font-size:11px;color:var(--taupe)}
+@media(max-width:520px){.student-category{font-size:12px;padding:10px 5px}.student-group-header b{font-size:14px}}
