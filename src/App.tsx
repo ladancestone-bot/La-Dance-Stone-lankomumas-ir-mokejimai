@@ -12,6 +12,7 @@ type Lang = "lt" | "en" | "es";
 type Section = "dashboard" | "schedule" | "attendance" | "payments" | "students" | "groups" | "teachers" | "rentals" | "settings";
 type AttendanceStatus = "present" | "absent" | "sick";
 type PaymentMethod = "cash" | "bank_transfer" | "stripe";
+const BILLING_TEST_MODE = true;
 
 type Student = {
   id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
@@ -24,7 +25,7 @@ type Charge = {
   id: string; student_id: string; group_id: string | null; amount_due: number; amount_paid: number;
   status: string; due_date: string; month: string;
   saskaita123_invoice_id?: string | null; saskaita123_invoice_number?: string | null; saskaita123_invoice_url?: string | null; saskaita123_invoice_error?: string | null;
-  invoice123_id?: string | null; invoice123_number?: string | null; invoice123_url?: string | null; invoice123_status?: string | null; invoice123_error?: string | null;
+  invoice123_id?: string | null; invoice123_number?: string | null; invoice123_url?: string | null; invoice123_status?: string | null; invoice123_error?: string | null; invoice_created_at?: string | null; invoice_sent_at?: string | null; invoice_send_status?: "not_sent" | "sent" | "failed";
   students?: { first_name: string; last_name: string; email?: string | null; phone?: string | null; parent_email?: string | null; parent_phone?: string | null } | null; groups?: { name: string } | null;
 };
 type Payment = {
@@ -47,7 +48,7 @@ const translations = {
     recordPayment:"Record payment", amount:"Amount", remaining:"Remaining", method:"Payment method", cash:"Cash", bank:"Bank transfer", stripe:"Stripe", paymentHistory:"Payment history", editPayment:"Edit payment", deletePayment:"Delete payment", noCharges:"No monthly charges yet.", noHistory:"No payment history.", confirmDelete:"Delete this payment?", teacherFinanceNote:"Teacher access is limited by database permissions to assigned students.",
     inviteTeacher:"Invite teacher", addTeacher:"Add teacher", assignGroups:"Assign groups", sendInvitation:"Send invitation", substitutions:"Substitutions", addSubstitution:"Add substitution", substitute:"Substitute", starts:"Starts", ends:"Ends", saveAssignment:"Save assignments", noTeachers:"No active teachers yet.",
     addRental:"Add rental", customer:"Customer", start:"Start", end:"End", rentalType:"Rental type", shortTerm:"Short term", longTerm:"Long term", price:"Price", pending:"Pending", paid:"Paid", cancelled:"Cancelled", saveRental:"Save rental", noRentals:"No rentals yet.",
-    pricing:"PRICING", studioPrices:"Studio prices", addPrice:"Add price", priceName:"Price name", monthlyAmount:"Monthly amount (€)", monthly:"Monthly", language:"Language", languageNote:"Choose the app language for this device.", savePrice:"Save price", editPrice:"Edit price", deactivate:"Deactivate", active:"Active", reload:"Reload", details:"Details", contact:"Contact",
+    pricing:"PRICING", studioPrices:"Studio prices", addPrice:"Add price", priceName:"Price name", monthlyAmount:"Monthly amount (€)", monthly:"Monthly", language:"Language", languageNote:"Choose the app language for this device.", savePrice:"Save price", editPrice:"Edit price", deactivate:"Deactivate", active:"Active", reload:"Reload", details:"Details", contact:"Contact", invoiceCreated:"Invoice created", invoiceSent:"Invoice sent", invoiceNotSent:"Not sent", billingTest:"TEST MODE – nothing is sent to clients",
   },
   lt: {
     dashboard:"Apžvalga", schedule:"Grafikas", students:"Mokiniai", groups:"Grupės", attendance:"Lankomumas", payments:"Mokėjimai", teachers:"Mokytojai", rentals:"Nuoma", settings:"Nustatymai",
@@ -59,7 +60,7 @@ const translations = {
     recordPayment:"Registruoti mokėjimą", amount:"Suma", remaining:"Likutis", method:"Mokėjimo būdas", cash:"Grynais", bank:"Bankiniu pavedimu", stripe:"Stripe", paymentHistory:"Mokėjimų istorija", editPayment:"Redaguoti mokėjimą", deletePayment:"Ištrinti mokėjimą", noCharges:"Mėnesinių mokėjimų nėra.", noHistory:"Mokėjimų istorijos nėra.", confirmDelete:"Ištrinti šį mokėjimą?", teacherFinanceNote:"Mokytojo prieiga ribojama jo grupių mokiniais pagal duomenų bazės teises.",
     inviteTeacher:"Pakviesti mokytoją", addTeacher:"Pridėti mokytoją", assignGroups:"Priskirti grupes", sendInvitation:"Siųsti kvietimą", substitutions:"Pavadavimai", addSubstitution:"Pridėti pavadavimą", substitute:"Pavaduojantis mokytojas", starts:"Nuo", ends:"Iki", saveAssignment:"Išsaugoti priskyrimus", noTeachers:"Aktyvių mokytojų dar nėra.",
     addRental:"Pridėti nuomą", customer:"Klientas", start:"Pradžia", end:"Pabaiga", rentalType:"Nuomos tipas", shortTerm:"Trumpalaikė", longTerm:"Ilgalaikė", price:"Kaina", pending:"Laukiama", paid:"Apmokėta", cancelled:"Atšaukta", saveRental:"Išsaugoti nuomą", noRentals:"Nuomų nėra.",
-    pricing:"KAINOS", studioPrices:"Studijos kainos", addPrice:"Pridėti kainą", priceName:"Kainos pavadinimas", monthlyAmount:"Mėnesio suma (€)", monthly:"Mėnesinis", language:"Kalba", languageNote:"Pasirinkite aplikacijos kalbą šiame įrenginyje.", savePrice:"Išsaugoti kainą", editPrice:"Redaguoti kainą", deactivate:"Deaktyvuoti", active:"Aktyvi", reload:"Atnaujinti", details:"Informacija", contact:"Kontaktai",
+    pricing:"KAINOS", studioPrices:"Studijos kainos", addPrice:"Pridėti kainą", priceName:"Kainos pavadinimas", monthlyAmount:"Mėnesio suma (€)", monthly:"Mėnesinis", language:"Kalba", languageNote:"Pasirinkite aplikacijos kalbą šiame įrenginyje.", savePrice:"Išsaugoti kainą", editPrice:"Redaguoti kainą", deactivate:"Deaktyvuoti", active:"Aktyvi", reload:"Atnaujinti", details:"Informacija", contact:"Kontaktai", invoiceCreated:"Sąskaita sukurta", invoiceSent:"Sąskaita išsiųsta", invoiceNotSent:"Neišsiųsta", billingTest:"TESTAVIMO REŽIMAS – klientams niekas nesiunčiama",
   },
   es: {
     dashboard:"Resumen", schedule:"Horario", students:"Alumnos", groups:"Grupos", attendance:"Asistencia", payments:"Pagos", teachers:"Profesores", rentals:"Alquiler", settings:"Ajustes",
@@ -71,7 +72,7 @@ const translations = {
     recordPayment:"Registrar pago", amount:"Importe", remaining:"Restante", method:"Método de pago", cash:"Efectivo", bank:"Transferencia", stripe:"Stripe", paymentHistory:"Historial de pagos", editPayment:"Editar pago", deletePayment:"Eliminar pago", noCharges:"No hay cargos mensuales.", noHistory:"No hay historial de pagos.", confirmDelete:"¿Eliminar este pago?", teacherFinanceNote:"El acceso del profesor está limitado a sus alumnos mediante los permisos de la base de datos.",
     inviteTeacher:"Invitar profesor", addTeacher:"Añadir profesor", assignGroups:"Asignar grupos", sendInvitation:"Enviar invitación", substitutions:"Sustituciones", addSubstitution:"Añadir sustitución", substitute:"Profesor sustituto", starts:"Desde", ends:"Hasta", saveAssignment:"Guardar asignaciones", noTeachers:"No hay profesores activos.",
     addRental:"Añadir alquiler", customer:"Cliente", start:"Inicio", end:"Fin", rentalType:"Tipo de alquiler", shortTerm:"Corto plazo", longTerm:"Largo plazo", price:"Precio", pending:"Pendiente", paid:"Pagado", cancelled:"Cancelado", saveRental:"Guardar alquiler", noRentals:"No hay alquileres.",
-    pricing:"PRECIOS", studioPrices:"Precios del estudio", addPrice:"Añadir precio", priceName:"Nombre del precio", monthlyAmount:"Importe mensual (€)", monthly:"Mensual", language:"Idioma", languageNote:"Elige el idioma de la aplicación en este dispositivo.", savePrice:"Guardar precio", editPrice:"Editar precio", deactivate:"Desactivar", active:"Activa", reload:"Actualizar", details:"Detalles", contact:"Contacto",
+    pricing:"PRECIOS", studioPrices:"Precios del estudio", addPrice:"Añadir precio", priceName:"Nombre del precio", monthlyAmount:"Importe mensual (€)", monthly:"Mensual", language:"Idioma", languageNote:"Elige el idioma de la aplicación en este dispositivo.", savePrice:"Guardar precio", editPrice:"Editar precio", deactivate:"Desactivar", active:"Activa", reload:"Actualizar", details:"Detalles", contact:"Contacto", invoiceCreated:"Factura creada", invoiceSent:"Factura enviada", invoiceNotSent:"No enviada", billingTest:"MODO DE PRUEBA – no se envía nada a los clientes",
   }
 } as const;
 
@@ -447,6 +448,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   const paidCount=charges.filter(c=>Number(c.amount_paid)>=Number(c.amount_due)).length;
 
   return <div className="stack">
+    {BILLING_TEST_MODE&&<div className="alert">🛡️ {t("billingTest")}</div>}
     {error&&<div className="alert">{error}</div>}
     <div className="card payment-filters">
       {!fixedGroupId&&<label className="field"><span>Grupė</span><select value={selectedGroupId} onChange={e=>setSelectedGroupId(e.target.value)}><option value="all">Visos grupės</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
@@ -476,7 +478,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
             <span>{t("paid")}: {money(Number(c.amount_paid))}</span>
             <span>{t("remaining")}: {money(left)}</span>
             <span className="payment-contact">📧 {c.students?.email||c.students?.parent_email||"—"} · ☎ {c.students?.phone||c.students?.parent_phone||"—"}</span>
-            {invoiceId?<span className="payment-contact">🧾 Sąskaita123: {invoiceUrl?<a href={invoiceUrl} target="_blank" rel="noreferrer">{invoiceNumber||invoiceId}</a>:(invoiceNumber||invoiceId)}</span>:null}
+            {invoiceId?<><span className="payment-contact">🧾 Sąskaita123: {invoiceUrl?<a href={invoiceUrl} target="_blank" rel="noreferrer">{invoiceNumber||invoiceId}</a>:(invoiceNumber||invoiceId)}</span><span className="payment-contact">✓ {t("invoiceCreated")} · {c.invoice_sent_at?t("invoiceSent"):t("invoiceNotSent")}</span></>:null}
           </div>
           <div className="pay-right">
             <b>{money(Number(c.amount_due))}</b>
