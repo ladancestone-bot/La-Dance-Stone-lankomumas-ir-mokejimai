@@ -192,7 +192,7 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   function clientKey(row:any){
     if(row.student_id)return "student:"+row.student_id;
     const email=String(row.email??"").trim().toLowerCase();
-    const phone=String(row.phone??"").replace(/\\D/g,"");
+    const phone=String(row.phone??"").replace(/\D/g,"");
     const name=(String(row.first_name??"")+" "+String(row.last_name??"")).trim().toLowerCase();
     return email?"email:"+email:phone?"phone:"+phone:name?"name:"+name:"row:"+row.id;
   }
@@ -221,7 +221,7 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       setOneOffBookings(oneOffRows.length);
       setRentalClients(new Set(rentalRows.map((x:any)=>{
         const email=String(x.email??"").trim().toLowerCase();
-        const phone=String(x.phone??"").replace(/\\D/g,"");
+        const phone=String(x.phone??"").replace(/\D/g,"");
         const name=String(x.customer_name??"").trim().toLowerCase();
         return email?"email:"+email:phone?"phone:"+phone:name?"name:"+name:"row:"+x.id;
       })).size);
