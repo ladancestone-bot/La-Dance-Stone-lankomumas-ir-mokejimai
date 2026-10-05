@@ -271,3 +271,9 @@ img,svg,video,canvas{max-width:100%}
   .payment-method-quick{gap:5px}
   .payment-method-quick button{padding:7px 9px}
 }
+
+.rental-method-quick{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:8px 0 2px}
+.rental-method-quick>span{font-size:10px;color:var(--taupe);font-weight:700}
+.rental-method-quick button{border:1px solid #d9c7ad99;background:var(--linen);color:var(--cocoa);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:700}
+.rental-method-quick button.active{background:var(--sand);border-color:#d1b990;color:var(--espresso)}
+@media(max-width:700px){.rental-method-quick{margin-top:6px}.rental-method-quick button{min-height:34px}}
