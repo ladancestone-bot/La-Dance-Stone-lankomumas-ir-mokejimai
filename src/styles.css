@@ -240,3 +240,14 @@ img,svg,video,canvas{max-width:100%}
   .stripe-payment-row{align-items:flex-start}
   .stripe-payment-side{min-width:105px}
 }
+
+.rental-card{align-items:flex-start}
+.rental-card>.pay-right{flex:0 0 auto;min-width:210px}
+.rental-card>.pay-right .actions{justify-content:flex-end}
+@media(max-width:700px){
+  .rental-card{display:grid;grid-template-columns:1fr;gap:14px}
+  .rental-card>.pay-right{width:100%;min-width:0;align-items:stretch;border-top:1px solid #d9c7ad66;padding-top:13px}
+  .rental-card>.pay-right>b,.rental-card>.pay-right>.pill{align-self:flex-start}
+  .rental-card>.pay-right .actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
+  .rental-card>.pay-right .small-btn,.rental-card>.pay-right .secondary{width:100%;min-height:42px}
+}
