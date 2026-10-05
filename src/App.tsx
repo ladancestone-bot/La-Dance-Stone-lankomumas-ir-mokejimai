@@ -221,7 +221,55 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     {open&&<Modal title={editing?t("edit"):t("addStudent")} close={()=>setOpen(false)}><div className="form-grid"><Field label={t("firstName")} value={form.first_name} set={v=>setForm({...form,first_name:v})}/><Field label={t("lastName")} value={form.last_name} set={v=>setForm({...form,last_name:v})}/><Field label={t("email")} value={form.email} set={v=>setForm({...form,email:v})}/><Field label={t("phone")} value={form.phone} set={v=>setForm({...form,phone:v})}/><Field label={t("dob")} type="date" value={form.date_of_birth} set={v=>setForm({...form,date_of_birth:v})}/><Field label={t("parentName")} value={form.parent_name} set={v=>setForm({...form,parent_name:v})}/><Field label={t("parentPhone")} value={form.parent_phone} set={v=>setForm({...form,parent_phone:v})}/><Field label={t("parentEmail")} value={form.parent_email} set={v=>setForm({...form,parent_email:v})}/><div><label>{t("paymentPreference")}</label><select value={form.payment_preference} onChange={e=>setForm({...form,payment_preference:e.target.value})}><option value="">—</option><option value="bank_transfer">{t("bankPreference")}</option><option value="card">{t("cardPreference")}</option><option value="cash">{t("cashPreference")}</option></select></div></div><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><label>{seasonId?"Šio sezono grupė":"Grupė"}</label><div className="checks">{groups.map(g=><label className="check" key={g.id}><input type="checkbox" checked={selectedGroups.includes(g.id)} onChange={()=>setSelectedGroups(x=>x.includes(g.id)?x.filter(id=>id!==g.id):[...x,g.id])}/>{g.name}</label>)}</div><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("save")}</button></div></Modal>}
   </div>
 }
-function StudentDetail({student,groups,lang,close}:{student:Student;groups:Group[];lang:Lang;close:()=>void}){const t=(k:TKey)=>tx(lang,k);return <Modal title={`${student.first_name} ${student.last_name}`} close={close}><div className="detail-grid"><div><span className="detail-label">{t("contact")}</span><b>{student.email||"—"}</b><span>{student.phone||"—"}</span></div><div><span className="detail-label">{t("parentName")}</span><b>{student.parent_name||"—"}</b><span>{student.parent_email||student.parent_phone||"—"}</span></div><div><span className="detail-label">{t("dob")}</span><b>{student.date_of_birth||"—"}</b></div><div><span className="detail-label">{t("groups")}</span>{groups.length?groups.map(g=><span key={g.id}>{g.name}</span>):<span>—</span></div><div><span className="detail-label">{t("paymentPreference")}</span><span>{student.payment_preference==="bank_transfer"?t("bankPreference"):student.payment_preference==="card"?t("cardPreference"):student.payment_preference==="cash"?t("cashPreference"):"—"}</span></div></div>{student.notes&&<><label>{t("notes")}</label><div className="note-box">{student.notes}</div></>}</Modal>}
+function StudentDetail({student,groups,lang,close}:{student:Student;groups:Group[];lang:Lang;close:()=>void}) {
+  const t=(k:TKey)=>tx(lang,k);
+  return (
+    <Modal title={`${student.first_name} ${student.last_name}`} close={close}>
+      <div className="detail-grid">
+        <div>
+          <span className="detail-label">{t("contact")}</span>
+          <b>{student.email||"—"}</b>
+          <span>{student.phone||"—"}</span>
+        </div>
+        <div>
+          <span className="detail-label">{t("parentName")}</span>
+          <b>{student.parent_name||"—"}</b>
+          <span>{student.parent_email||student.parent_phone||"—"}</span>
+        </div>
+        <div>
+          <span className="detail-label">{t("dob")}</span>
+          <b>{student.date_of_birth||"—"}</b>
+        </div>
+        <div>
+          <span className="detail-label">{t("groups")}</span>
+          {groups.length > 0 ? (
+            groups.map(g=><span key={g.id}>{g.name}</span>)
+          ) : (
+            <span>—</span>
+          )}
+        </div>
+        <div>
+          <span className="detail-label">{t("paymentPreference")}</span>
+          <span>
+            {student.payment_preference==="bank_transfer"
+              ? t("bankPreference")
+              : student.payment_preference==="card"
+                ? t("cardPreference")
+                : student.payment_preference==="cash"
+                  ? t("cashPreference")
+                  : "—"}
+          </span>
+        </div>
+      </div>
+      {student.notes && (
+        <>
+          <label>{t("notes")}</label>
+          <div className="note-box">{student.notes}</div>
+        </>
+      )}
+    </Modal>
+  );
+}
 
 function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const t=(k:TKey)=>tx(lang,k);
