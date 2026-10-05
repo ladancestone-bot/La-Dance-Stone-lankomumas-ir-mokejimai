@@ -41,3 +41,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.auth{min-height
 .student-group-header b{font:700 15px Jost,sans-serif}
 .student-group-header small{font-size:11px;color:var(--taupe)}
 @media(max-width:520px){.student-category{font-size:12px;padding:10px 5px}.student-group-header b{font-size:14px}}
+
+
+.student-filters{display:grid;gap:8px}
+.student-group-select{width:100%;border:1px solid var(--beige);background:var(--linen);color:var(--espresso);border-radius:18px;padding:13px 15px;font:600 14px Jost,sans-serif;outline:none}
+.student-group-select:focus{border-color:var(--taupe)}
