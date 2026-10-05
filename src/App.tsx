@@ -642,7 +642,17 @@ return <div className="stack">{error&&<div className="alert">{error}</div>}
 <div className="toolbar"><div><b>{t("rentals")}</b><div className="muted">Stripe / grynieji / Sąskaita123</div></div><button className="secondary" onClick={reset}><Plus size={16}/>{t("addRental")}</button></div>
 <section className="list">{rows.map(r=><article className="card" key={r.id}>
  <div style={{minWidth:0,flex:1}}><b>{r.customer_name}</b>
-  <span>{new Date(r.starts_at).toLocaleString("lt-LT",{dateStyle:"medium",timeStyle:"short"})} → {new Date(r.ends_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
+  <div className="rental-datetime">
+   <div className="rental-date">
+    <CalendarCheck size={15}/>
+    <span>{new Date(r.starts_at).toLocaleDateString("lt-LT",{day:"2-digit",month:"long",year:"numeric"})}</span>
+   </div>
+   <div className="rental-time">
+    <span>{new Date(r.starts_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
+    <i>→</i>
+    <span>{new Date(r.ends_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
+   </div>
+  </div>
   <span>{r.rental_type==="short_term"?t("shortTerm"):t("longTerm")} · {money(Number(r.price))} · {r.customer_email||"—"}</span>
   {r.paid_at&&<span>{t("paidAt")}: {new Date(r.paid_at).toLocaleString("lt-LT",{dateStyle:"short",timeStyle:"short"})}</span>}
   {r.saskaita123_invoice_number&&<span>{t("invoiceNumber")}: {r.saskaita123_invoice_number} · {t("invoiceReady")}</span>}
