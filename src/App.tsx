@@ -210,7 +210,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     else{await supabase.from("group_students").update({is_active:false}).eq("student_id",id);if(selectedGroups.length)await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"})}
     setOpen(false);await load()
   }
-  return <div className="stack">{error&&<div className="alert">{error}}
+  return <div className="stack">{error&&<div className="alert">{error}</div>}
     <div className="toolbar"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t("searchStudents")}/>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addStudent")}</button>}</div>
     <div className="student-filters"><div className="student-category-tabs"><button className={category==="all"?"student-category active":"student-category"} onClick={()=>setCategory("all")}>Visi</button><button className={category==="children"?"student-category active":"student-category"} onClick={()=>setCategory("children")}>Vaikai</button><button className={category==="adults"?"student-category active":"student-category"} onClick={()=>setCategory("adults")}>Suaugusieji</button></div><select className="student-group-select" value={selectedGroupFilter} onChange={e=>setSelectedGroupFilter(e.target.value)}><option value="all">Visos grupės</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
     <div className="students-summary">{filtered.length} klientai · rodomi tik šio sezono grupėse</div>
