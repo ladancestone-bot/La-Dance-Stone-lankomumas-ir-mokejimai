@@ -96,3 +96,24 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.auth{min-height
   .summary-card{padding:11px 12px}
   .summary-card b{font-size:16px}
 }
+
+/* Global mobile overflow protection */
+.content,.stack,.panel,.card,.list,.toolbar,.filters,.actions,.panel-head,.payment-filters,.payment-summary{min-width:0}
+.content{overflow-x:hidden}
+.card{width:100%;max-width:100%}
+button,input,select,textarea{max-width:100%}
+input[type="month"],input[type="date"],input[type="datetime-local"]{min-width:0;max-width:100%;width:100%;-webkit-appearance:none}
+.payment-filters{grid-template-columns:minmax(0,1fr) minmax(190px,220px) auto}
+.payment-filters .month-add-btn{width:auto;max-width:100%}
+.month-add-btn{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:700px){
+  .payment-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%}
+  .payment-filters .month-add-btn{grid-column:1/-1;width:100%}
+}
+@media(max-width:430px){
+  .payment-filters{grid-template-columns:1fr;width:100%;padding:12px}
+  .payment-filters .field,.payment-filters input,.payment-filters select{width:100%;min-width:0}
+  .payment-filters .month-add-btn{grid-column:auto;width:100%;min-width:0}
+  .payment-summary{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .summary-card{overflow:hidden}
+}
