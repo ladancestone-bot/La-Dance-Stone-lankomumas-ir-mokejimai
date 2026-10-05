@@ -217,3 +217,26 @@ img,svg,video,canvas{max-width:100%}
   button,.nav-btn,.tab,.group-tab,.student-category,.att,.check{min-height:44px}
   input,select,textarea{min-height:46px}
 }
+
+.stripe-ledger{padding:18px;border:1px solid #d9c7ad99;border-radius:22px;background:var(--surface,#fff);box-shadow:0 8px 30px rgba(70,52,35,.04)}
+.stripe-ledger-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.stripe-ledger-head h2{margin:3px 0 4px;font-size:20px}
+.stripe-ledger-head p{margin:0;color:var(--muted,#777);font-size:12px;line-height:1.5}
+.stripe-ledger-list{display:grid;gap:8px}
+.stripe-payment-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid #d9c7ad66}
+.stripe-payment-main,.stripe-payment-side{display:flex;flex-direction:column;gap:3px;min-width:0}
+.stripe-payment-main b{font-size:14px}
+.stripe-payment-main span,.stripe-payment-main small{color:var(--muted,#777);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stripe-payment-side{align-items:flex-end;text-align:right}
+.stripe-payment-side>b{font-size:16px}
+.stripe-kind{font-size:10px;color:var(--taupe);font-weight:700}
+.stripe-paid{font-size:9px;padding:4px 8px;border-radius:999px;background:var(--can-soft,#e7eee1);color:#506148;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.spin{animation:lds-spin .8s linear infinite}
+@keyframes lds-spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .stripe-ledger{padding:14px;border-radius:18px}
+  .stripe-ledger-head{align-items:stretch;flex-direction:column}
+  .stripe-ledger-head .small-btn{width:100%}
+  .stripe-payment-row{align-items:flex-start}
+  .stripe-payment-side{min-width:105px}
+}
