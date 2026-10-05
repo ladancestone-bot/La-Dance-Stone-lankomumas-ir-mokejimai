@@ -672,7 +672,7 @@ async function issueInvoice(r:Rental){
 if(role!=="admin")return <section className="panel empty"><p>{t("groupManaged")}</p></section>;
 return <div className="stack">{error&&<div className="alert">{error}</div>}
 <div className="toolbar"><div><b>{t("rentals")}</b><div className="muted">Stripe / grynieji / Sąskaita123</div></div><button className="secondary" onClick={reset}><Plus size={16}/>{t("addRental")}</button></div>
-<section className="list">{rows.map(r=><article className="card" key={r.id}>
+<section className="list">{rows.map(r=><article className="card rental-card" key={r.id}>
  <div style={{minWidth:0,flex:1}}><b>{r.customer_name}</b>
   <div className="rental-datetime">
    <div className="rental-date">
