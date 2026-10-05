@@ -327,7 +327,7 @@ function GroupDetail({group,role,lang,seasonId,close}:{group:Group;role:Role;lan
     }else setStudents([]);
   })()},[group.id,seasonId]);
   return <Modal title={group.name} close={close}>
-    <div className="group-detail-head"><div><div className="eyebrow">{t("groupDetail")}</div><h2>{group.name}</h2></div><span className="count-badge">{students.length} {t("members").toLowerCase()}</span></div>
+    <div className="group-detail-head"><div><div className="eyebrow">{t("groupDetail")}</div></div><span className="count-badge">{students.length} {t("members").toLowerCase()}</span></div>
     <div className="detail-grid"><div><span className="detail-label">{t("level")}</span><span>{group.level||"—"}</span></div><div><span className="detail-label">{t("members")}</span><span>{students.length}</span></div></div>
     {group.description&&<div className="note-box" style={{marginTop:12}}>{group.description}</div>}
     <div className="group-tabs">
