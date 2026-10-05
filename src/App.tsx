@@ -588,7 +588,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
         </div>)}
         {!stripePayments.length&&<div className="empty">Stripe mokėjimų dar nėra. Paspausk „Sinchronizuoti Stripe“.</div>}
       </div>
-    </section>
+    </section>}
 
     <section className="list">
       {charges.map(c=>{
