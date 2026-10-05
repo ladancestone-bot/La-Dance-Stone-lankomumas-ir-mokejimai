@@ -25,6 +25,7 @@ type Charge = {
   status: string; due_date: string; month: string;
   saskaita123_invoice_id?: string | null; saskaita123_invoice_number?: string | null; saskaita123_invoice_url?: string | null; saskaita123_invoice_error?: string | null;
   invoice123_id?: string | null; invoice123_number?: string | null; invoice123_url?: string | null; invoice123_status?: string | null; invoice123_error?: string | null;
+  invoice_created_at?: string | null; invoice_sent_at?: string | null; invoice_send_status?: "not_sent" | "sent" | "failed";
   students?: { first_name: string; last_name: string; email?: string | null; phone?: string | null; parent_email?: string | null; parent_phone?: string | null } | null; groups?: { name: string } | null;
 };
 type Payment = {
@@ -428,6 +429,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
       setError(detail);return;
     }
     if(data?.error){setError(String(data.error));return}
+    await supabase.from("monthly_charges").update({invoice_created_at:new Date().toISOString(),invoice_send_status:"not_sent"}).eq("id",charge.id);
     await load();
   }
 
@@ -494,7 +496,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
             <b>{money(Number(c.amount_due))}</b>
             <span className={`pill ${c.status}`}>{c.status.replace("_"," ")}</span>
             {left>0&&<button className="secondary compact" onClick={()=>setPaymentCharge(c)}><CreditCard size={13}/>{t("recordPayment")}</button>}
-            {invoiceId?<button className="ghost-link" onClick={()=>invoiceUrl&&window.open(invoiceUrl,"_blank")}>🧾 Sąskaita</button>:<button className="ghost-link" onClick={()=>createInvoice(c)} disabled={invoiceBusy===c.id}>🧾 {invoiceBusy===c.id?"Kuriama…":"Sukurti sąskaitą"}</button>}
+            {invoiceId?<div className="invoice-actions"><button className="ghost-link" onClick={()=>invoiceUrl&&window.open(invoiceUrl,"_blank")}>🧾 Sąskaita</button><span className="invoice-delivery-status">{(c as any).invoice_sent_at?"✓ Išsiųsta":"○ Nesisiųsta"}</span></div>:<button className="ghost-link" onClick={()=>createInvoice(c)} disabled={invoiceBusy===c.id}>🧾 {invoiceBusy===c.id?"Kuriama…":"Sukurti sąskaitą"}</button>}
             <button className="ghost-link" onClick={()=>setShowHistory(x=>({...x,[c.id]:!x[c.id]}))}><History size={13}/>{t("paymentHistory")} ({history.length})</button>
           </div>
           {showHistory[c.id]&&<div className="history-box">{history.length?history.map(p=><div className="history-row" key={p.id}><span>{new Date(p.paid_at).toLocaleDateString()} · {p.payment_method}</span><b>{money(Number(p.amount))}</b>{(role==="admin"||role==="teacher")&&<div className="card-actions"><button className="icon-btn" title={t("editPayment")} onClick={()=>setEditing(p)}><Pencil size={14}/></button><button className="icon-btn danger" title={t("deletePayment")} onClick={()=>removePayment(p)}><Trash2 size={14}/></button></div>}</div>):<span className="muted small">{t("noHistory")}</span>}</div>}
