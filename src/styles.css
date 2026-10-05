@@ -46,3 +46,38 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.auth{min-height
 .student-filters{display:grid;gap:8px}
 .student-group-select{width:100%;border:1px solid var(--beige);background:var(--linen);color:var(--espresso);border-radius:18px;padding:13px 15px;font:600 14px Jost,sans-serif;outline:none}
 .student-group-select:focus{border-color:var(--taupe)}
+
+
+/* LDS payment screen — compact, aligned and mobile-safe */
+.payment-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,260px);gap:14px;align-items:end}
+.payment-filters .field{display:grid;gap:7px;margin:0;min-width:0}
+.payment-filters .field span{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--taupe)}
+.payment-filters select,.payment-filters input{min-width:0;width:100%;height:48px}
+.payment-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,190px);align-items:center;gap:18px;overflow:hidden}
+.payment-card>div:first-child{min-width:0;display:grid;gap:6px}
+.payment-card>div:first-child>b{font-size:18px;line-height:1.2}
+.payment-card>div:first-child>span{min-width:0;overflow-wrap:anywhere;line-height:1.35}
+.payment-contact{font-size:11px!important;line-height:1.4}
+.payment-card .pay-right{min-width:0;display:grid;justify-items:stretch;align-items:stretch;gap:7px}
+.payment-card .pay-right>b{font-size:20px;text-align:right}
+.payment-card .pay-right .pill{text-align:center}
+.payment-card .pay-right .secondary,.payment-card .pay-right .ghost-link{width:100%;justify-content:center;min-width:0}
+.payment-card .history-box{grid-column:1/-1;min-width:0}
+@media(max-width:700px){
+  .payment-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:14px}
+  .payment-filters .field span{font-size:10px}
+  .payment-card{grid-template-columns:minmax(0,1fr);gap:12px;padding:15px}
+  .payment-card .pay-right{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .payment-card .pay-right>b{grid-column:1/-1;text-align:left;font-size:19px}
+  .payment-card .pay-right .pill{grid-column:1/-1}
+  .payment-card .pay-right .ghost-link{min-height:44px}
+  .payment-card .history-box{grid-column:1}
+}
+@media(max-width:430px){
+  .payment-filters{grid-template-columns:1fr;padding:13px}
+  .payment-card{border-radius:20px}
+  .payment-card>div:first-child>b{font-size:17px}
+  .payment-card .pay-right{grid-template-columns:1fr 1fr}
+  .payment-card .pay-right .secondary{font-size:11px;padding:0 8px}
+  .payment-card .pay-right .ghost-link{font-size:11px;padding:4px 6px}
+}
