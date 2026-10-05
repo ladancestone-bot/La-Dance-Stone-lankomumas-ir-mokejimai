@@ -99,6 +99,11 @@ function paymentIsPaid(value: unknown) {
   return ["taip", "yra", "apmoketa", "apmoketas", "paid", "yes"].includes(norm(value));
 }
 
+function rentalTypeFromPurpose(value: unknown) {
+  const n = norm(value);
+  return n.includes("ilgalaik") || n.includes("long") ? "long_term" : "short_term";
+}
+
 async function findOrCreateStudent(row: any) {
   const { first_name, last_name } = splitName(row.name);
   const email = clean(row.email) || null;
@@ -223,7 +228,7 @@ async function syncRental(row: any) {
     customer_name: name || "Nežinomas klientas",
     customer_email: clean(row.email) || null,
     customer_phone: clean(row.phone) || null,
-    rental_type: clean(row.purpose) || "Nuoma",
+    rental_type: rentalTypeFromPurpose(row.purpose),
     starts_at: start.toISOString(), ends_at: end.toISOString(),
     price: parseAmount(row.price) ?? 0,
     payment_status: paymentIsPaid(row.payment) ? "paid" : "pending",
