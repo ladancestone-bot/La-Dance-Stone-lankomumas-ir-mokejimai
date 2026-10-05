@@ -88,7 +88,7 @@ async function findMonthlyCharge(
     if (remaining <= 0) continue;
     const dueDate = new Date(String(row.due_date)).getTime();
     const days = Math.abs(paidTime - dueDate) / 86400000;
-    const studentName = normalizeName(\`\${row.students?.first_name ?? ""} \${row.students?.last_name ?? ""}\`);
+    const studentName = normalizeName(`${row.students?.first_name ?? ""} ${row.students?.last_name ?? ""}`);
     const studentEmail = normalizeEmail(row.students?.email || row.students?.parent_email);
     let score = 0;
     if (Math.abs(remaining - amount) < 0.01) score += 1000;
