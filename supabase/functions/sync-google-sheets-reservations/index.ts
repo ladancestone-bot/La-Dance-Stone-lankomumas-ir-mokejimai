@@ -120,7 +120,9 @@ async function findOrCreateStudent(row: any) {
     if (matches.length === 1) student = matches[0];
   }
 
-  const patch = { first_name, last_name, email, phone, updated_at: new Date().toISOString() };
+  const patch: Record<string, unknown> = { first_name, last_name, updated_at: new Date().toISOString() };
+  if (email) patch.email = email;
+  if (phone) patch.phone = phone;
 
   if (student) {
     await sb(`students?id=eq.${student.id}`, {
