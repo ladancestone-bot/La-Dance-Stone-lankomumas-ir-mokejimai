@@ -35,7 +35,7 @@ type Payment = {
 };
 type DropLesson = { id:string; group_id:string; lesson_date:string; start_time:string; end_time:string|null; price:number; capacity:number|null; is_active:boolean; groups?:{name:string}|null };
 type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null };
-type Rental = { id:string; customer_name:string; email:string|null; phone:string|null; rental_type:string; starts_at:string; ends_at:string; price:number; payment_status:string; payment_method:PaymentMethod|null; stripe_checkout_session_id?:string|null; stripe_payment_status?:string|null; stripe_payment_id?:string|null; paid_at?:string|null; saskaita123_invoice_id?:string|null; saskaita123_invoice_number?:string|null; saskaita123_invoice_url?:string|null; saskaita123_synced_at?:string|null; saskaita123_invoice_error?:string|null; invoice_created_at?:string|null; notes:string|null; is_active:boolean };
+type Rental = { id:string; customer_name:string; customer_email:string|null; customer_phone:string|null; rental_type:string; starts_at:string; ends_at:string; price:number; payment_status:string; payment_method:PaymentMethod|null; stripe_checkout_session_id?:string|null; stripe_payment_status?:string|null; stripe_payment_id?:string|null; paid_at?:string|null; saskaita123_invoice_id?:string|null; saskaita123_invoice_number?:string|null; saskaita123_invoice_url?:string|null; saskaita123_synced_at?:string|null; saskaita123_invoice_error?:string|null; invoice_created_at?:string|null; notes:string|null; is_active:boolean };
 
 type TKey = keyof typeof translations.en;
 const translations = {
@@ -609,7 +609,7 @@ async function createRental(){
  if(form.payment_method==="stripe"&&!form.email.trim())return setError(t("emailRequired"));
  setBusy("create");
  const {data,error}=await supabase.from("studio_rentals").insert({
-  customer_name:form.customer_name,email:form.email.trim()||null,phone:form.phone.trim()||null,rental_type:form.rental_type,
+  customer_name:form.customer_name,customer_email:form.email.trim()||null,customer_phone:form.phone.trim()||null,rental_type:form.rental_type,
   starts_at:new Date(form.starts_at).toISOString(),ends_at:new Date(form.ends_at).toISOString(),price:Number(form.price),
   payment_status:"pending",payment_method:form.payment_method,notes:form.notes.trim()||null
  }).select("*").single();
@@ -620,7 +620,7 @@ async function createRental(){
 }
 async function startStripePayment(r:Rental){
  setBusy(r.id);setError("");
- const {data,error}=await supabase.functions.invoke("stripe-checkout",{body:{payment_kind:"rental",rental_id:r.id,payer:{email:r.email,full_name:r.customer_name,phone:r.phone},success_url:window.location.origin+"/?rental_payment=success",cancel_url:window.location.origin+"/?rental_payment=cancelled"}});
+ const {data,error}=await supabase.functions.invoke("stripe-checkout",{body:{payment_kind:"rental",rental_id:r.id,payer:{email:r.customer_email,full_name:r.customer_name,phone:r.customer_phone},success_url:window.location.origin+"/?rental_payment=success",cancel_url:window.location.origin+"/?rental_payment=cancelled"}});
  if(error||!data?.checkout_url){setBusy(null);return setError(error?.message||data?.error||"Stripe mokėjimo nuoroda nesukurta.");}
  window.open(data.checkout_url,"_blank","noopener,noreferrer");setBusy(null);
 }
@@ -643,7 +643,7 @@ return <div className="stack">{error&&<div className="alert">{error}</div>}
 <section className="list">{rows.map(r=><article className="card" key={r.id}>
  <div style={{minWidth:0,flex:1}}><b>{r.customer_name}</b>
   <span>{new Date(r.starts_at).toLocaleString("lt-LT",{dateStyle:"medium",timeStyle:"short"})} → {new Date(r.ends_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
-  <span>{r.rental_type==="short_term"?t("shortTerm"):t("longTerm")} · {money(Number(r.price))} · {r.email||"—"}</span>
+  <span>{r.rental_type==="short_term"?t("shortTerm"):t("longTerm")} · {money(Number(r.price))} · {r.customer_email||"—"}</span>
   {r.paid_at&&<span>{t("paidAt")}: {new Date(r.paid_at).toLocaleString("lt-LT",{dateStyle:"short",timeStyle:"short"})}</span>}
   {r.saskaita123_invoice_number&&<span>{t("invoiceNumber")}: {r.saskaita123_invoice_number} · {t("invoiceReady")}</span>}
   {r.saskaita123_invoice_error&&<span className="muted">{t("invoiceError")}: {r.saskaita123_invoice_error}</span>}
