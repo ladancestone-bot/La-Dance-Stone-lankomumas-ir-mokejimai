@@ -733,6 +733,17 @@ async function markBankPaid(r:Rental){
  if(error){setBusy(null);return setError(error.message)}
  await load();setBusy(null);
 }
+async function setRentalPaymentMethod(r:Rental,method:PaymentMethod){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({payment_method:method,stripe_payment_status:method==="stripe"?r.stripe_payment_status:null}).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();setBusy(null);
+ if(method==="stripe"){
+  const latest=(await supabase.from("studio_rentals").select("*").eq("id",r.id).single()).data as Rental|null;
+  if(latest)await startStripePayment(latest);
+ }
+}
+
 async function issueInvoice(r:Rental){
  setBusy(r.id);setError("");
  const {data,error}=await supabase.functions.invoke("create-rental-saskaita123-invoice",{body:{rental_id:r.id}});
@@ -763,6 +774,7 @@ return <div className="stack">{error&&<div className="alert">{error}</div>}
  <div className="pay-right">
   <span className={`pill ${r.payment_status}`}>{r.payment_status==="paid"?t("paid"):r.payment_status==="cancelled"?t("cancelled"):t("pending")}</span>
   <b>{r.payment_method==="stripe"?"Stripe":r.payment_method==="cash"?t("cash"):r.payment_method==="bank_transfer"?t("bank"):"—"}</b>
+  {r.payment_status!=="paid"&&r.payment_status!=="cancelled"&&<div className="rental-method-quick"><span>Mokėjimas:</span><button className={r.payment_method==="cash"?"active":""} onClick={()=>setRentalPaymentMethod(r,"cash")}>Grynais</button><button className={r.payment_method==="bank_transfer"?"active":""} onClick={()=>setRentalPaymentMethod(r,"bank_transfer")}>Bankiniu</button><button className={r.payment_method==="stripe"?"active":""} onClick={()=>setRentalPaymentMethod(r,"stripe")}>Stripe</button></div>}
   <div className="actions">
    {r.payment_status!=="paid"&&r.payment_method==="stripe"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>startStripePayment(r)}>{t("payWithStripe")}</button>}
    {r.payment_status!=="paid"&&r.payment_method==="cash"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markCashPaid(r)}>{t("markPaidCash")}</button>}{r.payment_status!=="paid"&&r.payment_method==="bank_transfer"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markBankPaid(r)}>Pažymėti apmokėtą pavedimu</button>}
