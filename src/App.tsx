@@ -12,6 +12,7 @@ type Lang = "lt" | "en" | "es";
 type Section = "dashboard" | "schedule" | "attendance" | "payments" | "students" | "groups" | "teachers" | "rentals" | "settings";
 type AttendanceStatus = "present" | "absent" | "sick";
 type PaymentMethod = "cash" | "bank_transfer" | "stripe";
+// Keep billing in safe mode until invoice/payment reconciliation is fully verified.
 const BILLING_TEST_MODE = true;
 
 type Student = {
