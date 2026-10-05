@@ -25,8 +25,7 @@ type Charge = {
   id: string; student_id: string; group_id: string | null; amount_due: number; amount_paid: number;
   status: string; due_date: string; month: string;
   saskaita123_invoice_id?: string | null; saskaita123_invoice_number?: string | null; saskaita123_invoice_url?: string | null; saskaita123_invoice_error?: string | null;
-  invoice123_id?: string | null; invoice123_number?: string | null; invoice123_url?: string | null; invoice123_status?: string | null; invoice123_error?: string | null; invoice_created_at?: string | null; invoice_sent_at?: string | null;
-  invoice_created_at?: string | null; invoice_sent_at?: string | null; invoice_send_status?: "not_sent" | "sent" | "failed";
+  invoice123_id?: string | null; invoice123_number?: string | null; invoice123_url?: string | null; invoice123_status?: string | null; invoice123_error?: string | null; invoice_send_status?: "not_sent" | "sent" | "failed";
   students?: { first_name: string; last_name: string; email?: string | null; phone?: string | null; parent_email?: string | null; parent_phone?: string | null; payment_preference?: string | null } | null; groups?: { name: string } | null;
 };
 type Payment = {
