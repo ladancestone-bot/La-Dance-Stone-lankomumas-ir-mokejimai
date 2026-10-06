@@ -694,8 +694,15 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     const counts={present:0,absent:0,sick:0};
     Object.values(vals).forEach(st=>{if(st)counts[st]++});
     const marked=counts.present+counts.absent+counts.sick;
-    return {s,counts,marked};
+    const attendanceRate=marked?Math.round((counts.present/marked)*100):0;
+    return {s,vals,counts,marked,attendanceRate};
   });
+  const monthlyTotals=monthlyRows.reduce((acc,row)=>{
+    acc.present+=row.counts.present; acc.absent+=row.counts.absent; acc.sick+=row.counts.sick;
+    return acc;
+  },{present:0,absent:0,sick:0});
+  const monthlyMarked=monthlyTotals.present+monthlyTotals.absent+monthlyTotals.sick;
+  const monthlyRate=monthlyMarked?Math.round((monthlyTotals.present/monthlyMarked)*100):0;
 
   return <div className="stack">
     <section className="panel attendance-live-panel">
@@ -709,9 +716,13 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
       {groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}
     </section>
     {groupId&&<section className="panel attendance-month-panel">
-      <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Kiekvieno vaiko bendras lankomumas šiame mėnesyje.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
+      <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Bendra pasirinktos grupės ir kiekvieno mokinio mėnesio suvestinė.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
+      <div className="attendance-month-kpis"><div><b>{monthlyRate}%</b><span>Grupės lankomumas</span></div><div><b>{monthlyTotals.present}</b><span>Dalyvavo</span></div><div><b>{monthlyTotals.absent}</b><span>Nedalyvavo</span></div><div><b>{monthlyTotals.sick}</b><span>Serga</span></div></div>
       <div className="attendance-month-days">{trainingDays.length?trainingDays.map(d=><button key={d} className={d===date?"active":""} onClick={()=>setDate(d)}>{dayLabel(d)}</button>):<span className="muted small">Šį mėnesį dar nėra išsaugotų lankomumo įrašų.</span>}</div>
-      <div className="attendance-month-summary">{monthlyRows.map(({s,counts,marked})=><article className="attendance-month-student" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{marked} pažymėta</span></div><div className="attendance-month-counts"><span>D {counts.present}</span><span>N {counts.absent}</span><span>S {counts.sick}</span></div></article>)}</div>
+      <div className="attendance-table-wrap"><table className="attendance-table"><thead><tr><th>Mokinys</th>{trainingDays.map(d=><th key={d}>{new Date(d+"T12:00:00").toLocaleDateString("lt-LT",{day:"2-digit"})}</th>)}<th>Dalyvavo</th><th>Nedalyvavo</th><th>Serga</th><th>%</th></tr></thead><tbody>
+        {monthlyRows.map(({s,vals,counts,attendanceRate})=><tr key={s.id}><td className="attendance-student-name">{s.first_name} {s.last_name}</td>{trainingDays.map(d=>{const st=vals[d];return <td key={d}><span className={st?"attendance-dot "+st:"attendance-dot unmarked"} title={st?t(st as TKey):t("unmarked")}>{st==="present"?"D":st==="absent"?"N":st==="sick"?"S":"—"}</span></td>})}<td className="count-present">{counts.present}</td><td className="count-absent">{counts.absent}</td><td className="count-sick">{counts.sick}</td><td><b>{attendanceRate}%</b></td></tr>)}
+      </tbody></table></div>
+      <div className="attendance-legend"><span><i className="attendance-dot present">D</i> Dalyvavo</span><span><i className="attendance-dot absent">N</i> Nedalyvavo</span><span><i className="attendance-dot sick">S</i> Serga</span><span><i className="attendance-dot unmarked">—</i> Nepasirinkta</span></div>
     </section>}
     <section className="dropin-panel"><div><div className="eyebrow">{t("newParticipants")}</div><h2>{date}</h2></div>{dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <div className="dropin-lesson" key={l.id}><div><b>{l.groups?.name||"Group"}</b><span>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""} · {money(Number(l.price))}</span></div><div className="dropin-people">{bs.length?bs.map(b=><div className="dropin-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>{b.status} · {b.payment_method||"—"}</span><span className="payment-contact">{b.email||"—"}{b.phone?" · ☎ "+b.phone:""}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">{t("noStudents")}</span>}</div></div>})}{!dropLessons.length&&<span className="muted small">{lang==="lt"?"Šiandien vienkartinių dalyvių nėra.":lang==="es"?"No hay participantes de clase suelta hoy.":"No one-off participants today."}</span>}</section>
     <p className="muted small">{t("attendanceStatuses")}</p>
