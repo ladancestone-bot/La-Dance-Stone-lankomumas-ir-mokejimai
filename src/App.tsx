@@ -719,6 +719,24 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     {groupId&&<section className="panel attendance-month-panel">
       <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Bendra pasirinktos grupės ir kiekvieno mokinio mėnesio suvestinė.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
       <div className="attendance-month-kpis"><div><b>{monthlyRate}%</b><span>Grupės lankomumas</span></div><div><b>{monthlyTotals.present}</b><span>Dalyvavo</span></div><div><b>{monthlyTotals.absent}</b><span>Nedalyvavo</span></div><div><b>{monthlyTotals.sick}</b><span>Serga</span></div></div>
+      <div className="attendance-charts">
+        <div className="attendance-chart-card">
+          <div className="eyebrow">DALYVAVIMO DIAGRAMA</div>
+          <h3>Mėnesio rezultatas</h3>
+          <div className="attendance-bar-chart">
+            <div className="attendance-bar-row"><span>Dalyvavo</span><div className="attendance-bar-track"><i className="present" style={{width:monthlyMarked?Math.round(monthlyTotals.present/monthlyMarked*100)+"%":"0%"}}/></div><b>{monthlyTotals.present}</b></div>
+            <div className="attendance-bar-row"><span>Nedalyvavo</span><div className="attendance-bar-track"><i className="absent" style={{width:monthlyMarked?Math.round(monthlyTotals.absent/monthlyMarked*100)+"%":"0%"}}/></div><b>{monthlyTotals.absent}</b></div>
+            <div className="attendance-bar-row"><span>Serga</span><div className="attendance-bar-track"><i className="sick" style={{width:monthlyMarked?Math.round(monthlyTotals.sick/monthlyMarked*100)+"%":"0%"}}/></div><b>{monthlyTotals.sick}</b></div>
+          </div>
+        </div>
+        <div className="attendance-chart-card">
+          <div className="eyebrow">MOKINIŲ LANKOMUMAS</div>
+          <h3>Kiekvieno mokinio rezultatas</h3>
+          <div className="attendance-student-bars">
+            {monthlyRows.map(({s:student,attendanceRate,marked})=><div className="attendance-student-bar" key={student.id}><div><span>{student.first_name} {student.last_name}</span><b>{marked?attendanceRate+"%":"—"}</b></div><div className="attendance-bar-track"><i style={{width:marked?attendanceRate+"%":"0%"}}/></div></div>)}
+          </div>
+        </div>
+      </div>
       <div className="attendance-month-days">{trainingDays.length?trainingDays.map(d=><button key={d} className={d===date?"active":""} onClick={()=>setDate(d)}>{dayLabel(d)}</button>):<span className="muted small">Šį mėnesį dar nėra išsaugotų lankomumo įrašų.</span>}</div>
       <div className="attendance-table-wrap"><table className="attendance-table"><thead><tr><th>Mokinys</th>{trainingDays.map(d=><th key={d}>{new Date(d+"T12:00:00").toLocaleDateString("lt-LT",{day:"2-digit"})}</th>)}<th>Dalyvavo</th><th>Nedalyvavo</th><th>Serga</th><th>%</th></tr></thead><tbody>
         {monthlyRows.map(({s,vals,counts,attendanceRate})=><tr key={s.id}><td className="attendance-student-name">{s.first_name} {s.last_name}</td>{trainingDays.map(d=>{const st=vals[d];return <td key={d}><span className={st?"attendance-dot "+st:"attendance-dot unmarked"} title={st?t(st as TKey):t("unmarked")}>{st==="present"?"D":st==="absent"?"N":st==="sick"?"S":"—"}</span></td>})}<td className="count-present">{counts.present}</td><td className="count-absent">{counts.absent}</td><td className="count-sick">{counts.sick}</td><td><b>{attendanceRate}%</b></td></tr>)}
