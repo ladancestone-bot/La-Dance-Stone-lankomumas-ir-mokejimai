@@ -34,7 +34,7 @@ type Payment = {
   paid_at: string; notes: string | null; received_by: string | null;
 };
 type DropLesson = { id:string; group_id:string; lesson_date:string; start_time:string; end_time:string|null; price:number; capacity:number|null; is_active:boolean; groups?:{name:string}|null };
-type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null };
+type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null; created_at?:string|null };
 type Rental = { id:string; customer_name:string; customer_email:string|null; customer_phone:string|null; rental_type:string; starts_at:string; reserved_at?:string|null; created_at?:string|null; ends_at:string; price:number; payment_status:string; payment_method:PaymentMethod|null; stripe_checkout_session_id?:string|null; stripe_payment_status?:string|null; stripe_payment_id?:string|null; paid_at?:string|null; saskaita123_invoice_id?:string|null; saskaita123_invoice_number?:string|null; saskaita123_invoice_url?:string|null; saskaita123_synced_at?:string|null; saskaita123_invoice_error?:string|null; invoice_created_at?:string|null; notes:string|null; is_active:boolean };
 
 type TKey = keyof typeof translations.en;
@@ -299,7 +299,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       if(!config){setError("Ši grupė nepriskirta pasirinktam sezonui.");return}
       const membershipUpdate=await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("season_group_id",config.id).eq("student_id",s.id).eq("is_active",true);
       if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
-      const {count,countError}=await supabase.from("season_enrollments").select("id",{count:"exact",head:true}).eq("season_id",seasonId).eq("student_id",s.id).eq("is_active",true);
+      const {count,error:countError}=await supabase.from("season_enrollments").select("id",{count:"exact",head:true}).eq("season_id",seasonId).eq("student_id",s.id).eq("is_active",true);
       if(countError){setError(countError.message);return}
       if((count??0)===0){
         const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
@@ -308,7 +308,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     }else{
       const membershipUpdate=await supabase.from("group_students").update({is_active:false,left_at:todayISO()}).eq("student_id",s.id).eq("group_id",groupId).eq("is_active",true);
       if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
-      const {count,countError}=await supabase.from("group_students").select("id",{count:"exact",head:true}).eq("student_id",s.id).eq("is_active",true);
+      const {count,error:countError}=await supabase.from("group_students").select("id",{count:"exact",head:true}).eq("student_id",s.id).eq("is_active",true);
       if(countError){setError(countError.message);return}
       if((count??0)===0){
         const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
