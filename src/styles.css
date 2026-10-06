@@ -290,3 +290,27 @@ img,svg,video,canvas{max-width:100%}
 .payment-history-filters{display:flex;gap:7px;overflow-x:auto;margin-bottom:10px}.payment-history-filters button{border:1px solid #d9c7ad99;background:var(--linen);color:var(--taupe);border-radius:999px;padding:8px 13px;font-size:11px;font-weight:700;white-space:nowrap}.payment-history-filters button.active{background:var(--sand);color:var(--espresso);border-color:#d1b990}
 .payment-history-list{display:grid;gap:0;max-height:520px;overflow:auto;border-top:1px solid #d9c7ad66}.payment-history-row{display:flex;justify-content:space-between;gap:14px;padding:12px 2px;border-bottom:1px solid #d9c7ad55}.payment-history-row>div{display:flex;flex-direction:column;gap:3px;min-width:0}.payment-history-row>div:last-child{text-align:right;align-items:flex-end;white-space:nowrap}.payment-history-row b{font-size:13px}.payment-history-row span,.payment-history-row small{font-size:10px;color:var(--taupe);overflow-wrap:anywhere}.payment-history-row small{color:#9a8b7d}
 @media(max-width:600px){.payment-history-panel{padding:14px}.payment-history-summary{grid-template-columns:1fr 1fr}.payment-history-summary>div:last-child{grid-column:1/-1}.payment-history-row{gap:8px}.payment-history-row>div:last-child{min-width:92px}.payment-history-row b{font-size:12px}}
+
+
+/* Attendance live + monthly overview */
+.attendance-live-panel{overflow:hidden}
+.attendance-live-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.attendance-live-stats>div{border:1px solid rgba(90,70,50,.14);border-radius:18px;padding:14px 12px;background:rgba(255,255,255,.45);display:flex;flex-direction:column;gap:4px}
+.attendance-live-stats b{font-size:24px;line-height:1}
+.attendance-live-stats span{font-size:12px;color:#7f756b}
+.attendance-month-panel{overflow:hidden}
+.attendance-month-days{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px}
+.attendance-month-days button{flex:0 0 auto;border:1px solid rgba(90,70,50,.16);background:transparent;border-radius:12px;padding:9px 12px;cursor:pointer}
+.attendance-month-days button.active{background:#3b2c23;color:#fff}
+.attendance-month-summary{display:flex;flex-direction:column;gap:8px}
+.attendance-month-student{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(90,70,50,.10)}
+.attendance-month-student>div:first-child{display:flex;flex-direction:column;min-width:0}
+.attendance-month-student span{font-size:12px;color:#8a8076}
+.attendance-month-counts{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.attendance-month-counts span{border-radius:10px;padding:6px 8px;background:rgba(90,70,50,.07);font-size:12px;color:#4c4138}
+@media (max-width:700px){
+  .attendance-live-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .attendance-live-stats>div{padding:12px}
+  .attendance-month-student{align-items:flex-start}
+  .attendance-month-counts{max-width:48%}
+}
