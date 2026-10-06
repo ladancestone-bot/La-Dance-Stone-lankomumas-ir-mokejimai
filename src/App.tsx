@@ -273,12 +273,28 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   async function removeStudentFromGroup(s:Student, groupId:string, groupName:string){
     if(!window.confirm(`Pašalinti „${s.first_name} ${s.last_name}“ tik iš grupės „${groupName}“? Kitos jo grupės ir visa istorija liks nepakeistos.`)) return;
     setError("");
-    // Archive the client from all active groups, but keep the student/payment/attendance history.
-    const membershipUpdate=await supabase.from("group_students").update({is_active:false,left_at:todayISO()}).eq("student_id",s.id).eq("group_id",groupId).eq("is_active",true);
-    if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
-    // Keep all monthly charge history intact. Archived clients are excluded from active billing by the active-student filters.
-    const {count,countError}=await (async()=>{const r=await supabase.from("group_students").select("id",{count:"exact",head:true}).eq("student_id",s.id).eq("is_active",true);return {count:r.count,countError:r.error}})(); if(countError){setError(countError.message);return} if((count??0)>0)return; const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
-    if(studentUpdate.error){setError(studentUpdate.error.message);return}
+    if(seasonId){
+      const {data:config,error:configError}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",groupId).eq("is_active",true).maybeSingle();
+      if(configError){setError(configError.message);return}
+      if(!config){setError("Ši grupė nepriskirta pasirinktam sezonui.");return}
+      const membershipUpdate=await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("season_group_id",config.id).eq("student_id",s.id).eq("is_active",true);
+      if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
+      const {count,countError}=await supabase.from("season_enrollments").select("id",{count:"exact",head:true}).eq("season_id",seasonId).eq("student_id",s.id).eq("is_active",true);
+      if(countError){setError(countError.message);return}
+      if((count??0)===0){
+        const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
+        if(studentUpdate.error){setError(studentUpdate.error.message);return}
+      }
+    }else{
+      const membershipUpdate=await supabase.from("group_students").update({is_active:false,left_at:todayISO()}).eq("student_id",s.id).eq("group_id",groupId).eq("is_active",true);
+      if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
+      const {count,countError}=await supabase.from("group_students").select("id",{count:"exact",head:true}).eq("student_id",s.id).eq("is_active",true);
+      if(countError){setError(countError.message);return}
+      if((count??0)===0){
+        const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
+        if(studentUpdate.error){setError(studentUpdate.error.message);return}
+      }
+    }
     setDetail(null); await load();
   }
   async function save(){
@@ -716,7 +732,7 @@ function PaymentHistory({role}:{role:Role}){
     setLoading(true);setError("");
     const [p,s,r,d]=await Promise.all([
       supabase.from("payments").select("id,amount,payment_method,paid_at,monthly_charge_id,students(first_name,last_name,email),monthly_charges(month,groups(name))").order("paid_at",{ascending:false}),
-      supabase.from("stripe_payments").select("id,stripe_payment_id,amount,currency,status,payer_name,payer_email,paid_at,payment_kind,rental_id,drop_in_booking_id,monthly_charge_id").eq("status","succeeded").order("paid_at",{ascending:false}),
+      supabase.from("stripe_payments").select("id,stripe_payment_id,amount,currency,status,payer_name,payer_email,paid_at,payment_kind,rental_id,drop_in_booking_id,monthly_charge_id").in("status",["succeeded","paid"]).order("paid_at",{ascending:false}),
       supabase.from("studio_rentals").select("id,customer_name,customer_email,price,payment_status,payment_method,paid_at,starts_at,ends_at,stripe_payment_id").in("payment_status",["paid","waived"]).order("paid_at",{ascending:false}),
       supabase.from("drop_in_bookings").select("id,first_name,last_name,email,status,payment_method,lesson_id,drop_in_lessons(price,lesson_date,start_time,groups(name))").eq("status","paid").order("id",{ascending:false})
     ]);
@@ -724,7 +740,7 @@ function PaymentHistory({role}:{role:Role}){
     const out:any[]=[];
     (p.data??[]).forEach((x:any)=>out.push({id:"payment:"+x.id,source:"Abonementas",type:"monthly",name:[x.students?.first_name,x.students?.last_name].filter(Boolean).join(" ")||"—",email:x.students?.email||"—",amount:Number(x.amount),date:x.paid_at,method:x.payment_method,status:"paid",detail:x.monthly_charges?.groups?.name||"Mėnesinis abonementas"}));
     const represented=new Set<string>();
-    (r.data??[]).forEach((x:any)=>{if(x.stripe_payment_id)represented.add(x.stripe_payment_id);out.push({id:"rental:"+x.id,source:"Nuoma",type:"rental",name:x.customer_name||"—",email:x.customer_email||"—",amount:Number(x.price),date:x.paid_at||x.starts_at,method:x.payment_method||"—",status:x.payment_status,detail:"Studijos nuoma · "+new Date(x.starts_at).toLocaleDateString("lt-LT")})});
+    (r.data??[]).forEach((x:any)=>{if(x.stripe_payment_id)represented.add(x.stripe_payment_id);out.push({id:"rental:"+x.id,source:"Nuoma",type:"rental",rentalId:x.id,name:x.customer_name||"—",email:x.customer_email||"—",amount:Number(x.price),date:x.paid_at||x.starts_at,method:x.payment_method||"—",status:x.payment_status,detail:"Studijos nuoma · "+new Date(x.starts_at).toLocaleDateString("lt-LT")})});
     (d.data??[]).forEach((x:any)=>out.push({id:"dropin:"+x.id,source:"Vienkartinė pamoka",type:"dropin",name:[x.first_name,x.last_name].filter(Boolean).join(" "),email:x.email||"—",amount:Number(x.drop_in_lessons?.price||0),date:x.drop_in_lessons?.lesson_date,method:x.payment_method||"—",status:"paid",detail:x.drop_in_lessons?.groups?.name||"Vienkartinė pamoka"}));
     (s.data??[]).forEach((x:any)=>{
       if(x.rental_id&&represented.has(x.stripe_payment_id))return;
@@ -738,12 +754,17 @@ function PaymentHistory({role}:{role:Role}){
   const filtered=rows.filter(x=>filter==="all"||x.type===filter);
   const total=filtered.reduce((s,x)=>s+Number(x.amount||0),0);
   const label=(m:string)=>m==="stripe"?"Stripe":m==="cash"?"Grynais":m==="bank_transfer"?"Bankiniu":m;
+  async function waiveRental(rentalId:string){
+    const {error}=await supabase.from("studio_rentals").update({payment_status:"waived",payment_method:null,stripe_payment_id:null,stripe_payment_status:null,paid_at:null}).eq("id",rentalId);
+    if(error){setError(error.message);return}
+    await load();
+  }
   return <section className="panel payment-history-panel">
     <div className="panel-head"><div><div className="eyebrow">MOKĖJIMŲ ISTORIJA</div><h2>Visi klientų mokėjimai</h2><p className="muted">Abonementai, Stripe, nuoma ir vienkartinės pamokos vienoje istorijoje.</p></div><button className="secondary" onClick={load}>↻ Atnaujinti</button></div>
     {error&&<div className="alert">{error}</div>}
     <div className="payment-history-summary"><div><span>Mokėjimų</span><b>{filtered.length}</b></div><div><span>Suma</span><b>{money(total)}</b></div><div><span>Stripe</span><b>{filtered.filter(x=>x.method==="stripe").length}</b></div></div>
     <div className="payment-history-filters"><button className={filter==="all"?"active":""} onClick={()=>setFilter("all")}>Visi</button><button className={filter==="monthly"?"active":""} onClick={()=>setFilter("monthly")}>Abonementai</button><button className={filter==="stripe"?"active":""} onClick={()=>setFilter("stripe")}>Stripe</button><button className={filter==="rental"?"active":""} onClick={()=>setFilter("rental")}>Nuoma</button><button className={filter==="dropin"?"active":""} onClick={()=>setFilter("dropin")}>Vienkartinės</button></div>
-    {loading?<div className="empty">Kraunama…</div>:<div className="payment-history-list">{filtered.map(x=><div className="payment-history-row" key={x.id}><div><b>{x.name}</b><span>{x.detail}</span><small>{x.email} · {x.date?new Date(x.date).toLocaleString("lt-LT"):"—"}</small></div><div><b>{money(x.amount)}</b><span>{x.source} · {label(x.method)}</span></div></div>)}{!filtered.length&&<div className="empty">Mokėjimų nėra.</div>}</div>}
+    {loading?<div className="empty">Kraunama…</div>:<div className="payment-history-list">{filtered.map(x=><div className="payment-history-row" key={x.id}><div><b>{x.name}</b><span>{x.detail}</span><small>{x.email} · {x.date?new Date(x.date).toLocaleString("lt-LT"):"—"}</small></div><div><b>{money(x.amount)}</b><span>{x.source} · {label(x.method)}</span>{x.type==="rental"&&x.status!=="waived"&&<button className="secondary small-btn" onClick={()=>waiveRental(x.rentalId)}>Nemokama – mokytojas / studija</button>}{x.type==="rental"&&x.status==="waived"&&<span className="pill waived">Nemokama (mokytojas / studija)</span>}</div></div>)}{!filtered.length&&<div className="empty">Mokėjimų nėra.</div>}</div>}
   </section>
 }
 function PaymentModal({charge,lang,preferredMethod,close,save}:{charge:Charge;lang:Lang;preferredMethod?:PaymentMethod;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(Number(charge.amount_due)-Number(charge.amount_paid)));const preferred=(preferredMethod||charge.students?.payment_preference||"bank_transfer") as PaymentMethod;const [method,setMethod]=useState<PaymentMethod>(preferred==="cash"||preferred==="bank_transfer"||preferred==="stripe"?preferred:"bank_transfer");const label=(m:PaymentMethod)=>t(m==="bank_transfer"?"bank":m);return <Modal title={t("recordPayment")} close={close}><p><b>{charge.students?.first_name} {charge.students?.last_name}</b></p><Field label={`${t("amount")} · ${t("remaining")}: ${money(Number(charge.amount_due)-Number(charge.amount_paid))}`} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{label(m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
