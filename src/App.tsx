@@ -632,7 +632,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     </section>}
     
 
-    <section className="panel"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementų ir mėnesiniai mokėjimai</h2><p className="muted">Čia rodomi tik LDS mokinių / klientų abonementų mokėjimai. Pamokų rezervacijos ir nuoma rodomos atskirose skiltyse.</p></div></div></section><PaymentHistory role={role} lang={lang}/>
+    <section className="panel"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementų ir mėnesiniai mokėjimai</h2><p className="muted">Čia rodomi tik LDS mokinių / klientų abonementų mokėjimai. Pamokų rezervacijos ir nuoma rodomos atskirose skiltyse.</p></div></div></section><PaymentHistory role={role}/>
 
     <section className="list">
       {charges.map(c=>{
@@ -669,7 +669,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
   </div>
 }
-function PaymentHistory({role,lang}:{role:Role;lang:Lang}){
+function PaymentHistory({role}:{role:Role}){
   const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[filter,setFilter]=useState("all"),[error,setError]=useState("");
   async function load(){
     setLoading(true);setError("");
