@@ -539,11 +539,18 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   const [trainingDays,setTrainingDays]=useState<string[]>([]);
   const [dropLessons,setDropLessons]=useState<DropLesson[]>([]);
   const [dropBookings,setDropBookings]=useState<DropBooking[]>([]);
-  const [manualLesson,setManualLesson]=useState<DropLesson|null>(null);
+  const [manualOpen,setManualOpen]=useState(false);
+  const [manualGroupId,setManualGroupId]=useState("");
+  const [manualDate,setManualDate]=useState(date);
+  const [manualStudentId,setManualStudentId]=useState("");
   const [manualFirstName,setManualFirstName]=useState("");
   const [manualLastName,setManualLastName]=useState("");
   const [manualParentEmail,setManualParentEmail]=useState("");
   const [manualParentPhone,setManualParentPhone]=useState("");
+  const [manualStartTime,setManualStartTime]=useState("");
+  const [manualEndTime,setManualEndTime]=useState("");
+  const [manualScheduleKnown,setManualScheduleKnown]=useState(false);
+  const [manualStudents,setManualStudents]=useState<Student[]>([]);
   const [manualBusy,setManualBusy]=useState(false);
   const [error,setError]=useState("");
 
@@ -697,37 +704,106 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     if(error)setError(error.message);else setDropBookings(x=>x.map(b=>b.id===id?{...b,attendance_status:status}:b));
   }
 
-  function openManualParticipant(lesson:DropLesson){
-    setManualLesson(lesson);
+  async function loadManualStudents(){
+    const {data,error:qError}=await supabase.from("students")
+      .select("*").eq("is_active",true).order("last_name").order("first_name");
+    if(qError){setError(qError.message);return}
+    setManualStudents((data??[]) as Student[]);
+  }
+
+  function openQuickParticipant(){
+    setManualOpen(true);
+    setManualGroupId(groupId || groups[0]?.id || "");
+    setManualDate(date);
+    setManualStudentId("");
     setManualFirstName("");
     setManualLastName("");
     setManualParentEmail("");
     setManualParentPhone("");
+    setManualStartTime("");
+    setManualEndTime("");
+    setManualScheduleKnown(false);
     setError("");
+    loadManualStudents();
   }
 
-  async function saveManualParticipant(){
-    if(!manualLesson)return;
-    if(!manualFirstName.trim()||!manualLastName.trim()){
+  function closeQuickParticipant(){
+    if(manualBusy)return;
+    setManualOpen(false);
+  }
+
+  async function loadManualLessonPreset(gid:string,d:string){
+    if(!gid||!d)return;
+    setManualScheduleKnown(false);
+    const {data:existing}=await supabase.from("drop_in_lessons")
+      .select("start_time,end_time").eq("group_id",gid).eq("lesson_date",d).eq("is_active",true)
+      .order("created_at",{ascending:false}).limit(1).maybeSingle();
+    if(existing?.start_time){
+      setManualStartTime(String(existing.start_time).slice(0,5));
+      setManualEndTime(existing.end_time?String(existing.end_time).slice(0,5):"");
+      setManualScheduleKnown(true);
+      return;
+    }
+    const {data:latest}=await supabase.from("drop_in_lessons")
+      .select("start_time,end_time").eq("group_id",gid).eq("is_active",true)
+      .order("lesson_date",{ascending:false}).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    if(latest?.start_time){
+      setManualStartTime(String(latest.start_time).slice(0,5));
+      setManualEndTime(latest.end_time?String(latest.end_time).slice(0,5):"");
+      setManualScheduleKnown(true);
+      return;
+    }
+    const group=groups.find(g=>g.id===gid);
+    const timeMatch=group?.name.match(/(\\d{1,2}:\\d{2})/);
+    if(timeMatch){
+      setManualStartTime(timeMatch[1]);
+      setManualEndTime("");
+      setManualScheduleKnown(true);
+      return;
+    }
+    setManualStartTime("");
+    setManualEndTime("");
+  }
+
+  function selectManualStudent(id:string){
+    setManualStudentId(id);
+    const s=manualStudents.find(x=>x.id===id);
+    if(!s)return;
+    setManualFirstName(s.first_name);
+    setManualLastName(s.last_name);
+    setManualParentEmail(s.parent_email??s.email??"");
+    setManualParentPhone(s.parent_phone??s.phone??"");
+  }
+
+  async function saveQuickParticipant(){
+    if(!manualGroupId){setError("Pasirinkite grupę.");return}
+    if(!manualDate){setError("Pasirinkite datą.");return}
+    if(!manualStartTime){setError("Šiai grupei šios datos laikas nerastas. Pasirinkite pradžios laiką.");return}
+    if(!manualStudentId&&(!manualFirstName.trim()||!manualLastName.trim())){
       setError("Įrašykite vaiko vardą ir pavardę.");
       return;
     }
-    if(!manualParentEmail.trim()&&!manualParentPhone.trim()){
+    if(!manualStudentId&&!manualParentEmail.trim()&&!manualParentPhone.trim()){
       setError("Įrašykite bent vieną tėvų kontaktą: el. paštą arba telefoną.");
       return;
     }
     setManualBusy(true);
     setError("");
-    const {error:rpcError}=await supabase.rpc("add_manual_dropin_participant",{
-      p_lesson_id:manualLesson.id,
-      p_first_name:manualFirstName,
-      p_last_name:manualLastName,
-      p_parent_email:manualParentEmail||null,
-      p_parent_phone:manualParentPhone||null
+    const {error:rpcError}=await supabase.rpc("add_quick_dropin_participant",{
+      p_group_id:manualGroupId,
+      p_lesson_date:manualDate,
+      p_start_time:manualStartTime,
+      p_end_time:manualEndTime||null,
+      p_student_id:manualStudentId||null,
+      p_first_name:manualStudentId?null:manualFirstName,
+      p_last_name:manualStudentId?null:manualLastName,
+      p_parent_email:manualStudentId?null:(manualParentEmail||null),
+      p_parent_phone:manualStudentId?null:(manualParentPhone||null)
     });
     setManualBusy(false);
     if(rpcError){setError(rpcError.message);return}
-    setManualLesson(null);
+    setDate(manualDate);
+    setManualOpen(false);
     await loadDropins();
   }
 
@@ -781,16 +857,25 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
       {students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?"att "+st+" selected":"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}<button className={!values[s.id]?"att selected unmarked":"att unmarked"} onClick={()=>clearStatus(s.id)}>— {t("unmarked")}</button></div></article>)}
       {groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}
     </section>
-    <section className="dropin-panel">
-      <div className="panel-head"><div><div className="eyebrow">VIENKARTINĖS PAMOKOS</div><h2>Datos ir nauji dalyviai</h2><p className="muted">Pasirinkite dieną. Čia galite įrašyti naują mokinį, o mokytojas iš karto matys jo vardą ir tėvų kontaktus.</p></div><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-      {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Data</th><th>Grupė</th><th>Laikas</th><th>Dalyviai</th><th></th></tr></thead><tbody>
-        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td>{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</td><td><b>{l.groups?.name||"Grupė"}</b></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td><td><button className="primary small-btn" onClick={()=>openManualParticipant(l)}>＋ Naujas narys</button></td></tr>})}
-      </tbody></table></div>:<div className="empty">Šiai datai vienkartinių pamokų nėra.</div>}
+    <section className="dropin-panel quick-dropin-panel">
+      <div className="quick-dropin-head">
+        <div><div className="eyebrow">VIENKARTINĖ / BANDOMOJI PAMOKA</div><h2>Pridėti mokinį per kelias sekundes</h2><p className="muted">Paspauskite, pasirinkite grupę ir datą, pasirinkite klientą arba įrašykite naują.</p></div>
+        <button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>
+      </div>
+      <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">Mokytojas matys mokinį ir tėvų kontaktus iš karto.</div></div>
+      {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Grupė</th><th>Laikas</th><th>Dalyviai</th></tr></thead><tbody>
+        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td><b>{l.groups?.name||"Grupė"}</b><span className="quick-date-cell">{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td></tr>})}
+      </tbody></table></div>:<div className="quick-empty">Šiai datai dar nėra pridėtų vienkartinių pamokų. Paspauskite „Pridėti mokinį“ ir viskas bus sukurta automatiškai.</div>}
     </section>
-    {manualLesson&&<Modal title="Naujas vienkartinės pamokos dalyvis" close={()=>setManualLesson(null)}>
-      <div className="note-box"><b>{manualLesson.groups?.name||"Grupė"}</b><br/>{new Date(manualLesson.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"long",day:"numeric",month:"long"})} · {manualLesson.start_time.slice(0,5)}{manualLesson.end_time?"–"+manualLesson.end_time.slice(0,5):""}</div>
-      <div className="form-grid"><Field label="Vaiko vardas" value={manualFirstName} set={setManualFirstName}/><Field label="Vaiko pavardė" value={manualLastName} set={setManualLastName}/><Field label="Tėvų el. paštas" value={manualParentEmail} set={setManualParentEmail}/><Field label="Tėvų telefonas" value={manualParentPhone} set={setManualParentPhone}/></div>
-      <div className="actions"><button className="secondary" onClick={()=>setManualLesson(null)}>Atšaukti</button><button className="primary small-btn" onClick={saveManualParticipant} disabled={manualBusy}>{manualBusy?"Išsaugoma…":"Pridėti naują narį"}</button></div>
+    {manualOpen&&<Modal title="Pridėti vienkartinį / bandomąjį mokinį" close={closeQuickParticipant}>
+      <div className="quick-form">
+        <div className="quick-step"><span>1</span><div><b>Grupė</b><select value={manualGroupId} onChange={e=>{setManualGroupId(e.target.value);loadManualLessonPreset(e.target.value,manualDate)}}><option value="">— Pasirinkite grupę —</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></div></div>
+        <div className="quick-step"><span>2</span><div><b>Diena</b><input type="date" value={manualDate} onChange={e=>{setManualDate(e.target.value);loadManualLessonPreset(manualGroupId,e.target.value)}}/></div></div>
+        <div className="quick-step"><span>3</span><div><b>Klientas</b><select value={manualStudentId} onChange={e=>selectManualStudent(e.target.value)}><option value="">＋ Naujas klientas</option>{manualStudents.map(s=><option key={s.id} value={s.id}>{s.first_name} {s.last_name}{s.parent_phone?" · "+s.parent_phone:""}</option>)}</select></div></div>
+        {manualStudentId?<div className="selected-client"><b>{manualFirstName} {manualLastName}</b><span>{manualParentEmail||"—"} · {manualParentPhone||"—"}</span></div>:<div className="form-grid"><Field label="Vaiko vardas" value={manualFirstName} set={setManualFirstName}/><Field label="Vaiko pavardė" value={manualLastName} set={setManualLastName}/><Field label="Tėvų el. paštas" value={manualParentEmail} set={setManualParentEmail} type="email"/><Field label="Tėvų telefonas" value={manualParentPhone} set={setManualParentPhone}/></div>}
+        <div className="quick-time-row"><div><label>Laikas nuo</label><input type="time" value={manualStartTime} onChange={e=>setManualStartTime(e.target.value)}/></div><div><label>Iki</label><input type="time" value={manualEndTime} onChange={e=>setManualEndTime(e.target.value)}/></div>{manualScheduleKnown&&<span className="schedule-found">✓ Laikas parinktas automatiškai</span>}</div>
+      </div>
+      <div className="actions"><button className="secondary" onClick={closeQuickParticipant}>Atšaukti</button><button className="primary small-btn" onClick={saveQuickParticipant} disabled={manualBusy}>{manualBusy?"Išsaugoma…":"Pridėti ir parodyti mokytojui"}</button></div>
     </Modal>}
     {groupId&&<section className="panel attendance-month-panel">
       <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Bendra pasirinktos grupės ir kiekvieno mokinio mėnesio suvestinė.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
