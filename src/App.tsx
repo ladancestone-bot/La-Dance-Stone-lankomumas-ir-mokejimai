@@ -733,7 +733,7 @@ function PaymentHistory({role}:{role:Role}){
     const [p,s,r,d]=await Promise.all([
       supabase.from("payments").select("id,amount,payment_method,paid_at,monthly_charge_id,students(first_name,last_name,email),monthly_charges(month,groups(name))").order("paid_at",{ascending:false}),
       supabase.from("stripe_payments").select("id,stripe_payment_id,amount,currency,status,payer_name,payer_email,paid_at,payment_kind,rental_id,drop_in_booking_id,monthly_charge_id").in("status",["succeeded","paid"]).order("paid_at",{ascending:false}),
-      supabase.from("studio_rentals").select("id,customer_name,customer_email,price,payment_status,payment_method,paid_at,starts_at,ends_at,stripe_payment_id").in("payment_status",["paid","waived"]).order("paid_at",{ascending:false}),
+      supabase.from("studio_rentals").select("id,customer_name,customer_email,price,payment_status,payment_method,paid_at,starts_at,ends_at,stripe_payment_id").eq("is_active",true).order("paid_at",{ascending:false}),
       supabase.from("drop_in_bookings").select("id,first_name,last_name,email,status,payment_method,lesson_id,drop_in_lessons(price,lesson_date,start_time,groups(name))").eq("status","paid").order("id",{ascending:false})
     ]);
     if(p.error||s.error||r.error||d.error){setError((p.error||s.error||r.error||d.error)!.message);setRows([]);setLoading(false);return}
