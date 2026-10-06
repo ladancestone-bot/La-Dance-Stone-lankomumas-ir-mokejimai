@@ -650,7 +650,8 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
 
   async function loadDropins(){
     let lessonQuery:any=supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");
-    if(role!=="admin" && teacherGroupIds){
+    if(role!=="admin"){
+      if(!teacherGroupIds){setDropLessons([]);setDropBookings([]);return}
       const {data:userData}=await supabase.auth.getUser();
       const uid=userData.user?.id;
       if(!uid){setDropLessons([]);setDropBookings([]);return}
@@ -690,7 +691,7 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
   useEffect(()=>{loadGroups()},[seasonId,role]);
   useEffect(()=>{loadStudents()},[groupId,seasonId]);
   useEffect(()=>{loadSelectedDate();loadMonthly()},[groupId,date,month,seasonId]);
-  useEffect(()=>{loadDropins()},[date]);
+  useEffect(()=>{loadDropins()},[date,role,teacherGroupIds]);
   useEffect(()=>{
     if(!groupId)return;
     const channel=supabase.channel("attendance-live-"+groupId+"-"+date)
