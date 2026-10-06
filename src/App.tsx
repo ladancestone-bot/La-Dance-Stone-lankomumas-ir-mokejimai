@@ -506,20 +506,174 @@ function GroupDetail({group,role,lang,seasonId,close}:{group:Group;role:Role;lan
 
 function GroupAttendance({groupId,students,date,setDate,lang,seasonId}:{groupId:string;students:Student[];date:string;setDate:(v:string)=>void;lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [values,setValues]=useState<Record<string,AttendanceStatus>>({});const [error,setError]=useState("");useEffect(()=>{loadEffectiveAttendance(groupId,date).then(setValues).catch(e=>setError(e.message))},[groupId,date]);async function setStatus(id:string,status:AttendanceStatus){setError("");try{await recordAttendanceStatus(id,groupId,date,status,seasonId);setValues(v=>({...v,[id]:status}))}catch(e){setError((e as Error).message)}}return <div className="stack"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={values[s.id]===st?`att ${st} selected`:"att"} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}</section></div>}
 
-function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [groups,setGroups]=useState<Group[]>([]),[groupId,setGroupId]=useState(""),[date,setDate]=useState(todayISO()),[students,setStudents]=useState<Student[]>([]),[values,setValues]=useState<Record<string,AttendanceStatus>>({}),[dropLessons,setDropLessons]=useState<DropLesson[]>([]),[dropBookings,setDropBookings]=useState<DropBooking[]>([]),[error,setError]=useState("");async function loadGroups(){let q:any=supabase.from("groups").select("*").eq("is_active",true).order("name");if(seasonId){const {data:configs}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);const ids=(configs??[]).map(x=>x.group_id);if(!ids.length){setGroups([]);setGroupId("");return}q=q.in("id",ids)}const {data}=await q;const rows=(data??[]) as Group[];setGroups(rows);if(!rows.some(g=>g.id===groupId))setGroupId("")}async function load(){if(!groupId){setStudents([]);return}let ids:string[]=[];if(seasonId){const {data:config}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",groupId).maybeSingle();if(config){const {data:m}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("season_group_id",config.id).eq("is_active",true);ids=(m??[]).map(x=>x.student_id)}}else{const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",groupId).eq("is_active",true);ids=(m??[]).map((x:any)=>x.student_id)}if(ids.length){const {data:s}=await supabase.from("students").select("*").in("id",ids).eq("is_active",true).order("last_name");setStudents((s??[]) as Student[])}else setStudents([]);try{setValues(await loadEffectiveAttendance(groupId,date))}catch(e){setError((e as Error).message)}}async function loadDropins(){let q=supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");const {data:lessons}=await q;const ls=(lessons??[]) as DropLesson[];setDropLessons(ls);if(!ls.length){setDropBookings([]);return}const {data:bookings}=await supabase.from("drop_in_bookings").select("*").in("lesson_id",ls.map(x=>x.id));setDropBookings((bookings??[]) as DropBooking[])}useEffect(()=>{loadGroups()},[seasonId]);useEffect(()=>{load()},[groupId,date,seasonId]);useEffect(()=>{loadDropins()},[date]);async function setStatus(id:string,status:AttendanceStatus){setError("");try{await recordAttendanceStatus(id,groupId,date,status,seasonId);setValues(v=>({...v,[id]:status}))}catch(e){setError((e as Error).message)}}
-async function clearStatus(id:string){
- setError("");
- try{
-  const {error}=await supabase.rpc("clear_group_attendance",{p_attendance_id:(await supabase.from("attendance").select("id").eq("student_id",id).eq("group_id",groupId).eq("attendance_date",date).maybeSingle()).data?.id||null});
-  if(error)throw error;
-  setValues(v=>{const next={...v};delete next[id];return next});
- }catch(e){setError((e as Error).message)}
-}
-async function setDrop(id:string,status:AttendanceStatus|null){
- const {error}=await supabase.rpc("teacher_set_drop_in_attendance",{p_booking_id:id,p_status:status});
- if(error)setError(error.message);else setDropBookings(x=>x.map(b=>b.id===id?{...b,attendance_status:status}:b))
-}return <div className="stack"><section className="dropin-panel"><div><div className="eyebrow">{t("newParticipants")}</div><h2>{date}</h2></div>{dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <div className="dropin-lesson" key={l.id}><div><b>{l.groups?.name||"Group"}</b><span>{l.start_time.slice(0,5)}{l.end_time?`–${l.end_time.slice(0,5)}`:""} · {money(Number(l.price))}</span></div><div className="dropin-people">{bs.length?bs.map(b=><div className="dropin-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>{b.status} · {b.payment_method||"—"}</span><span className="payment-contact">{b.email||"—"}{b.phone?" · ☎ "+b.phone:""}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?`mini ${st} selected`:"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">{t("noStudents")}</span>}</div></div>})}{!dropLessons.length&&<span className="muted small">{lang==="lt"?"Šiandien vienkartinių dalyvių nėra.":lang==="es"?"No hay participantes de clase suelta hoy.":"No one-off participants today."}</span>}</section><div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?`att ${st} selected`:"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}<button className={!values[s.id]?"att selected unmarked":"att unmarked"} onClick={()=>clearStatus(s.id)}>— {t("unmarked")}</button></div></article>)}{groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}</section><p className="muted small">{t("attendanceStatuses")}</p></div>}
 
+function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
+  const t=(k:TKey)=>tx(lang,k);
+  const [groups,setGroups]=useState<Group[]>([]);
+  const [groupId,setGroupId]=useState("");
+  const [date,setDate]=useState(todayISO());
+  const [month,setMonth]=useState(currentMonth());
+  const [students,setStudents]=useState<Student[]>([]);
+  const [values,setValues]=useState<Record<string,AttendanceStatus>>({});
+  const [monthly,setMonthly]=useState<Record<string,Record<string,AttendanceStatus>>>({});
+  const [trainingDays,setTrainingDays]=useState<string[]>([]);
+  const [dropLessons,setDropLessons]=useState<DropLesson[]>([]);
+  const [dropBookings,setDropBookings]=useState<DropBooking[]>([]);
+  const [error,setError]=useState("");
+
+  async function loadGroups(){
+    let q:any=supabase.from("groups").select("*").eq("is_active",true).order("name");
+    if(seasonId){
+      const {data:configs}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);
+      const ids=(configs??[]).map(x=>x.group_id);
+      if(!ids.length){setGroups([]);setGroupId("");return}
+      q=q.in("id",ids);
+    }
+    const {data,error:qError}=await q;
+    if(qError){setError(qError.message);return}
+    const rows=(data??[]) as Group[];
+    setGroups(rows);
+    if(!rows.some(g=>g.id===groupId))setGroupId("");
+  }
+
+  async function loadStudents(){
+    if(!groupId){setStudents([]);setValues({});setMonthly({});setTrainingDays([]);return}
+    let ids:string[]=[];
+    if(seasonId){
+      const {data:config}=await supabase.from("season_groups").select("id").eq("season_id",seasonId).eq("group_id",groupId).maybeSingle();
+      if(config){
+        const {data:m}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("season_group_id",config.id).eq("is_active",true);
+        ids=(m??[]).map(x=>x.student_id);
+      }
+    }else{
+      const {data:m}=await supabase.from("group_students").select("student_id").eq("group_id",groupId).eq("is_active",true);
+      ids=(m??[]).map((x:any)=>x.student_id);
+    }
+    if(ids.length){
+      const {data:s,error:sError}=await supabase.from("students").select("*").in("id",ids).eq("is_active",true).order("last_name");
+      if(sError){setError(sError.message);return}
+      setStudents((s??[]) as Student[]);
+    }else setStudents([]);
+  }
+
+  function monthDates(){
+    const parts=month.split("-").map(Number);
+    const y=parts[0],m=parts[1];
+    const last=new Date(y,m,0).getDate();
+    return Array.from({length:last},(_,i)=>month+"-"+String(i+1).padStart(2,"0"));
+  }
+
+  async function loadMonthly(){
+    if(!groupId)return;
+    const dates=monthDates();
+    const {data:rows,error:rowsError}=await supabase.from("attendance")
+      .select("id,student_id,attendance_date,status")
+      .eq("group_id",groupId).gte("attendance_date",dates[0]).lte("attendance_date",dates[dates.length-1]);
+    if(rowsError){setError(rowsError.message);return}
+    const attendanceRows=rows??[];
+    const map:Record<string,Record<string,AttendanceStatus>>={};
+    attendanceRows.forEach((r:any)=>{map[r.student_id]??={};map[r.student_id][r.attendance_date]=r.status as AttendanceStatus});
+    const ids=attendanceRows.map((r:any)=>r.id);
+    if(ids.length){
+      const {data:revisions,error:revError}=await supabase.from("attendance_revisions")
+        .select("attendance_id,status,created_at,id").in("attendance_id",ids)
+        .order("created_at",{ascending:false}).order("id",{ascending:false});
+      if(revError){setError(revError.message);return}
+      const rowById=new Map(attendanceRows.map((r:any)=>[r.id,r]));
+      const seen=new Set<string>();
+      for(const rev of revisions??[]){
+        if(seen.has(rev.attendance_id))continue;
+        const row=rowById.get(rev.attendance_id);
+        if(row){map[row.student_id]??={};map[row.student_id][row.attendance_date]=rev.status as AttendanceStatus}
+        seen.add(rev.attendance_id);
+      }
+    }
+    setMonthly(map);
+    setTrainingDays(Array.from(new Set(attendanceRows.map((r:any)=>r.attendance_date))).sort());
+  }
+
+  async function loadSelectedDate(){
+    if(!groupId){setValues({});return}
+    try{setValues(await loadEffectiveAttendance(groupId,date))}
+    catch(e){setError((e as Error).message)}
+  }
+
+  async function loadDropins(){
+    const {data:lessons}=await supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");
+    const ls=(lessons??[]) as DropLesson[];
+    setDropLessons(ls);
+    if(!ls.length){setDropBookings([]);return}
+    const {data:bookings}=await supabase.from("drop_in_bookings").select("*").in("lesson_id",ls.map(x=>x.id));
+    setDropBookings((bookings??[]) as DropBooking[]);
+  }
+
+  useEffect(()=>{loadGroups()},[seasonId]);
+  useEffect(()=>{loadStudents()},[groupId,seasonId]);
+  useEffect(()=>{loadSelectedDate();loadMonthly()},[groupId,date,month,seasonId]);
+  useEffect(()=>{loadDropins()},[date]);
+
+  async function setStatus(id:string,status:AttendanceStatus){
+    setError("");
+    try{
+      await recordAttendanceStatus(id,groupId,date,status,seasonId);
+      setValues(v=>({...v,[id]:status}));
+      setMonthly(v=>({...v,[id]:{...(v[id]??{}),[date]:status}}));
+      setTrainingDays(v=>v.includes(date)?v:[...v,date].sort());
+    }catch(e){setError((e as Error).message)}
+  }
+
+  async function clearStatus(id:string){
+    setError("");
+    try{
+      const {data:existing,error:findError}=await supabase.from("attendance").select("id")
+        .eq("student_id",id).eq("group_id",groupId).eq("attendance_date",date).maybeSingle();
+      if(findError)throw findError;
+      const {error}=await supabase.rpc("clear_group_attendance",{p_attendance_id:existing?.id??null});
+      if(error)throw error;
+      setValues(v=>{const next={...v};delete next[id];return next});
+      setMonthly(v=>{const next={...v};next[id]={...(next[id]??{})};delete next[id][date];return next});
+    }catch(e){setError((e as Error).message)}
+  }
+
+  async function setDrop(id:string,status:AttendanceStatus|null){
+    const {error}=await supabase.rpc("teacher_set_drop_in_attendance",{p_booking_id:id,p_status:status});
+    if(error)setError(error.message);else setDropBookings(x=>x.map(b=>b.id===id?{...b,attendance_status:status}:b));
+  }
+
+  const dayLabel=(d:string)=>new Date(d+"T12:00:00").toLocaleDateString(lang==="lt"?"lt-LT":lang==="es"?"es-ES":"en-US",{weekday:"short",day:"numeric"});
+  const monthLabel=new Date(month+"-01T12:00:00").toLocaleDateString(lang==="lt"?"lt-LT":lang==="es"?"es-ES":"en-US",{month:"long",year:"numeric"});
+  const stats=students.reduce((acc,s)=>{
+    const st=values[s.id]; if(st)acc[st]++; else acc.unmarked++;
+    return acc;
+  },{present:0,absent:0,sick:0,unmarked:0});
+  const monthlyRows=students.map(s=>{
+    const vals=monthly[s.id]??{};
+    const counts={present:0,absent:0,sick:0};
+    Object.values(vals).forEach(st=>{if(st)counts[st]++});
+    const marked=counts.present+counts.absent+counts.sick;
+    return {s,counts,marked};
+  });
+
+  return <div className="stack">
+    <section className="panel attendance-live-panel">
+      <div className="panel-head"><div><div className="eyebrow">LANKOMUMAS</div><h2>Gyvas lankomumo vaizdas</h2><p className="muted">Pažymėjus mokinį, bendras rezultatas atsinaujina iš karto.</p></div></div>
+      <div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+      {groupId&&<div className="attendance-live-stats"><div><b>{stats.present}</b><span>Dalyvavo</span></div><div><b>{stats.absent}</b><span>Nedalyvavo</span></div><div><b>{stats.sick}</b><span>Serga</span></div><div><b>{stats.unmarked}</b><span>Nepasirinkta</span></div></div>}
+    </section>
+    {error&&<div className="alert">{error}</div>}
+    <section className="list">
+      {students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?"att "+st+" selected":"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}<button className={!values[s.id]?"att selected unmarked":"att unmarked"} onClick={()=>clearStatus(s.id)}>— {t("unmarked")}</button></div></article>)}
+      {groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}
+    </section>
+    {groupId&&<section className="panel attendance-month-panel">
+      <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Kiekvieno vaiko bendras lankomumas šiame mėnesyje.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
+      <div className="attendance-month-days">{trainingDays.length?trainingDays.map(d=><button key={d} className={d===date?"active":""} onClick={()=>setDate(d)}>{dayLabel(d)}</button>):<span className="muted small">Šį mėnesį dar nėra išsaugotų lankomumo įrašų.</span>}</div>
+      <div className="attendance-month-summary">{monthlyRows.map(({s,counts,marked})=><article className="attendance-month-student" key={s.id}><div><b>{s.first_name} {s.last_name}</b><span>{marked} pažymėta</span></div><div className="attendance-month-counts"><span>D {counts.present}</span><span>N {counts.absent}</span><span>S {counts.sick}</span></div></article>)}</div>
+    </section>}
+    <section className="dropin-panel"><div><div className="eyebrow">{t("newParticipants")}</div><h2>{date}</h2></div>{dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <div className="dropin-lesson" key={l.id}><div><b>{l.groups?.name||"Group"}</b><span>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""} · {money(Number(l.price))}</span></div><div className="dropin-people">{bs.length?bs.map(b=><div className="dropin-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>{b.status} · {b.payment_method||"—"}</span><span className="payment-contact">{b.email||"—"}{b.phone?" · ☎ "+b.phone:""}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">{t("noStudents")}</span>}</div></div>})}{!dropLessons.length&&<span className="muted small">{lang==="lt"?"Šiandien vienkartinių dalyvių nėra.":lang==="es"?"No hay participantes de clase suelta hoy.":"No one-off participants today."}</span>}</section>
+    <p className="muted small">{t("attendanceStatuses")}</p>
+  </div>
+}
 function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
