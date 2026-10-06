@@ -48,6 +48,15 @@ function parseIsoDate(value: unknown): string | null {
   return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : null;
 }
 
+function parseIsoDateTime(value: unknown): string | null {
+  const s = clean(value);
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const month = Number(m[2]), day = Number(m[3]), hour = Number(m[4]), minute = Number(m[5]);
+  const offset = month >= 4 && month <= 10 ? "+03:00" : "+02:00";
+  return new Date(`${m[1]}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}T${String(hour).padStart(2,"0")}:${minute}:00${offset}`).toISOString();
+}
+
 function parseLithuanianLessonDate(value: unknown, fallbackYear: number) {
   const s = norm(value);
   const m = s.match(/(sausio|vasario|kovo|balandzio|geguzes|birzelio|liepos|rugpjucio|rugsejo|spalio|lapkricio|gruodzio)\s+(\d{1,2})\s*d/);
@@ -247,6 +256,7 @@ async function syncRental(row: any) {
     customer_phone: clean(row.phone) || null,
     rental_type: rentalTypeFromPurpose(row.purpose),
     starts_at: start.toISOString(), ends_at: end.toISOString(),
+    reserved_at: parseIsoDateTime(row.date),
     price,
     payment_status: paymentIsPaid(row.payment) ? "paid" : "pending",
     payment_method: null, is_active: true, source: "google_sheets",
