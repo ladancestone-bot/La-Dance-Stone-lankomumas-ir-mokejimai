@@ -869,8 +869,8 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
   return <div className="stack">
     <section className="dropin-panel quick-dropin-panel">
       <div className="quick-dropin-head">
-        <div><div className="eyebrow">VIENKARTINĖ / BANDOMOJI PAMOKA</div><h2>Pridėti mokinį per kelias sekundes</h2><p className="muted">Paspauskite, pasirinkite grupę ir datą, pasirinkite klientą arba įrašykite naują.</p></div>
-        {role==="admin"&&<button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>}
+        <div><div className="eyebrow">VIENKARTINĖS REZERVACIJOS</div><h2>{role==="admin"?"Vienkartinės / bandomosios pamokos":"Jūsų grupių vienkartinės rezervacijos"}</h2><p className="muted">{role==="admin"?"Čia matysite pridėtus vienkartinių pamokų dalyvius. Naują mokinį pridėsite lankomumo apačioje.":"Čia matysite naujus mokinius, kuriuos reikia priimti į Jūsų grupę."}</p></div>
+
       </div>
       <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">{role==="admin"?"Mokytojui priskirtas vaikas bus matomas jo profilyje.":"Čia rodomos tik Jums priskirtų grupių vienkartinės rezervacijos."}</div></div>
       {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Grupė</th><th>Laikas</th><th>Dalyviai</th></tr></thead><tbody>
@@ -879,7 +879,7 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
     </section>
     <section className="panel attendance-live-panel">
       <div className="panel-head"><div><div className="eyebrow">LANKOMUMAS</div><h2>Gyvas lankomumo vaizdas</h2><p className="muted">Pažymėjus mokinį, bendras rezultatas atsinaujina iš karto.</p></div></div>
-      <div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+      <div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/><label className="attendance-period-filter"><span>Mėnuo</span><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label></div>
       {groupId&&<div className="attendance-live-stats"><div><b>{stats.present}</b><span>Dalyvavo</span></div><div><b>{stats.absent}</b><span>Nedalyvavo</span></div><div><b>{stats.sick}</b><span>Serga</span></div><div><b>{stats.unmarked}</b><span>Nepasirinkta</span></div></div>}
     </section>
     {error&&<div className="alert">{error}</div>}
@@ -916,8 +916,12 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
       </div>
       <div className="actions"><button className="secondary" onClick={closeQuickParticipant}>Atšaukti</button><button className="primary small-btn" onClick={saveQuickParticipant} disabled={manualBusy}>{manualBusy?"Išsaugoma…":"Pridėti ir parodyti mokytojui"}</button></div>
     </Modal>}
+    {role==="admin"&&<section className="dropin-admin-add-bottom">
+      <div><div className="eyebrow">ADMINISTRATORIUS</div><h3>Vienkartinė / bandomoji pamoka</h3><p className="muted">Pridėkite naują mokinį prie grupės. Po išsaugojimo jis automatiškai bus rodomas mokytojui viršuje.</p></div>
+      <button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>
+    </section>}
     {groupId&&<section className="panel attendance-month-panel">
-      <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Bendra pasirinktos grupės ir kiekvieno mokinio mėnesio suvestinė.</p></div><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></div>
+      <div className="panel-head"><div><div className="eyebrow">MĖNESIO LANKOMUMAS</div><h2>{monthLabel}</h2><p className="muted">Bendra pasirinktos grupės ir kiekvieno mokinio mėnesio suvestinė.</p></div></div>
       <div className="attendance-month-kpis"><div><b>{monthlyRate}%</b><span>Grupės lankomumas</span></div><div><b>{monthlyTotals.present}</b><span>Dalyvavo</span></div><div><b>{monthlyTotals.absent}</b><span>Nedalyvavo</span></div><div><b>{monthlyTotals.sick}</b><span>Serga</span></div></div>
       <div className="attendance-month-days">{trainingDays.length?trainingDays.map(d=><button key={d} className={d===date?"active":""} onClick={()=>setDate(d)}>{dayLabel(d)}</button>):<span className="muted small">Šį mėnesį dar nėra išsaugotų lankomumo įrašų.</span>}</div>
       <div className="attendance-table-wrap"><table className="attendance-table"><thead><tr><th>Mokinys</th>{trainingDays.map(d=><th key={d}>{new Date(d+"T12:00:00").toLocaleDateString("lt-LT",{day:"2-digit"})}</th>)}<th>Dalyvavo</th><th>Nedalyvavo</th><th>Serga</th><th>%</th></tr></thead><tbody>
