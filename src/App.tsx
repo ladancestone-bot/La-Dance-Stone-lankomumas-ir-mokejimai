@@ -682,6 +682,7 @@ function PaymentModal({charge,lang,preferredMethod,close,save}:{charge:Charge;la
 function PaymentEditModal({payment,lang,close,save}:{payment:Payment;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(payment.amount));const [method,setMethod]=useState<PaymentMethod>(payment.payment_method);return <Modal title={t("editPayment")} close={close}><Field label={t("amount")} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
 
 function LessonReservations({lang}:{lang:Lang}){
+ const reservationTitle=lang==="en"?"Lesson reservations":lang==="es"?"Reservas de clases":"Pamokų rezervacijos";
  const [tab,setTab]=useState<"groups"|"dropin">("groups");
  const [orders,setOrders]=useState<any[]>([]),[dropLessons,setDropLessons]=useState<DropLesson[]>([]),[dropBookings,setDropBookings]=useState<DropBooking[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);
  async function load(){
@@ -704,7 +705,7 @@ function LessonReservations({lang}:{lang:Lang}){
  return <div className="stack">
   {error&&<div className="alert">{error}</div>}
   <section className="panel">
-   <div className="panel-head"><div><div className="eyebrow">REZERVACIJOS</div><h2>Pamokų rezervacijos</h2><p className="muted">Visos šokių pamokų rezervacijos vienoje vietoje. Mokėjimo informacija rodoma prie konkrečios rezervacijos, todėl ji nesimaišo su nuoma ar mėnesiniais abonementais.</p></div><button className="secondary" onClick={load}>↻ Atnaujinti</button></div>
+   <div className="panel-head"><div><div className="eyebrow">REZERVACIJOS</div><h2>{reservationTitle}</h2><p className="muted">Visos šokių pamokų rezervacijos vienoje vietoje. Mokėjimo informacija rodoma prie konkrečios rezervacijos, todėl ji nesimaišo su nuoma ar mėnesiniais abonementais.</p></div><button className="secondary" onClick={load}>↻ Atnaujinti</button></div>
    <div className="rental-filters"><button className={tab==="groups"?"active":""} onClick={()=>setTab("groups")}>Grupių rezervacijos</button><button className={tab==="dropin"?"active":""} onClick={()=>setTab("dropin")}>Vienkartinės pamokos</button></div>
   </section>
   {loading?<div className="empty">Kraunama…</div>:tab==="groups"?<section className="list">
