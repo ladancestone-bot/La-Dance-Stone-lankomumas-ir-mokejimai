@@ -383,3 +383,5 @@ img,svg,video,canvas{max-width:100%}
   .attendance-student-name{min-width:130px}
   .attendance-dot{width:28px;height:28px}
 }
+
+@media(max-width:650px){.quick-dropin-head{flex-direction:column;align-items:stretch}.quick-add-btn{width:100%;justify-content:center}.quick-dropin-filters{align-items:stretch;flex-direction:column}.quick-dropin-filters label{align-items:stretch;flex-direction:column}.quick-dropin-filters input{max-width:none;width:100%}.quick-time-row{grid-template-columns:1fr 1fr}.schedule-found{grid-column:1/-1;padding-bottom:0}.selected-client{margin-left:0}}
