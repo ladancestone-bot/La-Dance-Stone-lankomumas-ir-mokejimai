@@ -624,7 +624,17 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     setDropLessons(ls);
     if(!ls.length){setDropBookings([]);return}
     const {data:bookings}=await supabase.from("drop_in_bookings").select("*").in("lesson_id",ls.map(x=>x.id));
-    setDropBookings((bookings??[]) as DropBooking[]);
+    // One customer can only appear once in a specific one-off lesson.
+    // Prefer the paid record and preserve an already marked attendance status.
+    const unique=new Map<string,DropBooking>();
+    for(const booking of (bookings??[]) as DropBooking[]){
+      const key=booking.lesson_id+"::"+(booking.student_id||((booking.email||"")+"::"+booking.first_name+"::"+booking.last_name));
+      const current=unique.get(key);
+      if(!current || (booking.status==="paid" && current.status!=="paid") || (!current.attendance_status && booking.attendance_status)){
+        unique.set(key,booking);
+      }
+    }
+    setDropBookings(Array.from(unique.values()));
   }
 
   useEffect(()=>{loadGroups()},[seasonId]);
