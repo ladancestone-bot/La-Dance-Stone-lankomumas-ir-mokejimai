@@ -280,7 +280,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     // Paid and historical charges remain untouched for the financial history.
     const todayMonth=currentMonth()+"-01";
     const chargesUpdate=await supabase.from("monthly_charges")
-      .update({amount_due:0, status:"paid", adjustment_amount:0})
+      .delete()
       .eq("student_id",s.id)
       .gte("month",todayMonth)
       .eq("amount_paid",0)
