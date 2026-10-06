@@ -468,7 +468,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){const t=(k:TKey
 function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
-  const [stripePayments,setStripePayments]=useState<StripePayment[]>([]),[stripeBusy,setStripeBusy]=useState(false),[paymentMethodPreset,setPaymentMethodPreset]=useState<PaymentMethod|null>(null);
+  const [stripeBusy,setStripeBusy]=useState(false),[paymentMethodPreset,setPaymentMethodPreset]=useState<PaymentMethod|null>(null);
   const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null),[addingMonth,setAddingMonth]=useState(false);
 
   async function loadGroups(){
@@ -512,16 +512,12 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
 
   useEffect(()=>{loadGroups()},[role,seasonId]);
   useEffect(()=>{if(fixedGroupId)setSelectedGroupId(fixedGroupId)},[fixedGroupId]);
-  async function loadStripePayments(){
-    const {data,error}=await supabase.from("stripe_payments").select("*").order("paid_at",{ascending:false}).limit(100);
-    if(error)setError(error.message); else setStripePayments((data??[]) as StripePayment[]);
-  }
   async function syncStripePayments(){
     setStripeBusy(true);setError("");
     const {data,error:fnError}=await supabase.functions.invoke("sync-stripe-payments",{body:{days:180}});
     if(fnError){setStripeBusy(false);setError(fnError.message||"Stripe sinchronizacija nepavyko.");return}
     if(data?.error){setStripeBusy(false);setError(String(data.error));return}
-    await Promise.all([loadStripePayments(),load()]);
+    await load();
     setStripeBusy(false);
   }
   useEffect(()=>{if(role==="admin")syncStripePayments()},[role]);
@@ -688,7 +684,7 @@ function LessonReservations({lang}:{lang:Lang}){
  async function load(){
   setLoading(true);setError("");
   const [oq,lq]=await Promise.all([
-   supabase.from("website_orders").select("id,order_type,customer_name,customer_email,customer_phone,child_name,parent_name,parent_email,parent_phone,group_text,lesson_text,reservation_date,start_time,end_time,amount,paid_text,status,created_at").in("order_type",["adult","child"]).order("reservation_date",{ascending:false,nullsLast:true}).order("created_at",{ascending:false}),
+   supabase.from("website_orders").select("id,order_type,customer_name,customer_email,customer_phone,child_name,parent_name,parent_email,parent_phone,group_text,lesson_text,reservation_date,start_time,end_time,amount,paid_text,status,created_at").in("order_type",["adult","child"]).order("reservation_date",{ascending:false,nullsFirst:false}).order("created_at",{ascending:false}),
    supabase.from("drop_in_lessons").select("*,groups(name)").eq("is_active",true).order("lesson_date",{ascending:false}).order("start_time",{ascending:false})
   ]);
   if(oq.error||lq.error){setError((oq.error||lq.error)!.message);setLoading(false);return}
