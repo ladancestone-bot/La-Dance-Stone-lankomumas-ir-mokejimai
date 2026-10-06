@@ -20,10 +20,13 @@ function normalizeName(value: unknown) {
   return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 function classify(amount: number, metadata: Record<string, string>) {
-  if (amount === 5) return "reservation_fee";
+  // The explicit payment kind always wins. Amount alone must never decide
+  // whether a transaction belongs to rentals or lesson reservations.
   if (metadata.payment_kind === "rental") return "rental";
   if (metadata.payment_kind === "monthly_charge") return "monthly_charge";
   if (metadata.payment_kind === "drop_in") return "drop_in";
+  if (metadata.payment_kind === "reservation_fee") return "reservation_fee";
+  if (amount === 5) return "reservation_fee";
   return metadata.payment_kind || "unknown";
 }
 
