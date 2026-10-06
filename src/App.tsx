@@ -712,8 +712,9 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   }
 
   function openQuickParticipant(){
+    const initialGroupId=groupId || groups[0]?.id || "";
     setManualOpen(true);
-    setManualGroupId(groupId || groups[0]?.id || "");
+    setManualGroupId(initialGroupId);
     setManualDate(date);
     setManualStudentId("");
     setManualFirstName("");
@@ -725,6 +726,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     setManualScheduleKnown(false);
     setError("");
     loadManualStudents();
+    loadManualLessonPreset(initialGroupId,date);
   }
 
   function closeQuickParticipant(){
@@ -754,7 +756,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
       return;
     }
     const group=groups.find(g=>g.id===gid);
-    const timeMatch=group?.name.match(/(\\d{1,2}:\\d{2})/);
+    const timeMatch=group?.name.match(/(\d{1,2}:\d{2})/);
     if(timeMatch){
       setManualStartTime(timeMatch[1]);
       setManualEndTime("");
