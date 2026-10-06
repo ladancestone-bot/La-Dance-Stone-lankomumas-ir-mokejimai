@@ -276,16 +276,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     // Archive the client from all active groups, but keep the student/payment/attendance history.
     const membershipUpdate=await supabase.from("group_students").update({is_active:false}).eq("student_id",s.id).eq("is_active",true);
     if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
-    // Current/future unpaid subscription charges must not keep this archived client in the payable queue.
-    // Paid and historical charges remain untouched for the financial history.
-    const todayMonth=currentMonth()+"-01";
-    const chargesUpdate=await supabase.from("monthly_charges")
-      .delete()
-      .eq("student_id",s.id)
-      .gte("month",todayMonth)
-      .eq("amount_paid",0)
-      .in("status",["unpaid","overdue"]);
-    if(chargesUpdate.error){setError(chargesUpdate.error.message);return}
+    // Keep all monthly charge history intact. Archived clients are excluded from active billing by the active-student filters.
     const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
     if(studentUpdate.error){setError(studentUpdate.error.message);return}
     setDetail(null); await load();
