@@ -89,7 +89,6 @@ const nav: { id: Section; key: TKey; icon: any }[] = [
 const money = (n:number) => new Intl.NumberFormat("lt-LT", {style:"currency",currency:"EUR"}).format(n);
 const todayISO = () => new Date().toISOString().slice(0,10);
 const currentMonth = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
-asy
 const parseReservationEventDate=(text:string,year:number)=>{
   const normalized=text.toLocaleLowerCase("lt-LT").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"");
   const months:Record<string,number>={sausio:1,vasario:2,kovo:3,balandzio:4,geguzes:5,birzelio:6,liepos:7,rugpjucio:8,rugsejo:9,spalio:10,lapkricio:11,gruodzio:12};
@@ -109,7 +108,8 @@ const formatReservedAt=(value:any)=>{
   const d=new Date(String(value));
   if(Number.isNaN(d.getTime()))return String(value);
   return d.toLocaleString("lt-LT",{timeZone:"Europe/Vilnius",dateStyle:"short",timeStyle:"short"});
-};nc function loadEffectiveAttendance(groupId:string,date:string){
+};
+async function loadEffectiveAttendance(groupId:string,date:string){
   const {data: rows,error}=await supabase.from("attendance").select("id,student_id,status").eq("group_id",groupId).eq("attendance_date",date);
   if(error)throw error;
   const result:Record<string,AttendanceStatus>={};
