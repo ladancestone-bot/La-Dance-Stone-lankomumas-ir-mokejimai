@@ -563,8 +563,14 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
       if(!uid){setGroups([]);setGroupId("");return}
       const {data:teacher}=await supabase.from("teachers").select("id").eq("profile_id",uid).eq("is_active",true).maybeSingle();
       if(!teacher){setGroups([]);setGroupId("");return}
-      const {data:assigned}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",teacher.id);
-      allowedGroupIds=Array.from(new Set((assigned??[]).map((x:any)=>x.group_id)));
+      const [{data:assigned},{data:subs}]=await Promise.all([
+        supabase.from("group_teachers").select("group_id").eq("teacher_id",teacher.id),
+        supabase.from("teacher_substitutions").select("group_id").eq("teacher_id",teacher.id).lte("starts_on",date).gte("ends_on",date)
+      ]);
+      allowedGroupIds=Array.from(new Set([
+        ...(assigned??[]).map((x:any)=>x.group_id),
+        ...(subs??[]).map((x:any)=>x.group_id)
+      ]));
       setTeacherGroupIds(allowedGroupIds);
       if(!allowedGroupIds.length){setGroups([]);setGroupId("");return}
     }else setTeacherGroupIds(null);
