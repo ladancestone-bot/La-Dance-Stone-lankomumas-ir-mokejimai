@@ -314,3 +314,34 @@ img,svg,video,canvas{max-width:100%}
   .attendance-month-student{align-items:flex-start}
   .attendance-month-counts{max-width:48%}
 }
+
+
+/* Group attendance overview */
+.attendance-month-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.attendance-month-kpis>div{border:1px solid rgba(91,69,53,.14);border-radius:16px;padding:13px 12px;background:rgba(255,255,255,.55)}
+.attendance-month-kpis b{display:block;font-size:22px;color:#3b2b20}
+.attendance-month-kpis span{display:block;margin-top:3px;font-size:12px;color:#8d7d6e}
+.attendance-table-wrap{width:100%;overflow-x:auto;border:1px solid rgba(91,69,53,.14);border-radius:18px;background:rgba(255,255,255,.42);-webkit-overflow-scrolling:touch}
+.attendance-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.attendance-table th,.attendance-table td{padding:10px 8px;text-align:center;border-bottom:1px solid rgba(91,69,53,.10);white-space:nowrap}
+.attendance-table th{font-size:11px;color:#8d7d6e;text-transform:uppercase;letter-spacing:.06em;background:#f7f1e8;position:sticky;top:0;z-index:1}
+.attendance-table th:first-child,.attendance-table td:first-child{position:sticky;left:0;text-align:left;z-index:2;background:#fbf7ef}
+.attendance-table th:first-child{z-index:3}
+.attendance-student-name{font-weight:700;min-width:145px;max-width:190px}
+.attendance-dot{display:inline-flex;width:30px;height:30px;border-radius:10px;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:11px}
+.attendance-dot.present{background:#cbdcc2;color:#3f5937}
+.attendance-dot.absent{background:#ead0cd;color:#7b403b}
+.attendance-dot.sick{background:#eadfb9;color:#725f26}
+.attendance-dot.unmarked{background:#eee9e1;color:#9a9188}
+.count-present{font-weight:800;color:#4f7047}.count-absent{font-weight:800;color:#8a4b46}.count-sick{font-weight:800;color:#756329}
+.attendance-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;color:#766b61;font-size:12px}
+.attendance-legend span{display:inline-flex;align-items:center;gap:6px}
+.attendance-legend .attendance-dot{width:22px;height:22px;border-radius:7px}
+@media(max-width:700px){
+  .attendance-month-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .attendance-month-kpis>div{padding:11px}
+  .attendance-month-kpis b{font-size:20px}
+  .attendance-table th,.attendance-table td{padding:8px 6px}
+  .attendance-student-name{min-width:130px}
+  .attendance-dot{width:28px;height:28px}
+}
