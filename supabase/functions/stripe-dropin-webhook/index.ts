@@ -151,10 +151,6 @@ Deno.serve(async (req) => {
     return Response.json({ received: true, ignored: true });
   }
 
-  const stripePaymentId = session.payment_intent
-    ? String(session.payment_intent)
-    : session.id;
-
   const { data: existing } = await supabaseAdmin
     .from("drop_in_bookings")
     .select("id")
