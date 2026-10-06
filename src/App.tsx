@@ -631,6 +631,19 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   useEffect(()=>{loadStudents()},[groupId,seasonId]);
   useEffect(()=>{loadSelectedDate();loadMonthly()},[groupId,date,month,seasonId]);
   useEffect(()=>{loadDropins()},[date]);
+  useEffect(()=>{
+    if(!groupId)return;
+    const channel=supabase.channel("attendance-live-"+groupId+"-"+date)
+      .on("postgres_changes",{event:"*",schema:"public",table:"attendance",filter:"group_id=eq."+groupId},()=>{
+        loadSelectedDate();
+        loadMonthly();
+      })
+      .on("postgres_changes",{event:"*",schema:"public",table:"drop_in_bookings"},()=>{
+        loadDropins();
+      })
+      .subscribe();
+    return()=>{supabase.removeChannel(channel);};
+  },[groupId,date,month]);
 
   async function setStatus(id:string,status:AttendanceStatus){
     setError("");
