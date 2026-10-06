@@ -341,7 +341,7 @@ function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [rows,setRows]=useState<Group[]>([]),[open,setOpen]=useState(false),[detail,setDetail]=useState<Group|null>(null),[editing,setEditing]=useState<Group|null>(null);
   const [name,setName]=useState(""),[level,setLevel]=useState(""),[description,setDescription]=useState("");
-  const [teachers,setTeachers]=useState<any[]>([]),[teacherId,setTeacherId]=useState("");
+  const [teachers,setTeachers]=useState<any[]>([]),[teacherId,setTeacherId]=useState(""),[memberCounts,setMemberCounts]=useState<Record<string,number>>({});
   const [day1,setDay1]=useState("1"),[start1,setStart1]=useState("16:00"),[end1,setEnd1]=useState("17:00");
   const [day2,setDay2]=useState("3"),[start2,setStart2]=useState("16:00"),[end2,setEnd2]=useState("17:00");
   const weekdays=[["1","Pirmadienis"],["2","Antradienis"],["3","Trečiadienis"],["4","Ketvirtadienis"],["5","Penktadienis"],["6","Šeštadienis"],["7","Sekmadienis"]];
@@ -355,6 +355,13 @@ function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       setTeachers(ts??[]);
     }
     const {data,error}=await query; if(error){alert(error.message);return} setRows((data??[]) as Group[]);
+    const groupIds=(data??[]).map((x:any)=>x.id);
+    if(groupIds.length){
+      const {data:members}=await supabase.from("group_students").select("group_id,student_id,students(first_name,last_name)").in("group_id",groupIds).eq("is_active",true);
+      const counts:Record<string,number>={};
+      (members??[]).forEach((m:any)=>{const n=String(m.students?.first_name??"").trim();const ln=String(m.students?.last_name??"").trim();if(/^[0-9]+$/.test(n)&&!ln)return;counts[m.group_id]=(counts[m.group_id]??0)+1});
+      setMemberCounts(counts);
+    }else setMemberCounts({});
   }
   useEffect(()=>{load()},[seasonId]);
   function create(){setEditing(null);setName("");setLevel("");setDescription("");setTeacherId("");setDay1("1");setStart1("16:00");setEnd1("17:00");setDay2("3");setStart2("16:00");setEnd2("17:00");setOpen(true)}
@@ -405,7 +412,7 @@ function Groups({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   return <div className="stack">
     <div className="toolbar"><span>{seasonId?"Sezono grupės":"Grupės"}</span>{role==="admin"&&<button className="secondary" onClick={create}><Plus size={16}/>{t("addGroup")}</button>}</div>
     <section className="list">{rows.map(g=><article className="card clickable" key={g.id} onClick={()=>setDetail(g)}>
-      <div><b>{g.name}</b><span>{g.level||"—"}</span><span>{g.description||""}</span></div>
+      <div><b>{g.name}</b><span>{g.level||"—"}</span><span>{memberCounts[g.id]??0} mokiniai</span><span>{g.description||""}</span></div>
       <div className="card-actions">{role==="admin"&&<button className="secondary compact" onClick={e=>{e.stopPropagation();edit(g)}}><Pencil size={13}/>{t("edit")}</button>}<ChevronRight size={17}/></div>
     </article>)}</section>
     {detail&&<GroupDetail group={detail} role={role} lang={lang} seasonId={seasonId} close={()=>setDetail(null)}/>}
@@ -625,7 +632,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     </section>}
     
 
-    <section className="panel"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementų ir mėnesiniai mokėjimai</h2><p className="muted">Čia rodomi tik LDS mokinių / klientų abonementų mokėjimai. Pamokų rezervacijos ir nuoma rodomos atskirose skiltyse.</p></div></div></section>
+    <section className="panel"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementų ir mėnesiniai mokėjimai</h2><p className="muted">Čia rodomi tik LDS mokinių / klientų abonementų mokėjimai. Pamokų rezervacijos ir nuoma rodomos atskirose skiltyse.</p></div></div></section><PaymentHistory role={role} lang={lang}/>
 
     <section className="list">
       {charges.map(c=>{
@@ -661,6 +668,42 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     {paymentCharge&&<PaymentModal charge={paymentCharge} lang={lang} preferredMethod={paymentMethodPreset??undefined} close={()=>{setPaymentCharge(null);setPaymentMethodPreset(null)}} save={savePayment}/>}
     {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
   </div>
+}
+function PaymentHistory({role,lang}:{role:Role;lang:Lang}){
+  const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[filter,setFilter]=useState("all"),[error,setError]=useState("");
+  async function load(){
+    setLoading(true);setError("");
+    const [p,s,r,d]=await Promise.all([
+      supabase.from("payments").select("id,amount,payment_method,paid_at,monthly_charge_id,students(first_name,last_name,email),monthly_charges(month,groups(name))").order("paid_at",{ascending:false}),
+      supabase.from("stripe_payments").select("id,stripe_payment_id,amount,currency,status,payer_name,payer_email,paid_at,payment_kind,rental_id,drop_in_booking_id,monthly_charge_id").eq("status","succeeded").order("paid_at",{ascending:false}),
+      supabase.from("studio_rentals").select("id,customer_name,customer_email,price,payment_status,payment_method,paid_at,starts_at,ends_at,stripe_payment_id").in("payment_status",["paid","waived"]).order("paid_at",{ascending:false,nullsLast:true}),
+      supabase.from("drop_in_bookings").select("id,first_name,last_name,email,status,payment_method,lesson_id,drop_in_lessons(price,lesson_date,start_time,groups(name))").eq("status","paid").order("id",{ascending:false})
+    ]);
+    if(p.error||s.error||r.error||d.error){setError((p.error||s.error||r.error||d.error)!.message);setRows([]);setLoading(false);return}
+    const out:any[]=[];
+    (p.data??[]).forEach((x:any)=>out.push({id:"payment:"+x.id,source:"Abonementas",type:"monthly",name:[x.students?.first_name,x.students?.last_name].filter(Boolean).join(" ")||"—",email:x.students?.email||"—",amount:Number(x.amount),date:x.paid_at,method:x.payment_method,status:"paid",detail:x.monthly_charges?.groups?.name||"Mėnesinis abonementas"}));
+    const represented=new Set<string>();
+    (r.data??[]).forEach((x:any)=>{if(x.stripe_payment_id)represented.add(x.stripe_payment_id);out.push({id:"rental:"+x.id,source:"Nuoma",type:"rental",name:x.customer_name||"—",email:x.customer_email||"—",amount:Number(x.price),date:x.paid_at||x.starts_at,method:x.payment_method||"—",status:x.payment_status,detail:"Studijos nuoma · "+new Date(x.starts_at).toLocaleDateString("lt-LT")})});
+    (d.data??[]).forEach((x:any)=>out.push({id:"dropin:"+x.id,source:"Vienkartinė pamoka",type:"dropin",name:[x.first_name,x.last_name].filter(Boolean).join(" "),email:x.email||"—",amount:Number(x.drop_in_lessons?.price||0),date:x.drop_in_lessons?.lesson_date,method:x.payment_method||"—",status:"paid",detail:x.drop_in_lessons?.groups?.name||"Vienkartinė pamoka"}));
+    (s.data??[]).forEach((x:any)=>{
+      if(x.rental_id&&represented.has(x.stripe_payment_id))return;
+      const kind=x.payment_kind==="reservation_fee"?"Rezervacijos mokestis":x.payment_kind==="rental"?"Nuoma":x.payment_kind==="drop_in"?"Vienkartinė pamoka":x.payment_kind==="monthly_charge"?"Abonementas":"Stripe mokėjimas";
+      out.push({id:"stripe:"+x.id,source:"Stripe",type:x.rental_id?"rental":x.drop_in_booking_id?"dropin":x.monthly_charge_id?"monthly":"stripe",name:x.payer_name||"—",email:x.payer_email||"—",amount:Number(x.amount),date:x.paid_at,method:"stripe",status:"paid",detail:kind});
+    });
+    out.sort((a,b)=>new Date(b.date||0).getTime()-new Date(a.date||0).getTime());
+    setRows(out);setLoading(false);
+  }
+  useEffect(()=>{if(role==="admin")load()},[role]);
+  const filtered=rows.filter(x=>filter==="all"||x.type===filter);
+  const total=filtered.reduce((s,x)=>s+Number(x.amount||0),0);
+  const label=(m:string)=>m==="stripe"?"Stripe":m==="cash"?"Grynais":m==="bank_transfer"?"Bankiniu":m;
+  return <section className="panel payment-history-panel">
+    <div className="panel-head"><div><div className="eyebrow">MOKĖJIMŲ ISTORIJA</div><h2>Visi klientų mokėjimai</h2><p className="muted">Abonementai, Stripe, nuoma ir vienkartinės pamokos vienoje istorijoje.</p></div><button className="secondary" onClick={load}>↻ Atnaujinti</button></div>
+    {error&&<div className="alert">{error}</div>}
+    <div className="payment-history-summary"><div><span>Mokėjimų</span><b>{filtered.length}</b></div><div><span>Suma</span><b>{money(total)}</b></div><div><span>Stripe</span><b>{filtered.filter(x=>x.method==="stripe").length}</b></div></div>
+    <div className="payment-history-filters"><button className={filter==="all"?"active":""} onClick={()=>setFilter("all")}>Visi</button><button className={filter==="monthly"?"active":""} onClick={()=>setFilter("monthly")}>Abonementai</button><button className={filter==="stripe"?"active":""} onClick={()=>setFilter("stripe")}>Stripe</button><button className={filter==="rental"?"active":""} onClick={()=>setFilter("rental")}>Nuoma</button><button className={filter==="dropin"?"active":""} onClick={()=>setFilter("dropin")}>Vienkartinės</button></div>
+    {loading?<div className="empty">Kraunama…</div>:<div className="payment-history-list">{filtered.map(x=><div className="payment-history-row" key={x.id}><div><b>{x.name}</b><span>{x.detail}</span><small>{x.email} · {x.date?new Date(x.date).toLocaleString("lt-LT"):"—"}</small></div><div><b>{money(x.amount)}</b><span>{x.source} · {label(x.method)}</span></div></div>)}{!filtered.length&&<div className="empty">Mokėjimų nėra.</div>}</div>}
+  </section>
 }
 function PaymentModal({charge,lang,preferredMethod,close,save}:{charge:Charge;lang:Lang;preferredMethod?:PaymentMethod;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(Number(charge.amount_due)-Number(charge.amount_paid)));const preferred=(preferredMethod||charge.students?.payment_preference||"bank_transfer") as PaymentMethod;const [method,setMethod]=useState<PaymentMethod>(preferred==="cash"||preferred==="bank_transfer"||preferred==="stripe"?preferred:"bank_transfer");const label=(m:PaymentMethod)=>t(m==="bank_transfer"?"bank":m);return <Modal title={t("recordPayment")} close={close}><p><b>{charge.students?.first_name} {charge.students?.last_name}</b></p><Field label={`${t("amount")} · ${t("remaining")}: ${money(Number(charge.amount_due)-Number(charge.amount_paid))}`} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{label(m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
 function PaymentEditModal({payment,lang,close,save}:{payment:Payment;lang:Lang;close:()=>void;save:(amount:number,method:PaymentMethod)=>void}){const t=(k:TKey)=>tx(lang,k);const [amount,setAmount]=useState(String(payment.amount));const [method,setMethod]=useState<PaymentMethod>(payment.payment_method);return <Modal title={t("editPayment")} close={close}><Field label={t("amount")} value={amount} set={setAmount} type="number"/><label>{t("method")}</label><div className="method-grid">{(["cash","bank_transfer","stripe"] as PaymentMethod[]).map(m=><button key={m} className={method===m?"method active":"method"} onClick={()=>setMethod(m)}>{t(m==="bank_transfer"?"bank":m)}</button>)}</div><div className="actions"><button className="secondary" onClick={close}>{t("cancel")}</button><button className="primary small-btn" onClick={()=>save(Number(amount),method)}>{t("save")}</button></div></Modal>}
@@ -784,7 +827,7 @@ return <div className="stack">{error&&<div className="alert">{error}</div>}
   {r.payment_status!=="paid"&&r.payment_status!=="cancelled"&&<div className="rental-method-quick"><span>Mokėjimas:</span><button className={r.payment_method==="cash"?"active":""} onClick={()=>setRentalPaymentMethod(r,"cash")}>Grynais</button><button className={r.payment_method==="bank_transfer"?"active":""} onClick={()=>setRentalPaymentMethod(r,"bank_transfer")}>Bankiniu</button><button className={r.payment_method==="stripe"?"active":""} onClick={()=>setRentalPaymentMethod(r,"stripe")}>Stripe</button></div>}
   <div className="actions">
    {r.payment_status!=="paid"&&r.payment_method==="stripe"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>startStripePayment(r)}>{t("payWithStripe")}</button>}
-   {r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="cash"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markCashPaid(r)}>{t("markPaidCash")}</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="bank_transfer"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markBankPaid(r)}>Pažymėti apmokėtą pavedimu</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_status!=="cancelled"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>waiveRentalPayment(r)}>Nemokama – mokytojas / studija</button>}{r.payment_status==="waived"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>restoreRentalPayment(r)}>Grąžinti mokėjimą</button>}
+   {r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="cash"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markCashPaid(r)}>{t("markPaidCash")}</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="bank_transfer"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markBankPaid(r)}>Pažymėti apmokėtą pavedimu</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_status!=="cancelled"&&<button className="secondary small-btn" disabled={busy===r.id} className={busy===r.id?"secondary small-btn waive-btn is-saving":"secondary small-btn waive-btn"} disabled={busy===r.id} onClick={()=>waiveRentalPayment(r)}>{busy===r.id?"Išsaugoma…":"Nemokama – mokytojas / studija"}</button>}{r.payment_status==="waived"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>restoreRentalPayment(r)}>Grąžinti mokėjimą</button>}
    <button className="secondary small-btn" disabled={busy===r.id} onClick={()=>issueInvoice(r)}>{r.saskaita123_invoice_number?t("invoiceReady"):t("issueInvoice")}</button>
    {r.saskaita123_invoice_url&&<a className="secondary small-btn" href={r.saskaita123_invoice_url} target="_blank" rel="noreferrer">{t("details")}</a>}
   </div>
