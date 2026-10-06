@@ -223,7 +223,7 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       })).size);
       setRentals(rentalRows.length);
       setGroups(gq.count??0);
-      const {data:charges}=await supabase.from("monthly_charges").select("amount_due,amount_paid");
+      const {data:charges}=await supabase.from("monthly_charges").select("amount_due,amount_paid,students!inner(is_active)").eq("students.is_active",true);
       setOutstanding((charges??[]).reduce((s:number,x:any)=>s+Math.max(0,Number(x.amount_due)-Number(x.amount_paid)),0));
       setLoading(false);
     }
@@ -271,10 +271,23 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   function create(){setDetail(null);setEditing(null);setSelectedGroups([]);setForm({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:"",payment_preference:""});setOpen(true)}
   function edit(s:Student){setDetail(null);setEditing(s);setSelectedGroups(memberships[s.id]??[]);setForm({first_name:s.first_name,last_name:s.last_name,email:s.email??"",phone:s.phone??"",date_of_birth:s.date_of_birth??"",parent_name:s.parent_name??"",parent_phone:s.parent_phone??"",parent_email:s.parent_email??"",notes:s.notes??"",payment_preference:s.payment_preference??""});setOpen(true)}
   async function deactivateStudent(s:Student){
-    if(!window.confirm(`Pašalinti klientą „${s.first_name} ${s.last_name}“ iš aktyvių klientų? Mokėjimų, rezervacijų ir lankomumo istorija liks išsaugota.`)) return;
+    if(!window.confirm(`Pašalinti klientą „${s.first_name} ${s.last_name}“ iš aktyvių klientų? Jo mokėjimų, rezervacijų ir lankomumo istorija liks išsaugota, tačiau jis nebebus įtraukiamas į aktyvių klientų ir būsimų mokėjimų skaičiavimus.`)) return;
     setError("");
-    const {error}=await supabase.from("students").update({is_active:false}).eq("id",s.id);
-    if(error){setError(error.message);return}
+    // Archive the client from all active groups, but keep the student/payment/attendance history.
+    const membershipUpdate=await supabase.from("group_students").update({is_active:false}).eq("student_id",s.id).eq("is_active",true);
+    if(membershipUpdate.error){setError(membershipUpdate.error.message);return}
+    // Current/future unpaid subscription charges must not keep this archived client in the payable queue.
+    // Paid and historical charges remain untouched for the financial history.
+    const todayMonth=currentMonth()+"-01";
+    const chargesUpdate=await supabase.from("monthly_charges")
+      .update({amount_due:0, status:"paid", adjustment_amount:0})
+      .eq("student_id",s.id)
+      .gte("month",todayMonth)
+      .eq("amount_paid",0)
+      .in("status",["unpaid","overdue"]);
+    if(chargesUpdate.error){setError(chargesUpdate.error.message);return}
+    const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
+    if(studentUpdate.error){setError(studentUpdate.error.message);return}
     setDeleting(null); setDetail(null); await load();
   }
   async function save(){
@@ -522,7 +535,12 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
       const {error:ensureError}=await supabase.rpc("ensure_monthly_charges",{p_month:selectedMonth+"-01"});
       if(ensureError){setError(ensureError.message);return;}
     }
+    const {data:activeStudentRows,error:activeStudentsError}=await supabase.from("students").select("id").eq("is_active",true);
+    if(activeStudentsError){setError(activeStudentsError.message);return}
+    const activeStudentIds=(activeStudentRows??[]).map((x:any)=>x.id);
     let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone,payment_preference),groups(name)").eq("month",selectedMonth+"-01");
+    if(!activeStudentIds.length){setCharges([]);setPayments([]);return}
+    chargeQuery=chargeQuery.in("student_id",activeStudentIds);
     if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
     const groupFilter=fixedGroupId||((selectedGroupId&&selectedGroupId!=="all")?selectedGroupId:"");
     if(groupFilter)chargeQuery=chargeQuery.eq("group_id",groupFilter);
