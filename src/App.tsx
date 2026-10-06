@@ -641,6 +641,8 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     </section>}
     
 
+    <section className="panel"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementų ir mėnesiniai mokėjimai</h2><p className="muted">Čia rodomi tik LDS mokinių / klientų abonementų mokėjimai. Pamokų rezervacijos ir nuoma rodomos atskirose skiltyse.</p></div></div></section>
+
     <section className="list">
       {charges.map(c=>{
         const left=Number(c.amount_due)-Number(c.amount_paid);
