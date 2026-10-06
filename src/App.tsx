@@ -33,11 +33,6 @@ type Payment = {
   id: string; monthly_charge_id: string; student_id: string; amount: number; payment_method: PaymentMethod;
   paid_at: string; notes: string | null; received_by: string | null;
 };
-type StripePayment = {
-  id:string; stripe_payment_id:string; amount:number; currency:string; status:string;
-  payer_name:string|null; payer_email:string|null; paid_at:string|null; payment_kind:string;
-  monthly_charge_id:string|null; rental_id:string|null; drop_in_booking_id:string|null;
-};
 type DropLesson = { id:string; group_id:string; lesson_date:string; start_time:string; end_time:string|null; price:number; capacity:number|null; is_active:boolean; groups?:{name:string}|null };
 type DropBooking = { id:string; lesson_id:string; student_id:string|null; first_name:string; last_name:string; email:string|null; phone:string|null; status:string; payment_method:PaymentMethod|null; attendance_status:AttendanceStatus|null };
 type Rental = { id:string; customer_name:string; customer_email:string|null; customer_phone:string|null; rental_type:string; starts_at:string; ends_at:string; price:number; payment_status:string; payment_method:PaymentMethod|null; stripe_checkout_session_id?:string|null; stripe_payment_status?:string|null; stripe_payment_id?:string|null; paid_at?:string|null; saskaita123_invoice_id?:string|null; saskaita123_invoice_number?:string|null; saskaita123_invoice_url?:string|null; saskaita123_synced_at?:string|null; saskaita123_invoice_error?:string|null; invoice_created_at?:string|null; notes:string|null; is_active:boolean };
@@ -468,7 +463,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){const t=(k:TKey
 function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonId:string;fixedGroupId?:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
-  const [stripeBusy,setStripeBusy]=useState(false),[paymentMethodPreset,setPaymentMethodPreset]=useState<PaymentMethod|null>(null);
+  const [paymentMethodPreset,setPaymentMethodPreset]=useState<PaymentMethod|null>(null);
   const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null),[addingMonth,setAddingMonth]=useState(false);
 
   async function loadGroups(){
@@ -512,15 +507,6 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
 
   useEffect(()=>{loadGroups()},[role,seasonId]);
   useEffect(()=>{if(fixedGroupId)setSelectedGroupId(fixedGroupId)},[fixedGroupId]);
-  async function syncStripePayments(){
-    setStripeBusy(true);setError("");
-    const {data,error:fnError}=await supabase.functions.invoke("sync-stripe-payments",{body:{days:180}});
-    if(fnError){setStripeBusy(false);setError(fnError.message||"Stripe sinchronizacija nepavyko.");return}
-    if(data?.error){setStripeBusy(false);setError(String(data.error));return}
-    await load();
-    setStripeBusy(false);
-  }
-  useEffect(()=>{if(role==="admin")syncStripePayments()},[role]);
   useEffect(()=>{load()},[selectedMonth,seasonId,selectedGroupId,fixedGroupId]);
 
   async function addMonth(){
