@@ -159,7 +159,7 @@ function App(){
   if(role==="teacher"&&!teacherProfileChosen)return <TeacherProfileChooser lang={lang} email={session.user.email||""} onContinue={()=>setTeacherProfileChosen(true)} onSignOut={()=>supabase.auth.signOut()}/>;
   const visibleNav: { id: Section; key: TKey; icon: any }[] = role==="admin" ? [...nav,{id:"reservations",key:"reservations",icon:CalendarCheck},{id:"groups",key:"groups",icon:Users},{id:"students",key:"students",icon:UserRound},{id:"teachers",key:"teachers",icon:UsersRound},{id:"rentals",key:"rentals",icon:Building2},{id:"settings",key:"settings",icon:Settings}] : nav;
   const current=visibleNav.find(n=>n.id===section)??visibleNav[0];
-  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>} {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
+  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>} {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId} role={role}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
 
 function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
@@ -527,7 +527,7 @@ function GroupDetail({group,role,lang,seasonId,close}:{group:Group;role:Role;lan
 function GroupAttendance({groupId,students,date,setDate,lang,seasonId}:{groupId:string;students:Student[];date:string;setDate:(v:string)=>void;lang:Lang;seasonId:string}){const t=(k:TKey)=>tx(lang,k);const [values,setValues]=useState<Record<string,AttendanceStatus>>({});const [error,setError]=useState("");useEffect(()=>{loadEffectiveAttendance(groupId,date).then(setValues).catch(e=>setError(e.message))},[groupId,date]);async function setStatus(id:string,status:AttendanceStatus){setError("");try{await recordAttendanceStatus(id,groupId,date,status,seasonId);setValues(v=>({...v,[id]:status}))}catch(e){setError((e as Error).message)}}return <div className="stack"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/>{error&&<div className="alert">{error}</div>}<section className="list">{students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={values[s.id]===st?`att ${st} selected`:"att"} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}</div></article>)}</section></div>}
 
 
-function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
+function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
   const t=(k:TKey)=>tx(lang,k);
   const [groups,setGroups]=useState<Group[]>([]);
   const [groupId,setGroupId]=useState("");
@@ -552,21 +552,38 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   const [manualScheduleKnown,setManualScheduleKnown]=useState(false);
   const [manualStudents,setManualStudents]=useState<Student[]>([]);
   const [manualBusy,setManualBusy]=useState(false);
+  const [teacherGroupIds,setTeacherGroupIds]=useState<string[]|null>(null);
   const [error,setError]=useState("");
 
   async function loadGroups(){
+    let allowedGroupIds:string[]|null=null;
+    if(role!=="admin"){
+      const {data:userData}=await supabase.auth.getUser();
+      const uid=userData.user?.id;
+      if(!uid){setGroups([]);setGroupId("");return}
+      const {data:teacher}=await supabase.from("teachers").select("id").eq("profile_id",uid).eq("is_active",true).maybeSingle();
+      if(!teacher){setGroups([]);setGroupId("");return}
+      const {data:assigned}=await supabase.from("group_teachers").select("group_id").eq("teacher_id",teacher.id);
+      allowedGroupIds=Array.from(new Set((assigned??[]).map((x:any)=>x.group_id)));
+      setTeacherGroupIds(allowedGroupIds);
+      if(!allowedGroupIds.length){setGroups([]);setGroupId("");return}
+    }else setTeacherGroupIds(null);
+
     let q:any=supabase.from("groups").select("*").eq("is_active",true).order("name");
     if(seasonId){
       const {data:configs}=await supabase.from("season_groups").select("group_id").eq("season_id",seasonId).eq("is_active",true);
-      const ids=(configs??[]).map(x=>x.group_id);
+      let ids=(configs??[]).map(x=>x.group_id);
+      if(allowedGroupIds)ids=ids.filter((id:string)=>allowedGroupIds!.includes(id));
       if(!ids.length){setGroups([]);setGroupId("");return}
       q=q.in("id",ids);
+    }else if(allowedGroupIds){
+      q=q.in("id",allowedGroupIds);
     }
     const {data,error:qError}=await q;
     if(qError){setError(qError.message);return}
     const rows=(data??[]) as Group[];
     setGroups(rows);
-    if(!rows.some(g=>g.id===groupId))setGroupId("");
+    if(!rows.some(g=>g.id===groupId))setGroupId(rows[0]?.id||"");
   }
 
   async function loadStudents(){
@@ -632,7 +649,19 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   }
 
   async function loadDropins(){
-    const {data:lessons}=await supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");
+    let lessonQuery:any=supabase.from("drop_in_lessons").select("*,groups(name)").eq("lesson_date",date).eq("is_active",true).order("start_time");
+    if(role!=="admin" && teacherGroupIds){
+      const {data:userData}=await supabase.auth.getUser();
+      const uid=userData.user?.id;
+      if(!uid){setDropLessons([]);setDropBookings([]);return}
+      const {data:teacher}=await supabase.from("teachers").select("id").eq("profile_id",uid).eq("is_active",true).maybeSingle();
+      if(!teacher){setDropLessons([]);setDropBookings([]);return}
+      const {data:subs}=await supabase.from("teacher_substitutions").select("group_id").eq("teacher_id",teacher.id).lte("starts_on",date).gte("ends_on",date);
+      const visibleGroups=Array.from(new Set([...teacherGroupIds,...(subs??[]).map((x:any)=>x.group_id)]));
+      if(!visibleGroups.length){setDropLessons([]);setDropBookings([]);return}
+      lessonQuery=lessonQuery.in("group_id",visibleGroups);
+    }
+    const {data:lessons}=await lessonQuery;
     const ls=(lessons??[]) as DropLesson[];
     setDropLessons(ls);
     if(!ls.length){setDropBookings([]);return}
@@ -658,7 +687,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     setDropBookings(Array.from(unique.values()));
   }
 
-  useEffect(()=>{loadGroups()},[seasonId]);
+  useEffect(()=>{loadGroups()},[seasonId,role]);
   useEffect(()=>{loadStudents()},[groupId,seasonId]);
   useEffect(()=>{loadSelectedDate();loadMonthly()},[groupId,date,month,seasonId]);
   useEffect(()=>{loadDropins()},[date]);
@@ -834,11 +863,11 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
     <section className="dropin-panel quick-dropin-panel">
       <div className="quick-dropin-head">
         <div><div className="eyebrow">VIENKARTINĖ / BANDOMOJI PAMOKA</div><h2>Pridėti mokinį per kelias sekundes</h2><p className="muted">Paspauskite, pasirinkite grupę ir datą, pasirinkite klientą arba įrašykite naują.</p></div>
-        <button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>
+        {role==="admin"&&<button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>}
       </div>
-      <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">Mokytojas matys mokinį ir tėvų kontaktus iš karto.</div></div>
+      <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">{role==="admin"?"Mokytojui priskirtas vaikas bus matomas jo profilyje.":"Čia rodomos tik Jums priskirtų grupių vienkartinės rezervacijos."}</div></div>
       {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Grupė</th><th>Laikas</th><th>Dalyviai</th></tr></thead><tbody>
-        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td><b>{l.groups?.name||"Grupė"}</b><span className="quick-date-cell">{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td></tr>})}
+        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td><b>{l.groups?.name||"Grupė"}</b><span className="quick-date-cell">{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div>{role==="admin"&&<div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div>}</div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td></tr>})}
       </tbody></table></div>:<div className="quick-empty">Šiai datai dar nėra pridėtų vienkartinių pamokų. Paspauskite „Pridėti mokinį“ ir viskas bus sukurta automatiškai.</div>}
     </section>
     <section className="panel attendance-live-panel">
