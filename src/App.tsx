@@ -718,7 +718,7 @@ async function load(){
   const {data,error}=await supabase.from("studio_rentals").select("*").eq("is_active",true).gte("starts_at",start.toISOString()).lt("starts_at",next.toISOString()).order("created_at",{ascending:false}).order("starts_at",{ascending:false});
   if(error)setError(error.message);setRows((data??[]) as Rental[])
 }
-useEffect(()=>{if(role==="admin")load()},[role]);
+useEffect(()=>{if(role==="admin")load()},[role,selectedRentalMonth]);
 function reset(){setForm({customer_name:"",email:"",phone:"",rental_type:"short_term",starts_at:"",ends_at:"",price:"",payment_method:"cash",notes:""});setOpen(true)}
 async function createRental(){
  setError("");
@@ -773,7 +773,7 @@ async function issueInvoice(r:Rental){
 }
 if(role!=="admin")return <section className="panel empty"><p>{t("groupManaged")}</p></section>;
 return <div className="stack">{error&&<div className="alert">{error}</div>}
-<div className="toolbar"><div><b>{t("rentals")}</b></div><div className="toolbar-actions"><label className="field compact-field"><span>Mėnuo</span><input type="month" value={selectedRentalMonth} onChange={e=>setSelectedRentalMonth(e.target.value)}/></label><button className="secondary" onClick={reset}><Plus size={16}/>{t("addRental")}</button></div>
+<div className="toolbar"><div><b>{t("rentals")}</b></div><div className="toolbar-actions"><label className="field compact-field"><span>Mėnuo</span><input type="month" value={selectedRentalMonth} onChange={e=>setSelectedRentalMonth(e.target.value)}/></label><button className="secondary" onClick={reset}><Plus size={16}/>{t("addRental")}</button></div></div>
 <section className="rental-payment-summary"><div><span>{new Date(`${selectedRentalMonth}-01T00:00:00`).toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</span><b>{rows.length}</b><small>rezervacijos šį mėnesį</small></div><div><span>Gauti mokėjimai</span><b>{money(rows.filter(r=>r.payment_status==="paid").reduce((s,r)=>s+Number(r.price),0))}</b><small>{rows.filter(r=>r.payment_status==="paid").length} apmokėta nuoma</small></div><div><span>Laukiama</span><b>{money(rows.filter(r=>r.payment_status==="pending").reduce((s,r)=>s+Number(r.price),0))}</b><small>{rows.filter(r=>r.payment_status==="pending").length} laukia</small></div><div><span>Nuoma iš viso</span><b>{money(rows.reduce((s,r)=>s+Number(r.price),0))}</b><small>šio mėnesio rezervacijos</small></div></section><div className="rental-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi</button><button className={paymentFilter==="cash"?"active":""} onClick={()=>setPaymentFilter("cash")}>Grynais</button><button className={paymentFilter==="bank_transfer"?"active":""} onClick={()=>setPaymentFilter("bank_transfer")}>Bankiniu</button><button className={paymentFilter==="stripe"?"active":""} onClick={()=>setPaymentFilter("stripe")}>Stripe</button></div><section className="list">{rows.filter(r=>paymentFilter==="all"||r.payment_method===paymentFilter).map(r=><article className="card rental-card" key={r.id}>
  <div style={{minWidth:0,flex:1}}><b>{r.customer_name}</b>
   <div className="rental-datetime">
