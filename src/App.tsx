@@ -831,6 +831,16 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
   const monthlyRate=monthlyMarked?Math.round((monthlyTotals.present/monthlyMarked)*100):0;
 
   return <div className="stack">
+    <section className="dropin-panel quick-dropin-panel">
+      <div className="quick-dropin-head">
+        <div><div className="eyebrow">VIENKARTINĖ / BANDOMOJI PAMOKA</div><h2>Pridėti mokinį per kelias sekundes</h2><p className="muted">Paspauskite, pasirinkite grupę ir datą, pasirinkite klientą arba įrašykite naują.</p></div>
+        <button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>
+      </div>
+      <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">Mokytojas matys mokinį ir tėvų kontaktus iš karto.</div></div>
+      {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Grupė</th><th>Laikas</th><th>Dalyviai</th></tr></thead><tbody>
+        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td><b>{l.groups?.name||"Grupė"}</b><span className="quick-date-cell">{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td></tr>})}
+      </tbody></table></div>:<div className="quick-empty">Šiai datai dar nėra pridėtų vienkartinių pamokų. Paspauskite „Pridėti mokinį“ ir viskas bus sukurta automatiškai.</div>}
+    </section>
     <section className="panel attendance-live-panel">
       <div className="panel-head"><div><div className="eyebrow">LANKOMUMAS</div><h2>Gyvas lankomumo vaizdas</h2><p className="muted">Pažymėjus mokinį, bendras rezultatas atsinaujina iš karto.</p></div></div>
       <div className="filters"><select value={groupId} onChange={e=>setGroupId(e.target.value)}><option value="">{t("chooseGroup")}</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
@@ -859,16 +869,7 @@ function Attendance({lang,seasonId}:{lang:Lang;seasonId:string}){
       {students.map(s=><article className="attendance" key={s.id}><b>{s.first_name} {s.last_name}</b><div className="attendance-actions">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button className={values[s.id]===st?"att "+st+" selected":"att"} key={st} onClick={()=>setStatus(s.id,st)}>{t(st as TKey)}</button>)}<button className={!values[s.id]?"att selected unmarked":"att unmarked"} onClick={()=>clearStatus(s.id)}>— {t("unmarked")}</button></div></article>)}
       {groupId&&!students.length&&<div className="empty">{t("noStudents")}</div>}
     </section>
-    <section className="dropin-panel quick-dropin-panel">
-      <div className="quick-dropin-head">
-        <div><div className="eyebrow">VIENKARTINĖ / BANDOMOJI PAMOKA</div><h2>Pridėti mokinį per kelias sekundes</h2><p className="muted">Paspauskite, pasirinkite grupę ir datą, pasirinkite klientą arba įrašykite naują.</p></div>
-        <button className="primary quick-add-btn" onClick={openQuickParticipant}>＋ Pridėti mokinį</button>
-      </div>
-      <div className="quick-dropin-filters"><label><span>Diena</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><div className="quick-dropin-hint">Mokytojas matys mokinį ir tėvų kontaktus iš karto.</div></div>
-      {dropLessons.length?<div className="dropin-date-table-wrap"><table className="dropin-date-table"><thead><tr><th>Grupė</th><th>Laikas</th><th>Dalyviai</th></tr></thead><tbody>
-        {dropLessons.map(l=>{const bs=dropBookings.filter(b=>b.lesson_id===l.id);return <tr key={l.id}><td><b>{l.groups?.name||"Grupė"}</b><span className="quick-date-cell">{new Date(l.lesson_date+"T12:00:00").toLocaleDateString("lt-LT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span></td><td>{l.start_time.slice(0,5)}{l.end_time?"–"+l.end_time.slice(0,5):""}</td><td><div className="dropin-table-people">{bs.length?bs.map(b=><div className="dropin-table-person" key={b.id}><div><b>{b.first_name} {b.last_name}</b><span>👤 {b.parent_email||b.email||"—"}</span><span>☎ {b.parent_phone||b.phone||"—"}</span></div><div className="mini-att">{(["present","absent","sick"] as AttendanceStatus[]).map(st=><button key={st} className={b.attendance_status===st?"mini "+st+" selected":"mini"} onClick={()=>setDrop(b.id,st)}>{t(st as TKey)}</button>)}<button className={!b.attendance_status?"mini selected":"mini"} onClick={()=>setDrop(b.id,null)}>— {t("unmarked")}</button></div></div>):<span className="muted small">Kol kas dalyvių nėra.</span>}</div></td></tr>})}
-      </tbody></table></div>:<div className="quick-empty">Šiai datai dar nėra pridėtų vienkartinių pamokų. Paspauskite „Pridėti mokinį“ ir viskas bus sukurta automatiškai.</div>}
-    </section>
+
     {manualOpen&&<Modal title="Pridėti vienkartinį / bandomąjį mokinį" close={closeQuickParticipant}>
       <div className="quick-form">
         <div className="quick-step"><span>1</span><div><b>Grupė</b><select value={manualGroupId} onChange={e=>{setManualGroupId(e.target.value);loadManualLessonPreset(e.target.value,manualDate)}}><option value="">— Pasirinkite grupę —</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></div></div>
