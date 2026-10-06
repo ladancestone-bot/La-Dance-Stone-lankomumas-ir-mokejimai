@@ -292,9 +292,21 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   }
   async function save(){
     if(!form.first_name.trim()||!form.last_name.trim())return;
+    const selectedPrice=prices.find(p=>p.id===form.billing_price_id);
+    const billingChanged=Boolean(editing && (editing.billing_price_id??"")!==(form.billing_price_id||""));
     const payload={...form,email:form.email||null,phone:form.phone||null,date_of_birth:form.date_of_birth||null,parent_name:form.parent_name||null,parent_phone:form.parent_phone||null,parent_email:form.parent_email||null,notes:form.notes||null,payment_preference:form.payment_preference||null,billing_price_id:form.billing_price_id||null};
     const r=editing?await supabase.from("students").update(payload).eq("id",editing.id).select().single():await supabase.from("students").insert(payload).select().single();
     if(r.error){setError(r.error.message);return} const id=(r.data as any).id;
+    if(editing && billingChanged){
+      const note=selectedPrice ? (Number(selectedPrice.amount)===40?"1x/week":Number(selectedPrice.amount)===50?"2x/week":"3x/week") : null;
+      const noteUpdate=await supabase.from("students").update({billing_note:note}).eq("id",id);
+      if(noteUpdate.error){setError(noteUpdate.error.message);return}
+      if(selectedPrice){
+        const chargeUpdate=await supabase.from("monthly_charges").update({price_id:selectedPrice.id,amount_due:Number(selectedPrice.amount)})
+          .eq("student_id",id).gte("month",currentMonth()+"-01").eq("amount_paid",0).in("status",["unpaid","overdue"]);
+        if(chargeUpdate.error){setError(chargeUpdate.error.message);return}
+      }
+    }
     if(seasonId){const {data:configs}=await supabase.from("season_groups").select("id,group_id").eq("season_id",seasonId).eq("is_active",true);const configMap:Record<string,string>={};(configs??[]).forEach((x:any)=>configMap[x.group_id]=x.id);await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("student_id",id);const inserts=selectedGroups.filter(gid=>configMap[gid]).map(gid=>({season_id:seasonId,season_group_id:configMap[gid],student_id:id,enrolled_on:todayISO(),is_active:true}));if(inserts.length){const ins=await supabase.from("season_enrollments").upsert(inserts,{onConflict:"season_id,season_group_id,student_id"});if(ins.error){setError(ins.error.message);return}}}
     else{await supabase.from("group_students").update({is_active:false}).eq("student_id",id);if(selectedGroups.length)await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"})}
     setOpen(false);await load()
