@@ -250,7 +250,7 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
 function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const t=(k:TKey)=>tx(lang,k);
   const [rows,setRows]=useState<Student[]>([]),[groups,setGroups]=useState<Group[]>([]),[memberships,setMemberships]=useState<Record<string,string[]>>({}),[search,setSearch]=useState(""),[category,setCategory]=useState<"all"|"children"|"adults">("all"),[selectedGroupFilter,setSelectedGroupFilter]=useState("all"),[open,setOpen]=useState(false),[detail,setDetail]=useState<Student|null>(null),[editing,setEditing]=useState<Student|null>(null),[selectedGroups,setSelectedGroups]=useState<string[]>([]),[form,setForm]=useState({first_name:"",last_name:"",email:"",phone:"",date_of_birth:"",parent_name:"",parent_phone:"",parent_email:"",notes:"",payment_preference:""}),[error,setError]=useState("");
-  const [deleting,setDeleting]=useState<Student|null>(null);
+  
   async function load(){
     const [s,g]=await Promise.all([supabase.from("students").select("*").eq("is_active",true).order("last_name"),supabase.from("groups").select("*").eq("is_active",true).order("name")]);
     if(s.error||g.error){setError((s.error||g.error)!.message);return}
@@ -288,7 +288,7 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     if(chargesUpdate.error){setError(chargesUpdate.error.message);return}
     const studentUpdate=await supabase.from("students").update({is_active:false}).eq("id",s.id);
     if(studentUpdate.error){setError(studentUpdate.error.message);return}
-    setDeleting(null); setDetail(null); await load();
+    setDetail(null); await load();
   }
   async function save(){
     if(!form.first_name.trim()||!form.last_name.trim())return;
