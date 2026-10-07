@@ -962,10 +962,8 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
 
   async function load(){
     setError("");
-    if(role==="admin"){
-      const {error:ensureError}=await supabase.rpc("ensure_monthly_charges",{p_month:selectedMonth+"-01"});
-      if(ensureError){setError(ensureError.message);return;}
-    }
+    // IMPORTANT: selecting a month must only READ that month's existing charges.
+    // Historical months must never be regenerated from today's active roster.
     const {data:activeStudentRows,error:activeStudentsError}=await supabase.from("students").select("id").eq("is_active",true);
     if(activeStudentsError){setError(activeStudentsError.message);return}
     const activeStudentIds=(activeStudentRows??[]).map((x:any)=>x.id);
@@ -989,6 +987,11 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   async function addMonth(){
     if(!selectedMonth)return;
     setAddingMonth(true);
+    setError("");
+    if(role==="admin"){
+      const {error:ensureError}=await supabase.rpc("ensure_monthly_charges",{p_month:selectedMonth+"-01"});
+      if(ensureError){setError(ensureError.message);setAddingMonth(false);return;}
+    }
     await load();
     setAddingMonth(false);
   }
@@ -1084,7 +1087,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     <div className="card payment-filters">
       {!fixedGroupId&&<label className="field"><span>Grupė</span><select value={selectedGroupId} onChange={e=>setSelectedGroupId(e.target.value)}><option value="all">Visos grupės</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
       <label className="field"><span>Mėnuo</span><input type="month" value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}/></label>
-      {role==="admin"&&!fixedGroupId&&<button className="primary month-add-btn" onClick={addMonth} disabled={addingMonth}>{addingMonth?"Kuriama…":"＋ Pridėti mėnesį"}</button>}
+      {role==="admin"&&!fixedGroupId&&<button className="primary month-add-btn" onClick={addMonth} disabled={addingMonth}>{addingMonth?"Kuriama…":"＋ Sukurti mėnesio mokėjimus"}</button>}
     </div>
 
     {role==="admin"&&<section className="payment-summary">
