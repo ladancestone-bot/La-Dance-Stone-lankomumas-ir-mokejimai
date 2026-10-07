@@ -936,7 +936,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   const t=(k:TKey)=>tx(lang,k);
   const [charges,setCharges]=useState<Charge[]>([]),[payments,setPayments]=useState<Payment[]>([]),[groups,setGroups]=useState<Group[]>([]);
   const [paymentMethodPreset,setPaymentMethodPreset]=useState<PaymentMethod|null>(null),[paymentFilter,setPaymentFilter]=useState<"all"|"paid"|"unpaid">("all");
-  const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth()),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null),[addingMonth,setAddingMonth]=useState(false);
+  const [selectedGroupId,setSelectedGroupId]=useState(fixedGroupId||"all"),[paymentView,setPaymentView]=useState<"groups"|"all">(fixedGroupId?"all":"groups"),[error,setError]=useState(""),[paymentCharge,setPaymentCharge]=useState<Charge|null>(null),[editing,setEditing]=useState<Payment|null>(null),[showHistory,setShowHistory]=useState<Record<string,boolean>>({}),[selectedMonth,setSelectedMonth]=useState(currentMonth()),[invoiceBusy,setInvoiceBusy]=useState<string|null>(null),[addingMonth,setAddingMonth]=useState(false);
 
   async function loadGroups(){
     let list:Group[]=[];
@@ -1075,25 +1075,47 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
   const bankTotal=payments.filter(p=>p.payment_method==="bank_transfer").reduce((s,p)=>s+Number(p.amount),0);
   const cardTotal=payments.filter(p=>p.payment_method==="stripe").reduce((s,p)=>s+Number(p.amount),0);
   const paidCount=charges.filter(c=>Number(c.amount_paid)>=Number(c.amount_due)).length;
+  const groupPaymentCards=groups.map(g=>{
+    const rows=charges.filter(c=>c.group_id===g.id);
+    if(!rows.length)return null;
+    const due=rows.reduce((s,c)=>s+Number(c.amount_due),0);
+    const paid=rows.reduce((s,c)=>s+Number(c.amount_paid),0);
+    const paidClients=rows.filter(c=>Number(c.amount_paid)>=Number(c.amount_due)).length;
+    return {group:g,rows,due,paid,remaining:Math.max(0,due-paid),paidClients};
+  }).filter(Boolean) as {group:Group;rows:Charge[];due:number;paid:number;remaining:number;paidClients:number}[];
   function openPayment(c:Charge,method?:PaymentMethod){setPaymentMethodPreset(method??null);setPaymentCharge(c);}
+  function openGroup(groupId:string){setSelectedGroupId(groupId);setPaymentFilter("all");setPaymentView("all");}
 
   return <div className="stack">
     {BILLING_TEST_MODE&&<div className="alert">🛡️ {t("billingTest")}</div>}
     {error&&<div className="alert">{error}</div>}
     {role==="admin"&&<div className="muted">Stripe / grynieji / bankiniai pavedimai / Sąskaita123 – nuomos mokėjimai valdomi skiltyje „Nuoma“.</div>}
     <div className="card payment-filters">
-      {!fixedGroupId&&<label className="field"><span>Grupė</span><select value={selectedGroupId} onChange={e=>setSelectedGroupId(e.target.value)}><option value="all">Visos grupės</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
+      {!fixedGroupId&&<div className="payment-view-switch">
+        <button className={paymentView==="groups"?"active":""} onClick={()=>{setPaymentView("groups");setSelectedGroupId("all")}}><Users size={16}/> Grupės</button>
+        <button className={paymentView==="all"?"active":""} onClick={()=>{setPaymentView("all");setSelectedGroupId("all")}}><CreditCard size={16}/> Visi mokėjimai</button>
+      </div>}
       <label className="field"><span>Mėnuo</span><input type="month" value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)}/></label>
       {role==="admin"&&!fixedGroupId&&<button className="primary month-add-btn" onClick={addMonth} disabled={addingMonth}>{addingMonth?"Kuriama…":"＋ Sukurti mėnesio mokėjimus"}</button>}
     </div>
-
-    {role==="admin"&&<section className="payment-summary">
+    {!fixedGroupId&&paymentView==="groups"&&<section className="payment-groups-grid">
+      {groupPaymentCards.map(({group,rows,due,paid,remaining,paidClients})=><button className="payment-group-card" key={group.id} onClick={()=>openGroup(group.id)}>
+        <div className="payment-group-card-top"><span className="payment-group-icon"><Users size={19}/></span><ChevronRight size={18}/></div>
+        <div className="payment-group-name">{group.name}</div>
+        <div className="payment-group-meta">{rows.length} klientai · {paidClients} apmokėti</div>
+        <div className="payment-group-money"><span><small>Gauta</small><b>{money(paid)}</b></span><span><small>Liko</small><b>{money(remaining)}</b></span></div>
+        <div className="payment-group-progress"><span style={{width:(due?Math.min(100,(paid/due)*100):0)+"%"}}/></div>
+      </button>)}
+      {!groupPaymentCards.length&&<div className="empty">Šį mėnesį grupių mokėjimų nėra.</div>}
+    </section>}
+    {paymentView==="all"&&<div className="payment-current-group">{selectedGroupId!=="all"&&!fixedGroupId&&<button className="ghost-link" onClick={()=>{setSelectedGroupId("all");setPaymentView("groups")}}><ChevronRight size={14} style={{transform:"rotate(180deg)"}}/> Visos grupės</button>}<b>{selectedGroupId!=="all" ? (groups.find(g=>g.id===selectedGroupId)?.name||"Grupės mokėjimai") : "Visi mokėjimai"}</b></div>}
+    {paymentView==="all"&&role==="admin"&&<section className="payment-summary">
       <div className="summary-card"><span>Klientai</span><b>{charges.length}</b></div>
       <div className="summary-card"><span>Apmokėta</span><b>{money(totalPaid)}</b></div>
       <div className="summary-card"><span>Liko</span><b>{money(totalRemaining)}</b></div>
       <div className="summary-card"><span>Statusas</span><b>{paidCount}/{charges.length}</b></div>
     </section>}
-    {role==="admin"&&<section className="payment-summary">
+    {paymentView==="all"&&role==="admin"&&<section className="payment-summary">
       <div className="summary-card"><span>💵 {t("cashTotal")}</span><b>{money(cashTotal)}</b></div>
       <div className="summary-card"><span>🏦 {t("bankTotal")}</span><b>{money(bankTotal)}</b></div>
       <div className="summary-card"><span>💳 {t("cardTotal")}</span><b>{money(cardTotal)}</b></div>
@@ -1101,9 +1123,9 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     </section>}
     
 
-    <section className="panel monthly-payments-head"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementai · pasirinktas mėnuo</h2><p className="muted">Rodomi tik <b>{new Date(selectedMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</b> mėnesio abonementų mokėjimai. Čia aiškiai matysite, kas jau susimokėjo ir kam dar liko.</p></div></div><div className="monthly-payment-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi <span>{charges.length}</span></button><button className={paymentFilter==="paid"?"active":""} onClick={()=>setPaymentFilter("paid")}>✓ Apmokėti <span>{paidCount}</span></button><button className={paymentFilter==="unpaid"?"active":""} onClick={()=>setPaymentFilter("unpaid")}>○ Neapmokėti <span>{charges.length-paidCount}</span></button></div></section><PaymentHistory role={role} month={selectedMonth}/>
+    {paymentView==="all"&&<section className="panel monthly-payments-head"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementai · pasirinktas mėnuo</h2><p className="muted">Rodomi tik <b>{new Date(selectedMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</b> mėnesio abonementų mokėjimai. Čia aiškiai matysite, kas jau susimokėjo ir kam dar liko.</p></div></div><div className="monthly-payment-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi <span>{charges.length}</span></button><button className={paymentFilter==="paid"?"active":""} onClick={()=>setPaymentFilter("paid")}>✓ Apmokėti <span>{paidCount}</span></button><button className={paymentFilter==="unpaid"?"active":""} onClick={()=>setPaymentFilter("unpaid")}>○ Neapmokėti <span>{charges.length-paidCount}</span></button></div></section><PaymentHistory role={role} month={selectedMonth}/>
 
-    <section className="list">
+    {paymentView==="all"&&    <section className="list">
       {charges.filter(c=>paymentFilter==="all"||(paymentFilter==="paid"&&Number(c.amount_paid)>=Number(c.amount_due))||(paymentFilter==="unpaid"&&Number(c.amount_paid)<Number(c.amount_due))).map(c=>{
         const left=Number(c.amount_due)-Number(c.amount_paid);
         const history=payments.filter(p=>p.monthly_charge_id===c.id);
@@ -1133,7 +1155,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
       })}
       {!charges.length&&<div className="empty">{t("noCharges")}</div>}{charges.length>0&&!charges.some(c=>paymentFilter==="all"||(paymentFilter==="paid"&&Number(c.amount_paid)>=Number(c.amount_due))||(paymentFilter==="unpaid"&&Number(c.amount_paid)<Number(c.amount_due)))&&<div className="empty">Šiame filtre mokėjimų nėra.</div>}
     </section>
-    {role==="teacher"&&<p className="muted small">{t("teacherFinanceNote")}</p>}
+}    {role==="teacher"&&<p className="muted small">{t("teacherFinanceNote")}</p>}
     {paymentCharge&&<PaymentModal charge={paymentCharge} lang={lang} preferredMethod={paymentMethodPreset??undefined} close={()=>{setPaymentCharge(null);setPaymentMethodPreset(null)}} save={savePayment}/>}
     {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
   </div>
