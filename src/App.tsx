@@ -966,7 +966,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     // actually exist for that month; never filter them by today's active roster.
     // A student can leave the studio later and must still remain visible in
     // the month in which the charge was created.
-    let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone,payment_preference),groups(name)").eq("month",selectedMonth+"-01");
+    let chargeQuery:any=supabase.from("monthly_charges").select("*,students(first_name,last_name,email,phone,parent_email,parent_phone,payment_preference),groups(name)").eq("month",selectedMonth+"-01").eq("source_active",true);
     if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
     const groupFilter=fixedGroupId||((selectedGroupId&&selectedGroupId!=="all")?selectedGroupId:"");
     if(groupFilter)chargeQuery=chargeQuery.eq("group_id",groupFilter);
