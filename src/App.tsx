@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck, CreditCard, LayoutDashboard, LogOut, Plus, Settings,
   UserRound, Users, UsersRound, X, Building2, UserPlus, ChevronRight,
-  Pencil, Trash2, History, Languages
+  Pencil, Trash2, History, Languages, Camera
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import SeasonManagement from "./SeasonManagement";
 
 type Role = "admin" | "teacher";
 type Lang = "lt" | "en" | "es";
-type Section = "dashboard" | "schedule" | "attendance" | "payments" | "reservations" | "students" | "groups" | "teachers" | "rentals" | "settings";
+type Section = "dashboard" | "profile" | "schedule" | "attendance" | "payments" | "reservations" | "students" | "groups" | "teachers" | "rentals" | "settings";
 type AttendanceStatus = "present" | "absent" | "sick";
 type PaymentMethod = "cash" | "bank_transfer" | "stripe";
 // Keep billing in safe mode until invoice/payment reconciliation is fully verified.
@@ -40,7 +40,7 @@ type Rental = { id:string; customer_name:string; customer_email:string|null; cus
 type TKey = keyof typeof translations.en;
 const translations = {
   en: {
-    dashboard:"Overview", schedule:"Schedule", students:"Students", groups:"Groups", attendance:"Attendance", payments:"Payments", reservations:"Lesson reservations", teachers:"Teachers", rentals:"Rentals", settings:"Settings",
+    dashboard:"Overview", profile:"My profile", schedule:"Schedule", students:"Students", groups:"Groups", attendance:"Attendance", payments:"Payments", reservations:"Lesson reservations", teachers:"Teachers", rentals:"Rentals", settings:"Settings",
     studioManagement:"STUDIO MANAGEMENT", privateAccess:"Private access for La Dance Stone administrators and teachers.", signIn:"Send secure sign-in link", email:"Email", accessPending:"Access pending", noRole:"Your account is authenticated but has no studio role yet.", signOut:"Sign out",
     activeStudents:"Active students", activeGroups:"Active groups", outstanding:"Outstanding", today:"Today's classes will appear here when the schedule is connected.",
     searchStudents:"Search students…", addStudent:"Add student", edit:"Edit", save:"Save", cancel:"Cancel", firstName:"First name", lastName:"Last name", phone:"Phone", dob:"Date of birth", parentName:"Parent name", parentPhone:"Parent phone", parentEmail:"Parent email", notes:"Notes", noContact:"No contact", noGroup:"No group assigned", selectGroups:"Select groups",
@@ -53,7 +53,7 @@ const translations = {
     rentalPayment:"Rental payment", payWithStripe:"Pay with Stripe", markPaidCash:"Mark paid in cash", issueInvoice:"Issue invoice", invoiceNumber:"Invoice", stripeReceipt:"Stripe receipt", invoiceError:"Invoice error", openPayment:"Open payment", paymentReceived:"Payment received", invoiceReady:"Invoice issued", notIssued:"Not issued", paidAt:"Paid at", emailRequired:"Customer email is required for Stripe payment",
   },
   lt: {
-    dashboard:"Apžvalga", schedule:"Grafikas", students:"Mokiniai", groups:"Grupės", attendance:"Lankomumas", payments:"Mokėjimai", reservations:"Pamokų rezervacijos", teachers:"Mokytojai", rentals:"Nuoma", settings:"Nustatymai",
+    dashboard:"Apžvalga", profile:"Mano profilis", schedule:"Grafikas", students:"Mokiniai", groups:"Grupės", attendance:"Lankomumas", payments:"Mokėjimai", reservations:"Pamokų rezervacijos", teachers:"Mokytojai", rentals:"Nuoma", settings:"Nustatymai",
     studioManagement:"STUDIJOS VALDYMAS", privateAccess:"Privati prieiga La Dance Stone administratoriams ir mokytojams.", signIn:"Siųsti saugią prisijungimo nuorodą", email:"El. paštas", accessPending:"Prieiga laukiama", noRole:"Paskyra patvirtinta, tačiau jai dar nepriskirta studijos rolė.", signOut:"Atsijungti",
     activeStudents:"Aktyvūs mokiniai", activeGroups:"Aktyvios grupės", outstanding:"Neapmokėta", today:"Šiandienos pamokos bus rodomos, kai bus prijungtas tvarkaraštis.",
     searchStudents:"Ieškoti mokinių…", addStudent:"Pridėti mokinį", edit:"Redaguoti", save:"Išsaugoti", cancel:"Atšaukti", firstName:"Vardas", lastName:"Pavardė", phone:"Telefonas", dob:"Gimimo data", parentName:"Tėvų vardas", parentPhone:"Tėvų telefonas", parentEmail:"Tėvų el. paštas", notes:"Pastabos", noContact:"Nėra kontaktų", noGroup:"Grupė nepriskirta", selectGroups:"Pasirinkite grupes",
@@ -151,16 +151,17 @@ function App(){
   useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
   useEffect(()=>{setTeacherProfileChosen(false);if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
   useEffect(()=>{if(!role){setSeasons([]);setSeasonId("");return}supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data,error})=>{if(error){setSeasons([]);return}const items=(data??[]) as Array<{id:string;name:string}>;setSeasons(items);setSeasonId(current=>items.some(s=>s.id===current)?current:"")})},[role]);
-  useEffect(()=>{if(role==="teacher"&&["students","teachers","rentals","reservations"].includes(section))setSection("dashboard")},[role,section]);
-  useEffect(()=>{const handler=(e:Event)=>{const detail=(e as CustomEvent).detail as Section;if(["dashboard","schedule","attendance","payments"].includes(detail))setSection(detail)};window.addEventListener("lds-go-section",handler);return()=>window.removeEventListener("lds-go-section",handler)},[]);
+  useEffect(()=>{if(role==="teacher"&&section==="dashboard")setSection("profile");if(role==="admin"&&section==="profile")setSection("dashboard")},[role]);
+  useEffect(()=>{const handler=(e:Event)=>{const detail=(e as CustomEvent).detail as Section;if(["dashboard","profile","schedule","attendance","payments"].includes(detail))setSection(detail)};window.addEventListener("lds-go-section",handler);return()=>window.removeEventListener("lds-go-section",handler)},[]);
   useEffect(()=>{if(role==="admin")supabase.functions.invoke("sync-stripe-payments")},[role]);
   async function login(){setMessage("");const {error}=await supabase.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:window.location.origin}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."))}
   if(!session)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS</div><h1>{lang==="lt"?"Studijos valdymas vienoje vietoje.":lang==="es"?"Gestión del estudio en un solo lugar.":"Studio management, in one place."}</h1><p>{t("privateAccess")}</p><label>{t("email")}</label><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="you@example.com"/><button className="primary" onClick={login} disabled={!email}>{t("signIn")}</button>{message&&<div className="message">{message}</div>}<div className="language-mini"><Languages size={14}/><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></div></section></main>;
   if(!role)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><h1>{t("accessPending")}</h1><p>{t("noRole")}</p><button className="primary" onClick={()=>supabase.auth.signOut()}>{t("signOut")}</button></section></main>;
-  if(role==="teacher"&&!teacherProfileChosen)return <TeacherProfileChooser lang={lang} email={session.user.email||""} onContinue={()=>setTeacherProfileChosen(true)} onSignOut={()=>supabase.auth.signOut()}/>;
-  const visibleNav: { id: Section; key: TKey; icon: any }[] = role==="admin" ? [...nav,{id:"reservations",key:"reservations",icon:CalendarCheck},{id:"groups",key:"groups",icon:Users},{id:"students",key:"students",icon:UserRound},{id:"teachers",key:"teachers",icon:UsersRound},{id:"rentals",key:"rentals",icon:Building2},{id:"settings",key:"settings",icon:Settings}] : nav;
+  if(role==="teacher"&&section==="dashboard")setSection("profile");
+  const teacherNav: { id: Section; key: TKey; icon: any }[] = [{id:"profile",key:"profile",icon:UserRound},{id:"schedule",key:"schedule",icon:CalendarCheck},{id:"attendance",key:"attendance",icon:UsersRound},{id:"payments",key:"payments",icon:CreditCard}];
+  const visibleNav: { id: Section; key: TKey; icon: any }[] = role==="admin" ? [...nav,{id:"reservations",key:"reservations",icon:CalendarCheck},{id:"groups",key:"groups",icon:Users},{id:"students",key:"students",icon:UserRound},{id:"teachers",key:"teachers",icon:UsersRound},{id:"rentals",key:"rentals",icon:Building2},{id:"settings",key:"settings",icon:Settings}] : teacherNav;
   const current=visibleNav.find(n=>n.id===section)??visibleNav[0];
-  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>} {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId} role={role}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
+  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="profile"&&role==="teacher"&&<TeacherProfile lang={lang} session={session}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>}  {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId} role={role}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
 
 function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
@@ -204,6 +205,75 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
 
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
+function TeacherProfile({lang,session}:{lang:Lang;session:any}){
+  const [profile,setProfile]=useState<any>(null);
+  const [teacher,setTeacher]=useState<any>(null);
+  const [groups,setGroups]=useState<string[]>([]);
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState({first_name:"",last_name:"",phone:"",bio:"",specialization:"",avatar_url:""});
+  const [saving,setSaving]=useState(false);
+  const [uploading,setUploading]=useState(false);
+  const [error,setError]=useState("");
+  async function load(){
+    const uid=session?.user?.id;
+    if(!uid)return;
+    const [p,t]=await Promise.all([
+      supabase.from("profiles").select("id,first_name,last_name,email,phone,avatar_url,bio,specialization").eq("id",uid).maybeSingle(),
+      supabase.from("teachers").select("id").eq("profile_id",uid).eq("is_active",true).maybeSingle()
+    ]);
+    if(p.error||t.error){setError((p.error||t.error)?.message||"Nepavyko įkelti profilio");return}
+    setProfile(p.data);
+    setTeacher(t.data);
+    setForm({first_name:p.data?.first_name||"",last_name:p.data?.last_name||"",phone:p.data?.phone||"",bio:p.data?.bio||"",specialization:p.data?.specialization||"",avatar_url:p.data?.avatar_url||""});
+    if(t.data?.id){
+      const {data:g}=await supabase.from("group_teachers").select("groups(name)").eq("teacher_id",t.data.id);
+      setGroups((g??[]).map((x:any)=>x.groups?.name).filter(Boolean));
+    }
+  }
+  useEffect(()=>{load()},[session?.user?.id]);
+  async function save(){
+    if(!session?.user?.id)return;
+    setSaving(true);setError("");
+    const {data,error:e}=await supabase.from("profiles").update({first_name:form.first_name.trim(),last_name:form.last_name.trim(),phone:form.phone.trim()||null,bio:form.bio.trim()||null,specialization:form.specialization.trim()||null,avatar_url:form.avatar_url.trim()||null}).eq("id",session.user.id).select("id,first_name,last_name,email,phone,avatar_url,bio,specialization").single();
+    if(e)setError(e.message);else{setProfile(data);setEditing(false)}
+    setSaving(false);
+  }
+  async function uploadPhoto(file:File){
+    if(!session?.user?.id)return;
+    if(!file.type.startsWith("image/")){setError("Pasirinkite nuotrauką.");return}
+    if(file.size>5*1024*1024){setError("Nuotrauka turi būti iki 5 MB.");return}
+    setUploading(true);setError("");
+    const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+    const path=session.user.id+"/avatar-"+Date.now()+"."+ext;
+    const {error:e}=await supabase.storage.from("teacher-profiles").upload(path,file,{upsert:true,contentType:file.type});
+    if(e){setError(e.message);setUploading(false);return}
+    const {data:urlData}=supabase.storage.from("teacher-profiles").getPublicUrl(path);
+    const {error:ue}=await supabase.from("profiles").update({avatar_url:urlData.publicUrl}).eq("id",session.user.id);
+    if(ue)setError(ue.message);else{setForm(v=>({...v,avatar_url:urlData.publicUrl}));setProfile((v:any)=>({...v,avatar_url:urlData.publicUrl}))}
+    setUploading(false);
+  }
+  const name=String(profile?.first_name||"")+" "+String(profile?.last_name||"");
+  const initials=name.trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase()||"?";
+  return <div className="stack">
+    {error&&<div className="alert">{error}</div>}
+    <section className="panel teacher-profile-panel">
+      <div className="teacher-profile-hero">
+        <div className="teacher-avatar-wrap">{profile?.avatar_url?<img src={profile.avatar_url} alt="Profilio nuotrauka" className="teacher-avatar-img"/>:<div className="teacher-avatar-placeholder">{initials}</div>}<label className="teacher-avatar-upload" title="Pakeisti nuotrauką"><Camera size={15}/><input type="file" accept="image/*" onChange={e=>e.target.files?.[0]&&uploadPhoto(e.target.files[0])}/></label></div>
+        <div className="teacher-profile-title"><div className="eyebrow">MANO PROFILIS</div><h2>{name.trim()||"Mokytojas"}</h2><p>{profile?.email||session?.user?.email||"—"}</p>{groups.length>0&&<span>Jūsų grupės: {groups.join(" · ")}</span>}</div>
+        <button className="secondary" onClick={()=>setEditing(v=>!v)}>{editing?"Atšaukti":"✎ Redaguoti"}</button>
+      </div>
+      {editing?<div className="form-grid teacher-profile-form">
+        <label className="field"><span>Vardas</span><input value={form.first_name} onChange={e=>setForm(v=>({...v,first_name:e.target.value}))}/></label>
+        <label className="field"><span>Pavardė</span><input value={form.last_name} onChange={e=>setForm(v=>({...v,last_name:e.target.value}))}/></label>
+        <label className="field"><span>Telefonas</span><input value={form.phone} onChange={e=>setForm(v=>({...v,phone:e.target.value}))}/></label>
+        <label className="field"><span>Specializacija</span><input value={form.specialization} onChange={e=>setForm(v=>({...v,specialization:e.target.value}))} placeholder="Pvz. Contemporary, Lady Šoka"/></label>
+        <label className="field" style={{gridColumn:"1/-1"}}><span>Apie mane</span><textarea value={form.bio} onChange={e=>setForm(v=>({...v,bio:e.target.value}))} rows={4} placeholder="Trumpai apie save, patirtį, šokio kryptis…"/></label>
+        <div className="profile-actions"><button className="primary" onClick={save} disabled={saving}>{saving?"Saugoma…":"Išsaugoti profilį"}</button></div>
+      </div>:<div className="teacher-profile-info"><div><span>Telefonas</span><b>{profile?.phone||"Nenurodytas"}</b></div><div><span>Specializacija</span><b>{profile?.specialization||"Nenurodyta"}</b></div><div className="teacher-profile-bio"><span>Apie mane</span><p>{profile?.bio||"Čia galite trumpai parašyti apie save, savo patirtį ir šokio kryptis."}</p></div></div>}
+      {uploading&&<div className="muted">Įkeliama nuotrauka…</div>}
+    </section>
+  </div>
+}
 function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const [monthlyClients,setMonthlyClients]=useState(0),[oneOffClients,setOneOffClients]=useState(0),[oneOffBookings,setOneOffBookings]=useState(0),[rentalClients,setRentalClients]=useState(0),[rentals,setRentals]=useState(0),[groups,setGroups]=useState(0),[totalDue,setTotalDue]=useState(0),[totalPaid,setTotalPaid]=useState(0),[outstanding,setOutstanding]=useState(0),[loading,setLoading]=useState(true);
   const [dashboardMonth,setDashboardMonth]=useState(currentMonth());
