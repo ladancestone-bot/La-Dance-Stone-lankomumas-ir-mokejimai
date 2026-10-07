@@ -252,13 +252,10 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
         supabase.from("studio_rentals").select("id,customer_name,email,phone").eq("is_active",true)
       ]);
       let monthly=0;
-      if(seasonId){
-        const {data}=await supabase.from("season_enrollments").select("student_id").eq("season_id",seasonId).eq("is_active",true);
-        monthly=new Set((data??[]).map((x:any)=>x.student_id).filter(Boolean)).size;
-      }else{
-        const {data}=await supabase.from("group_students").select("student_id").eq("is_active",true);
-        monthly=new Set((data??[]).map((x:any)=>x.student_id).filter(Boolean)).size;
-      }
+      let monthChargeQuery:any=supabase.from("monthly_charges").select("student_id").eq("month",dashboardMonth+"-01").eq("source_active",true);
+      if(seasonId)monthChargeQuery=monthChargeQuery.eq("season_id",seasonId);
+      const {data:monthChargeRows}=await monthChargeQuery;
+      monthly=new Set((monthChargeRows??[]).map((x:any)=>x.student_id).filter(Boolean)).size;
       const oneOffRows=oq.data??[];
       const rentalRows=rq.data??[];
       if(!alive)return;
