@@ -1104,7 +1104,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     <section className="panel monthly-payments-head"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementai · pasirinktas mėnuo</h2><p className="muted">Rodomi tik <b>{new Date(selectedMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</b> mėnesio abonementų mokėjimai. Čia aiškiai matysite, kas jau susimokėjo ir kam dar liko.</p></div></div><div className="monthly-payment-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi <span>{charges.length}</span></button><button className={paymentFilter==="paid"?"active":""} onClick={()=>setPaymentFilter("paid")}>✓ Apmokėti <span>{paidCount}</span></button><button className={paymentFilter==="unpaid"?"active":""} onClick={()=>setPaymentFilter("unpaid")}>○ Neapmokėti <span>{charges.length-paidCount}</span></button></div></section><PaymentHistory role={role} month={selectedMonth}/>
 
     <section className="list">
-      {charges.map(c=>{
+      {charges.filter(c=>paymentFilter==="all"||(paymentFilter==="paid"&&Number(c.amount_paid)>=Number(c.amount_due))||(paymentFilter==="unpaid"&&Number(c.amount_paid)<Number(c.amount_due))).map(c=>{
         const left=Number(c.amount_due)-Number(c.amount_paid);
         const history=payments.filter(p=>p.monthly_charge_id===c.id);
         const invoiceId=c.saskaita123_invoice_id||c.invoice123_id;
@@ -1112,7 +1112,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
         const invoiceUrl=c.saskaita123_invoice_url||c.invoice123_url;
         return <article className="card payment-card" key={c.id}>
           <div>
-            <b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b>
+            <div className="payment-client-title"><b>{c.students?`${c.students.first_name} ${c.students.last_name}`:"Student"}</b><span className={`payment-status-badge ${left<=0?"paid":"unpaid"}`}>{left<=0?"✓ Apmokėta":"○ Neapmokėta"}</span></div>
             <span>{c.groups?.name||"Studio"} · Mokėjimo mėnuo: {new Date(c.month+"T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</span><span>Mokėjimo terminas: {c.due_date}</span>
             <span>{t("price")}: {money(Number(c.amount_due))}</span>
             <span>{t("paid")}: {money(Number(c.amount_paid))}{history.length?` · ${history.map(p=>p.payment_method==="cash"?"Grynais":p.payment_method==="bank_transfer"?"Bankiniu":"Kortele").join(", ")}`:""}</span>
