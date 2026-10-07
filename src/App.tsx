@@ -1373,6 +1373,130 @@ return <div className="stack">{error&&<div className="alert">{error}</div>}
  <div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" disabled={busy==="create"} onClick={createRental}>{form.payment_method==="stripe"?t("payWithStripe"):t("saveRental")}</button></div>
 </Modal>}</div>}
 
+function Rentals({role,lang}:{role:Role;lang:Lang}){const t=(k:TKey)=>tx(lang,k);
+const [rows,setRows]=useState<Rental[]>([]),[open,setOpen]=useState(false),[busy,setBusy]=useState<string|null>(null),[waivedFlash,setWaivedFlash]=useState<string|null>(null),[error,setError]=useState(""),[paymentFilter,setPaymentFilter]=useState<"all"|"cash"|"bank_transfer"|"stripe">("all"),[selectedRentalMonth,setSelectedRentalMonth]=useState(currentMonth());
+const [form,setForm]=useState({customer_name:"",email:"",phone:"",rental_type:"short_term",starts_at:"",ends_at:"",price:"",payment_method:"cash" as PaymentMethod,notes:""});
+async function load(){
+  const start=new Date(`${selectedRentalMonth}-01T00:00:00`);
+  const next=new Date(start.getFullYear(),start.getMonth()+1,1);
+  const {data,error}=await supabase.from("studio_rentals").select("*").eq("is_active",true).gte("starts_at",start.toISOString()).lt("starts_at",next.toISOString()).order("created_at",{ascending:false}).order("starts_at",{ascending:false});
+  if(error)setError(error.message);setRows((data??[]) as Rental[])
+}
+useEffect(()=>{if(role==="admin")load()},[role,selectedRentalMonth]);
+function reset(){setForm({customer_name:"",email:"",phone:"",rental_type:"short_term",starts_at:"",ends_at:"",price:"",payment_method:"cash",notes:""});setOpen(true)}
+async function createRental(){
+ setError("");
+ if(!form.customer_name||!form.starts_at||!form.ends_at||!Number(form.price))return setError("Įveskite klientą, laiką ir kainą.");
+ if(form.payment_method==="stripe"&&!form.email.trim())return setError(t("emailRequired"));
+ setBusy("create");
+ const {data,error}=await supabase.from("studio_rentals").insert({
+  customer_name:form.customer_name,customer_email:form.email.trim()||null,customer_phone:form.phone.trim()||null,rental_type:form.rental_type,
+  starts_at:new Date(form.starts_at).toISOString(),ends_at:new Date(form.ends_at).toISOString(),reserved_at:new Date().toISOString(),price:Number(form.price),
+  payment_status:"pending",payment_method:form.payment_method,notes:form.notes.trim()||null
+ }).select("*").single();
+ if(error){setBusy(null);return setError(error.message)}
+ setOpen(false);await load();
+ if(form.payment_method==="stripe")await startStripePayment(data as Rental);
+ setBusy(null);
+}
+async function startStripePayment(r:Rental){
+ setBusy(r.id);setError("");
+ const {data,error}=await supabase.functions.invoke("stripe-checkout",{body:{payment_kind:"rental",rental_id:r.id,payer:{email:r.customer_email,full_name:r.customer_name,phone:r.customer_phone},success_url:window.location.origin+"/?rental_payment=success",cancel_url:window.location.origin+"/?rental_payment=cancelled"}});
+ if(error||!data?.checkout_url){setBusy(null);return setError(error?.message||data?.error||"Stripe mokėjimo nuoroda nesukurta.");}
+ window.open(data.checkout_url,"_blank","noopener,noreferrer");setBusy(null);
+}
+async function markCashPaid(r:Rental){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({payment_status:"paid",payment_method:"cash",stripe_payment_status:null,paid_at:new Date().toISOString()}).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();
+ setBusy(null);
+}
+async function markBankPaid(r:Rental){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({payment_status:"paid",payment_method:"bank_transfer",stripe_payment_status:null,paid_at:new Date().toISOString()}).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();setBusy(null);
+}
+async function waiveRentalPayment(r:Rental){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({
+  payment_status:"waived",payment_method:null,stripe_payment_id:null,stripe_payment_status:null,paid_at:null,
+  notes:[r.notes,"Nemokama darbuotojo / mokytojo rezervacija"].filter(Boolean).join(" · ")
+ }).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();setWaivedFlash(r.id);window.setTimeout(()=>setWaivedFlash(null),1400);setBusy(null);
+}
+async function restoreRentalPayment(r:Rental){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({
+  payment_status:"pending",payment_method:null,stripe_payment_id:null,stripe_payment_status:null,paid_at:null
+ }).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();setBusy(null);
+}
+async function setRentalPaymentMethod(r:Rental,method:PaymentMethod){
+ setBusy(r.id);setError("");
+ const {error}=await supabase.from("studio_rentals").update({payment_method:method,stripe_payment_status:method==="stripe"?r.stripe_payment_status:null}).eq("id",r.id);
+ if(error){setBusy(null);return setError(error.message)}
+ await load();setBusy(null);
+ if(method==="stripe"){
+  const latest=(await supabase.from("studio_rentals").select("*").eq("id",r.id).single()).data as Rental|null;
+  if(latest)await startStripePayment(latest);
+ }
+}
+
+async function issueInvoice(r:Rental){
+ setBusy(r.id);setError("");
+ const {data,error}=await supabase.functions.invoke("create-rental-saskaita123-invoice",{body:{rental_id:r.id}});
+ if(error||data?.error){setBusy(null);return setError(error?.message||data?.error||"Sąskaitos išrašyti nepavyko.");}
+ await load();setBusy(null);
+}
+if(role!=="admin")return <section className="panel empty"><p>{t("groupManaged")}</p></section>;
+return <div className="stack">{error&&<div className="alert">{error}</div>}
+<div className="toolbar"><div><b>{t("rentals")}</b></div><div className="toolbar-actions"><label className="field compact-field"><span>Mėnuo</span><input type="month" value={selectedRentalMonth} onChange={e=>setSelectedRentalMonth(e.target.value)}/></label><button className="secondary" onClick={reset}><Plus size={16}/>{t("addRental")}</button></div></div>
+<section className="rental-payment-summary"><div><span>{new Date(`${selectedRentalMonth}-01T00:00:00`).toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</span><b>{rows.length}</b><small>rezervacijos šį mėnesį</small></div><div><span>Gauti mokėjimai</span><b>{money(rows.filter(r=>r.payment_status==="paid").reduce((s,r)=>s+Number(r.price),0))}</b><small>{rows.filter(r=>r.payment_status==="paid").length} apmokėta nuoma</small></div><div><span>Laukiama</span><b>{money(rows.filter(r=>r.payment_status==="pending").reduce((s,r)=>s+Number(r.price),0))}</b><small>{rows.filter(r=>r.payment_status==="pending").length} laukia</small></div><div><span>Mokėtina nuoma</span><b>{money(rows.filter(r=>r.payment_status!=="waived"&&r.payment_status!=="cancelled").reduce((s,r)=>s+Number(r.price),0))}</b><small>nemokamos darbuotojų rezervacijos neįskaičiuotos</small></div></section><div className="rental-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi</button><button className={paymentFilter==="cash"?"active":""} onClick={()=>setPaymentFilter("cash")}>Grynais</button><button className={paymentFilter==="bank_transfer"?"active":""} onClick={()=>setPaymentFilter("bank_transfer")}>Bankiniu</button><button className={paymentFilter==="stripe"?"active":""} onClick={()=>setPaymentFilter("stripe")}>Stripe</button></div><section className="list">{rows.filter(r=>paymentFilter==="all"||r.payment_method===paymentFilter).map(r=><article className="card rental-card" key={r.id}>
+ <div style={{minWidth:0,flex:1}}><b>{r.customer_name}</b>
+  <div className="rental-datetime">
+   <div className="rental-date">
+    <CalendarCheck size={15}/>
+    <span>{new Date(r.starts_at).toLocaleDateString("lt-LT",{day:"2-digit",month:"long",year:"numeric"})}</span>
+   </div>
+   <div className="rental-time">
+    <span>{new Date(r.starts_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
+    <i>→</i>
+    <span>{new Date(r.ends_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span>
+   </div>
+  </div>
+  <span><strong>Nuoma:</strong> {new Date(r.starts_at).toLocaleDateString("lt-LT",{day:"2-digit",month:"long",year:"numeric"})} · {new Date(r.starts_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}–{new Date(r.ends_at).toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"})}</span><span><strong>Rezervuota:</strong> {formatReservedAt(r.reserved_at||r.created_at)}</span><span>{r.rental_type==="short_term"?t("shortTerm"):t("longTerm")} · {money(Number(r.price))} · {r.customer_email||"—"}</span>
+  {r.paid_at&&<span>{t("paidAt")}: {new Date(r.paid_at).toLocaleString("lt-LT",{dateStyle:"short",timeStyle:"short"})}</span>}
+  {r.saskaita123_invoice_number&&<span>{t("invoiceNumber")}: {r.saskaita123_invoice_number} · {t("invoiceReady")}</span>}
+  {r.saskaita123_invoice_error&&<span className="muted">{t("invoiceError")}: {r.saskaita123_invoice_error}</span>}
+ </div>
+ <div className="pay-right">
+  <span className={`pill ${r.payment_status}`}>{r.payment_status==="paid"?t("paid"):r.payment_status==="cancelled"?t("cancelled"):r.payment_status==="waived"?t("waived"):t("pending")}</span>
+  <b>{r.payment_method==="stripe"?"Stripe":r.payment_method==="cash"?t("cash"):r.payment_method==="bank_transfer"?t("bank"):"—"}</b>
+  {r.payment_status!=="paid"&&r.payment_status!=="cancelled"&&<div className="rental-method-quick"><span>Mokėjimas:</span><button className={r.payment_method==="cash"?"active":""} onClick={()=>setRentalPaymentMethod(r,"cash")}>Grynais</button><button className={r.payment_method==="bank_transfer"?"active":""} onClick={()=>setRentalPaymentMethod(r,"bank_transfer")}>Bankiniu</button><button className={r.payment_method==="stripe"?"active":""} onClick={()=>setRentalPaymentMethod(r,"stripe")}>Stripe</button></div>}
+  <div className="actions">
+   {r.payment_status!=="paid"&&r.payment_method==="stripe"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>startStripePayment(r)}>{t("payWithStripe")}</button>}
+   {r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="cash"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markCashPaid(r)}>{t("markPaidCash")}</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_method==="bank_transfer"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>markBankPaid(r)}>Pažymėti apmokėtą pavedimu</button>}{r.payment_status!=="paid"&&r.payment_status!=="waived"&&r.payment_status!=="cancelled"&&<button className={busy===r.id?"secondary small-btn waive-btn is-saving":"secondary small-btn waive-btn"} disabled={busy===r.id} onClick={()=>waiveRentalPayment(r)}>{busy===r.id?"Išsaugoma…":waivedFlash===r.id?"✓ Nemokama":"Nemokama – mokytojas / studija"}</button>}{r.payment_status==="waived"&&<button className="secondary small-btn" disabled={busy===r.id} onClick={()=>restoreRentalPayment(r)}>Grąžinti mokėjimą</button>}
+   <button className="secondary small-btn" disabled={busy===r.id} onClick={()=>issueInvoice(r)}>{r.saskaita123_invoice_number?t("invoiceReady"):t("issueInvoice")}</button>
+   {r.saskaita123_invoice_url&&<a className="secondary small-btn" href={r.saskaita123_invoice_url} target="_blank" rel="noreferrer">{t("details")}</a>}
+  </div>
+ </div>
+</article>)}{!rows.length&&<div className="empty">{t("noRentals")}</div>}</section>
+{open&&<Modal title={t("addRental")} close={()=>setOpen(false)}>
+ <Field label={t("customer")} value={form.customer_name} set={v=>setForm({...form,customer_name:v})}/>
+ <div className="form-grid"><Field label={t("email")} value={form.email} set={v=>setForm({...form,email:v})} type="email"/><Field label={t("phone")} value={form.phone} set={v=>setForm({...form,phone:v})}/>
+ <div><label>{t("rentalType")}</label><select value={form.rental_type} onChange={e=>setForm({...form,rental_type:e.target.value})}><option value="short_term">{t("shortTerm")}</option><option value="long_term">{t("longTerm")}</option></select></div>
+ <Field label={t("price")} value={form.price} set={v=>setForm({...form,price:v})} type="number"/>
+ <Field label={t("start")} value={form.starts_at} set={v=>setForm({...form,starts_at:v})} type="datetime-local"/>
+ <Field label={t("end")} value={form.ends_at} set={v=>setForm({...form,ends_at:v})} type="datetime-local"/></div>
+ <div className="form-grid"><div><label>{t("method")}</label><select value={form.payment_method} onChange={e=>setForm({...form,payment_method:e.target.value as PaymentMethod})}><option value="cash">{t("cash")}</option><option value="bank_transfer">{t("bank")}</option><option value="stripe">Stripe</option></select></div></div>
+ <label>{t("notes")}</label><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/>
+ <div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" disabled={busy==="create"} onClick={createRental}>{form.payment_method==="stripe"?t("payWithStripe"):t("saveRental")}</button></div>
+</Modal>}</div>}
+
 function SettingsPage({role,lang,setLang,seasonId,onSeasonCreated}:{role:Role;lang:Lang;setLang:(v:Lang)=>void;seasonId:string;onSeasonCreated:(id:string)=>void}){const t=(k:TKey)=>tx(lang,k);const [prices,setPrices]=useState<Price[]>([]),[open,setOpen]=useState(false),[editing,setEditing]=useState<Price|null>(null),[name,setName]=useState(""),[amount,setAmount]=useState("");async function load(){const {data}=await supabase.from("prices").select("*").eq("is_active",true).order("amount");setPrices((data??[]) as Price[])}useEffect(()=>{if(role==="admin")load()},[role]);if(role!=="admin")return <div className="stack"><section className="panel"><div className="panel-head"><div><div className="eyebrow">{t("language")}</div><h2>{t("language")}</h2></div></div><p className="muted">{t("languageNote")}</p><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></section></div>;function create(){setEditing(null);setName("");setAmount("");setOpen(true)}function edit(p:Price){setEditing(p);setName(p.name);setAmount(String(p.amount));setOpen(true)}async function save(){const n=Number(amount);if(!name||!Number.isFinite(n)||n<0)return;const r=editing?await supabase.from("prices").update({name,amount:n}).eq("id",editing.id):await supabase.from("prices").insert({name,amount:n,currency:"EUR",billing_period:"monthly"});if(r.error)alert(r.error.message);else{setOpen(false);load()}}async function deactivate(p:Price){await supabase.from("prices").update({is_active:false}).eq("id",p.id);load()}return <div className="stack"><SeasonManagement seasonId={seasonId} onSeasonCreated={onSeasonCreated}/><section className="panel"><div className="panel-head"><div><div className="eyebrow">{t("pricing")}</div><h2>{t("studioPrices")}</h2></div><button className="secondary" onClick={create}><Plus size={16}/>{t("addPrice")}</button></div><div className="list">{prices.map(p=><article className="card" key={p.id}><div><b>{p.name}</b><span>{t("monthly")} · EUR</span></div><div className="card-actions"><b>{money(Number(p.amount))}</b><button className="icon-btn" onClick={()=>edit(p)}><Pencil size={14}/></button><button className="icon-btn danger" onClick={()=>deactivate(p)}><Trash2 size={14}/></button></div></article>)}</div></section><section className="panel"><div className="panel-head"><div><div className="eyebrow"><Languages size={13}/></div><h2>{t("language")}</h2></div></div><p className="muted">{t("languageNote")}</p><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></section>{open&&<Modal title={editing?t("editPrice"):t("addPrice")} close={()=>setOpen(false)}><Field label={t("priceName")} value={name} set={setName}/><Field label={t("monthlyAmount")} value={amount} set={setAmount} type="number"/><div className="actions"><button className="secondary" onClick={()=>setOpen(false)}>{t("cancel")}</button><button className="primary small-btn" onClick={save}>{t("savePrice")}</button></div></Modal>}</div>}
 
 function Field({label,value,set,type="text"}:{label:string;value:string;set:(v:string)=>void;type?:string}){return <div><label>{label}</label><input type={type} value={value} onChange={e=>set(e.target.value)}/></div>}
