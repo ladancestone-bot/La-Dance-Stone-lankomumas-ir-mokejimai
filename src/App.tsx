@@ -296,7 +296,7 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     </section>}
     <section className="dashboard-month-filter">
       <div><div className="eyebrow">{lang==="lt"?"MOKĖJIMŲ APŽVALGA":lang==="es"?"RESUMEN DE PAGOS":"PAYMENT OVERVIEW"}</div><b>{lang==="lt"?"Pasirinkite mėnesį":lang==="es"?"Elige un mes":"Choose a month"}</b><span>{lang==="lt"?"„Neapmokėta“ suma skaičiuojama tik pagal pasirinktą mėnesį.":lang==="es"?"El importe pendiente se calcula solo para el mes seleccionado.":"The outstanding amount is calculated only for the selected month."}</span></div>
-      <label className="field"><span>{t("monthly")}</span><input type="month" value={dashboardMonth} onChange={e=>setDashboardMonth(e.target.value)}/></label>
+      <label className="field"><span>{tx(lang,"monthly")}</span><input type="month" value={dashboardMonth} onChange={e=>setDashboardMonth(e.target.value)}/></label>
     </section>
     <section className="stats payment-dashboard-stats">
       <div className="stat"><span>💶 Turi būti apmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(totalDue)}</b><small>{lang==="lt"?"Visa pasirinkto mėnesio abonementų suma":lang==="es"?"Total de abonos del mes seleccionado":"Total subscription amount for the selected month"}</small></div>
@@ -1166,7 +1166,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     </section>}
     
 
-    {paymentView==="all"&&<section className="panel monthly-payments-head"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementai · pasirinktas mėnuo</h2><p className="muted">Rodomi tik <b>{new Date(selectedMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</b> mėnesio abonementų mokėjimai. Čia aiškiai matysite, kas jau susimokėjo ir kam dar liko.</p></div></div><div className="monthly-payment-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi <span>{charges.length}</span></button><button className={paymentFilter==="paid"?"active":""} onClick={()=>setPaymentFilter("paid")}>✓ Apmokėti <span>{paidCount}</span></button><button className={paymentFilter==="unpaid"?"active":""} onClick={()=>setPaymentFilter("unpaid")}>○ Neapmokėti <span>{charges.length-paidCount}</span></button></div></section>}{paymentView==="all"&&<PaymentHistory role={role} month={selectedMonth}/>}
+    {paymentView==="all"&&<section className="panel monthly-payments-head"><div className="panel-head"><div><div className="eyebrow">KLIENTŲ MOKĖJIMAI</div><h2>Abonementai · pasirinktas mėnuo</h2><p className="muted">Rodomi tik <b>{new Date(selectedMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"})}</b> mėnesio abonementų mokėjimai. Čia aiškiai matysite, kas jau susimokėjo ir kam dar liko.</p></div></div><div className="monthly-payment-filters"><button className={paymentFilter==="all"?"active":""} onClick={()=>setPaymentFilter("all")}>Visi <span>{charges.length}</span></button><button className={paymentFilter==="paid"?"active":""} onClick={()=>setPaymentFilter("paid")}>✓ Apmokėti <span>{paidCount}</span></button><button className={paymentFilter==="unpaid"?"active":""} onClick={()=>setPaymentFilter("unpaid")}>○ Neapmokėti <span>{charges.length-paidCount}</span></button></div></section>}{paymentView==="all"&&<PaymentHistory role={role} lang={lang} month={selectedMonth}/>}
 
     {paymentView==="all"&&    <section className="list">
       {charges.filter(c=>paymentFilter==="all"||(paymentFilter==="paid"&&Number(c.amount_paid)>=Number(c.amount_due))||(paymentFilter==="unpaid"&&Number(c.amount_paid)<Number(c.amount_due))).map(c=>{
@@ -1203,7 +1203,7 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
   </div>
 }
-function PaymentHistory({role,month}:{role:Role;month:string}){
+function PaymentHistory({role,lang,month}:{role:Role;lang:Lang;month:string}){
   const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
   async function load(){
     setLoading(true);setError("");
@@ -1231,7 +1231,7 @@ function PaymentHistory({role,month}:{role:Role;month:string}){
   return <section className="panel payment-history-panel">
     <div className="panel-head"><div><div className="eyebrow">MOKĖJIMŲ ISTORIJA · {monthLabel.toUpperCase()}</div><h2>Šio mėnesio apmokėjimai</h2><p className="muted">Čia rodomi tik pasirinkto mėnesio faktiškai užregistruoti abonementų mokėjimai. Rugsėjo mokėjimai į spalio sąrašą nepatenka.</p></div><button className="secondary" onClick={load}>↻ Atnaujinti</button></div>
     {error&&<div className="alert">{error}</div>}
-    <div className="payment-history-summary"><div><span>Apmokėjimų</span><b>{rows.length}</b></div><div><span>{lang==="lt"?"Gauta":lang==="es"?"Recibido":"Received"}</span><b>{money(total)}</b></div><div><span>{t("monthly")}</span><b>{monthLabel}</b></div></div>
+    <div className="payment-history-summary"><div><span>{lang==="lt"?"Apmokėjimų":lang==="es"?"Pagos":"Payments"}</span><b>{rows.length}</b></div><div><span>{lang==="lt"?"Gauta":lang==="es"?"Recibido":"Received"}</span><b>{money(total)}</b></div><div><span>{tx(lang,"monthly")}</span><b>{monthLabel}</b></div></div>
     {loading?<div className="empty">Kraunama…</div>:<div className="payment-history-list">{rows.map(x=><div className="payment-history-row" key={x.id}><div><b>{x.name}</b><span>{x.detail}</span><small>{x.email} · {x.date?new Date(x.date).toLocaleString("lt-LT"):"—"}</small></div><div><b>{money(x.amount)}</b><span>{label(x.method)}</span><span className="payment-history-paid">✓ Apmokėta</span></div></div>)}{!rows.length&&<div className="empty">Šį mėnesį dar nėra užregistruotų mokėjimų.</div>}</div>}
   </section>
 }
