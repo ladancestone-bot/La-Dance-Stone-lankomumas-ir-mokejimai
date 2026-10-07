@@ -75,12 +75,38 @@ function findPhone_(row) {
   return '';
 }
 
-function findPrice_(row) {
-  // The sheet layout has Subscription → Price → Payment.
-  // Find the right-most numeric value up to €100 before the Payment column.
-  const nums = row.map((v,i)=>({i,n:number_(v)})).filter(x=>x.n !== null && x.n >= 0 && x.n <= 100);
-  if (!nums.length) return null;
-  return nums[nums.length - 1].n;
+function findPrice_(row, priceCol) {
+  // IMPORTANT: Price and Payment are both numeric.
+  // Always read the dedicated Price/Kaina column so the spreadsheet's
+  // Payment column is never imported as the amount due.
+  if (priceCol >= 0 && priceCol < row.length) {
+    const n = number_(row[priceCol]);
+    if (n !== null && n >= 0 && n <= 100) return n;
+  }
+  return null;
+}
+
+function findPriceColumn_(values) {
+  const priceLabels = /^(price|kaina|monthly price|abonemento kaina|mokestis)$/i;
+  const paymentLabels = /^(payment|mok[eė]jimas|sumok[eė]ta|apmok[eė]ta)$/i;
+
+  // Search header-like rows first. Prefer Price/Kaina and never Payment.
+  for (let r = 0; r < Math.min(values.length, 30); r++) {
+    for (let c = 0; c < values[r].length; c++) {
+      const label = String(values[r][c] || '').trim();
+      if (priceLabels.test(label) && !paymentLabels.test(label)) return c;
+    }
+  }
+
+  // Fallback for the known LDS layout: Subscription -> Price -> Payment.
+  // Do not use the right-most number because that can be Payment.
+  for (let r = 0; r < Math.min(values.length, 30); r++) {
+    const row = values[r].map(v => String(v || '').trim().toLowerCase());
+    const sub = row.findIndex(v => /subscription|abonementas/.test(v));
+    if (sub >= 0 && sub + 1 < row.length) return sub + 1;
+  }
+
+  return -1;
 }
 
 function detectSchedule_(text) {
@@ -111,6 +137,7 @@ function parseSheet_(sheet) {
   const month = monthDate_(sheet.getName());
   if (!month) return [];
   const values = sheet.getDataRange().getDisplayValues();
+  const priceCol = findPriceColumn_(values);
   const rows = [];
   let schedule = null;
   let groupName = null;
@@ -138,7 +165,7 @@ function parseSheet_(sheet) {
 
     const email = findEmail_(row);
     const phone = findPhone_(row);
-    const amount = findPrice_(row);
+    const amount = findPrice_(row, priceCol);
     if (!groupName || amount === null) return;
 
     const identity = email || phone || name;
