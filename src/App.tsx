@@ -204,7 +204,7 @@ function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;emai
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
 function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
-  const [monthlyClients,setMonthlyClients]=useState(0),[oneOffClients,setOneOffClients]=useState(0),[oneOffBookings,setOneOffBookings]=useState(0),[rentalClients,setRentalClients]=useState(0),[rentals,setRentals]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0),[loading,setLoading]=useState(true);
+  const [monthlyClients,setMonthlyClients]=useState(0),[oneOffClients,setOneOffClients]=useState(0),[oneOffBookings,setOneOffBookings]=useState(0),[rentalClients,setRentalClients]=useState(0),[rentals,setRentals]=useState(0),[groups,setGroups]=useState(0),[totalDue,setTotalDue]=useState(0),[totalPaid,setTotalPaid]=useState(0),[outstanding,setOutstanding]=useState(0),[loading,setLoading]=useState(true);
   const [dashboardMonth,setDashboardMonth]=useState(currentMonth());
   function clientKey(row:any){
     if(row.student_id)return "student:"+row.student_id;
@@ -247,7 +247,12 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       let chargeQuery:any=supabase.from("monthly_charges").select("amount_due,amount_paid,students!inner(is_active)").eq("students.is_active",true).eq("month",dashboardMonth+"-01").eq("source_active",true);
       if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
       const {data:charges}=await chargeQuery;
-      setOutstanding((charges??[]).reduce((s:number,x:any)=>s+Math.max(0,Number(x.amount_due)-Number(x.amount_paid)),0));
+      const chargeRows=charges??[];
+      const dueTotal=chargeRows.reduce((s:number,x:any)=>s+Number(x.amount_due||0),0);
+      const paidTotal=chargeRows.reduce((s:number,x:any)=>s+Number(x.amount_paid||0),0);
+      setTotalDue(dueTotal);
+      setTotalPaid(paidTotal);
+      setOutstanding(Math.max(0,dueTotal-paidTotal));
       setLoading(false);
     }
     load();
@@ -267,9 +272,13 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       <div><div className="eyebrow">MOKĖJIMŲ APŽVALGA</div><b>Pasirinkite mėnesį</b><span>„Neapmokėta“ suma skaičiuojama tik pagal pasirinktą mėnesį.</span></div>
       <label className="field"><span>Mėnuo</span><input type="month" value={dashboardMonth} onChange={e=>setDashboardMonth(e.target.value)}/></label>
     </section>
+    <section className="stats payment-dashboard-stats">
+      <div className="stat"><span>💶 Turi būti apmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(totalDue)}</b><small>Visa pasirinkto mėnesio abonementų suma</small></div>
+      <div className="stat"><span>✓ Apmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(totalPaid)}</b><small>Jau užregistruoti mokėjimai</small></div>
+      <div className="stat"><span>○ Neapmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(outstanding)}</b><small>Dar likusi suma</small></div>
+    </section>
     <section className="stats">
       <div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{loading?"—":groups}</b></div>
-      <div className="stat"><span>Neapmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(outstanding)}</b></div>
       <div className="stat"><span>Šokių klientai šį sezoną</span><b>{loading?"—":monthlyClients}</b></div>
     </section>
     <section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section>
