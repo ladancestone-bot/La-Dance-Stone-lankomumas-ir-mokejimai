@@ -446,3 +446,58 @@ img,svg,video,canvas{max-width:100%}
 
 /* Stronger La Dance Stone accent + clearer mobile UI */
 :root{--accent:#b4573f;--accent-dark:#8f3f2e;--accent-soft:#f0d9d0;--taupe:#8b7560;--cocoa:#5b3d2e}.primary{background:var(--accent);border-color:var(--accent)}.primary:hover{background:var(--accent-dark)}.secondary:hover{border-color:var(--accent);color:var(--accent-dark)}.eyebrow{color:var(--accent-dark)}.nav-btn{color:#806b57;font-weight:600}.nav-btn svg{stroke-width:2.2}.nav-btn.active{color:var(--accent-dark);font-weight:800;background:var(--accent-soft)}.nav-btn.active svg{stroke-width:2.5}.teacher-avatar-upload{background:var(--accent);box-shadow:0 2px 8px #8f3f2e33}.teacher-profile-title span{color:var(--accent-dark);font-weight:800}.teacher-profile-info b{color:#3b2b22}.field>span,.teacher-profile-info span{color:#826b55;font-weight:700}.payment-view-switch button.active{background:var(--accent);border-color:var(--accent);color:#fff}.payment-group-card:hover{border-color:var(--accent);box-shadow:0 12px 34px #8f3f2e18}.payment-group-progress>span{background:var(--accent)}.dashboard-month-filter .eyebrow{color:var(--accent-dark)}
+
+
+/* La Dance Stone — final visual contrast pass */
+:root{
+  --accent:#a94f39;
+  --accent-dark:#7f3526;
+  --accent-soft:#ead0c8;
+  --taupe:#735b49;
+  --cocoa:#4d3024;
+  --espresso:#2f211b;
+  --ink:#211712;
+}
+.eyebrow{color:var(--accent-dark);font-weight:800;letter-spacing:.16em}
+.muted{color:#62564e}
+label,.field>span{color:#4f3a2e;font-weight:750}
+.secondary{color:var(--espresso);border-color:#c9b29a;font-weight:750}
+.secondary:hover{background:#ead0c8;border-color:var(--accent);color:var(--accent-dark)}
+.nav{border-top-color:#c9b29a99}
+.nav-btn{color:#604b3d;font-weight:700}
+.nav-btn.active{background:var(--accent-soft);color:var(--accent-dark);font-weight:850}
+.nav-btn svg{stroke-width:2.35}
+.nav-btn.active svg{stroke-width:2.7}
+.teacher-profile-panel{border-color:#cdb7a2;background:#fbf8f2f2}
+.teacher-profile-hero{padding-bottom:4px}
+.teacher-avatar-img,.teacher-avatar-placeholder{border:2px solid #c9a994;box-shadow:0 8px 22px #7f352620}
+.teacher-avatar-placeholder{color:var(--accent-dark);background:#ead0c8;font-weight:800}
+.teacher-avatar-upload{background:var(--accent-dark);border-color:var(--linen);box-shadow:0 3px 10px #7f352640}
+.teacher-profile-title .eyebrow{color:var(--accent-dark)}
+.teacher-profile-title h2{color:var(--espresso);font-weight:700}
+.teacher-profile-title p{color:#5f4c40}
+.teacher-profile-title span{color:var(--accent-dark);font-weight:850}
+.teacher-profile-info>div{border-color:#cdb7a2}
+.teacher-profile-info span{color:#73543f;font-weight:800}
+.teacher-profile-info b{color:#302119;font-weight:800}
+.payment-view-switch button.active{background:var(--accent-dark);border-color:var(--accent-dark)}
+.payment-group-icon{background:#ead0c8;color:var(--accent-dark)}
+.payment-group-name{color:var(--espresso);font-weight:850}
+.payment-group-progress>span{background:var(--accent-dark)}
+.dashboard-month-filter .eyebrow{color:var(--accent-dark)}
+.group-tab{color:#735b49;font-weight:750}
+.group-tab.active{color:var(--accent-dark)}
+.fixed-filter{color:var(--espresso)}
+@media(max-width:600px){
+  .teacher-profile-panel{padding:16px 14px}
+  .teacher-profile-hero{gap:14px}
+  .teacher-avatar-wrap,.teacher-avatar-img,.teacher-avatar-placeholder{width:82px;height:82px}
+  .teacher-avatar-wrap{flex-basis:82px}
+  .teacher-profile-title{min-width:calc(100% - 100px)}
+  .teacher-profile-title h2{font-size:25px}
+  .teacher-profile-title span{font-size:11px;line-height:1.45}
+  .teacher-profile-hero>.secondary{width:100%;font-weight:800}
+  .nav-btn{font-size:10px;color:#5d493c}
+  .nav-btn.active{color:var(--accent-dark)}
+  .nav-btn svg{width:19px;height:19px}
+}
