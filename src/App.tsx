@@ -145,11 +145,10 @@ function App(){
   const [seasons,setSeasons]=useState<Array<{id:string;name:string}>>([]); const [seasonId,setSeasonId]=useState("");
   const [email,setEmail]=useState(""); const [message,setMessage]=useState("");
   const [lang,setLang]=useState<Lang>(()=>(localStorage.getItem("lds-lang") as Lang)||"lt");
-  const [teacherProfileChosen,setTeacherProfileChosen]=useState(false);
   const t=(k:TKey)=>tx(lang,k);
   useEffect(()=>{localStorage.setItem("lds-lang",lang)},[lang]);
   useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
-  useEffect(()=>{setTeacherProfileChosen(false);if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
+  useEffect(()=>{if(!session?.user?.id){setRole(null);return}supabase.from("user_roles").select("role").eq("user_id",session.user.id).then(({data})=>{const r=data??[];setRole(r.some((x:any)=>x.role==="admin")?"admin":r.some((x:any)=>x.role==="teacher")?"teacher":null)})},[session?.user?.id]);
   useEffect(()=>{if(!role){setSeasons([]);setSeasonId("");return}supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data,error})=>{if(error){setSeasons([]);return}const items=(data??[]) as Array<{id:string;name:string}>;setSeasons(items);setSeasonId(current=>items.some(s=>s.id===current)?current:"")})},[role]);
   useEffect(()=>{if(role==="teacher"&&section==="dashboard")setSection("profile");if(role==="admin"&&section==="profile")setSection("dashboard")},[role]);
   useEffect(()=>{const handler=(e:Event)=>{const detail=(e as CustomEvent).detail as Section;if(["dashboard","profile","schedule","attendance","payments"].includes(detail))setSection(detail)};window.addEventListener("lds-go-section",handler);return()=>window.removeEventListener("lds-go-section",handler)},[]);
@@ -160,53 +159,13 @@ function App(){
   const teacherNav: { id: Section; key: TKey; icon: any }[] = [{id:"profile",key:"profile",icon:UserRound},{id:"schedule",key:"schedule",icon:CalendarCheck},{id:"attendance",key:"attendance",icon:UsersRound},{id:"payments",key:"payments",icon:CreditCard}];
   const visibleNav: { id: Section; key: TKey; icon: any }[] = role==="admin" ? [...nav,{id:"reservations",key:"reservations",icon:CalendarCheck},{id:"groups",key:"groups",icon:Users},{id:"students",key:"students",icon:UserRound},{id:"teachers",key:"teachers",icon:UsersRound},{id:"rentals",key:"rentals",icon:Building2},{id:"settings",key:"settings",icon:Settings}] : teacherNav;
   const current=visibleNav.find(n=>n.id===section)??visibleNav[0];
-  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="profile"&&role==="teacher"&&<TeacherProfile lang={lang} session={session}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>}  {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId} role={role}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
-}
-
-function TeacherProfileChooser({lang,email,onContinue,onSignOut}:{lang:Lang;email:string;onContinue:()=>void;onSignOut:()=>void}){
-  const [team,setTeam]=useState<any[]>([]);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState("");
-  useEffect(()=>{
-    let alive=true;
-    supabase.from("teachers").select("id,profiles(first_name,last_name,email)").eq("is_active",true).then(({data,error})=>{
-      if(!alive)return;
-      if(error)setError(error.message);
-      setTeam(data??[]);
-      setLoading(false);
-    });
-    return()=>{alive=false};
-  },[]);
-  const own=team.find(x=>String(x.profiles?.email??"").toLowerCase()===email.toLowerCase());
-  const fullName=(person:any)=>`${person.profiles?.first_name??""} ${person.profiles?.last_name??""}`.trim();
-  const initials=(person:any)=>fullName(person).split(" ").filter(Boolean).map((x:string)=>x[0]).join("").slice(0,2).toUpperCase()||"?";
-  return <main className="profile-entry">
-    <section className="profile-entry-inner">
-      <div className="eyebrow">LA DANCE STONE ŠOKIŲ STUDIJA</div>
-      <h1>{lang==="lt"?"Kas jūs?":lang==="es"?"¿Quién eres?":"Who are you?"}</h1>
-      <p className="profile-intro">{lang==="lt"?"Pasirinkite savo profilį, kad patektumėte į studijos valdymą.":lang==="es"?"Elige tu perfil para entrar a la gestión del estudio.":"Choose your profile to enter studio management."}</p>
-      {loading?<div className="empty">...</div>:error?<div className="alert">{error}</div>:<div className="profile-list">
-        {team.map(person=>{
-          const active=own?.id===person.id;
-          const name=fullName(person);
-          return <button key={person.id} className={active?"profile-card active":"profile-card"} disabled={!active} onClick={onContinue}>
-            <span className="profile-avatar">{initials(person)}</span>
-            <span className="profile-copy"><b>{name}</b><small>{lang==="lt"?"Mokytojas / Treneris":lang==="es"?"Profesor / Entrenador":"Teacher / Trainer"}</small>{active&&<em>{lang==="lt"?"Jūsų profilis":lang==="es"?"Tu perfil":"Your profile"}</em>}</span>
-            {active&&<ChevronRight size={20}/>}
-          </button>
-        })}
-      </div>}
-      {!loading&&!error&&!own&&<p className="alert">{lang==="lt"?"Šiam el. paštui mokytojo profilis dar nepriskirtas.":lang==="es"?"Este correo aún no está asignado a un perfil de profesor.":"This email is not assigned to a teacher profile yet."}</p>}
-      <button className="ghost-link profile-exit" onClick={onSignOut}><LogOut size={15}/>{lang==="lt"?"Atsijungti":lang==="es"?"Cerrar sesión":"Sign out"}</button>
-    </section>
-  </main>
+  return <div className="shell"><header className="topbar"><div><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS · {role.toUpperCase()}</div></div><div className="top-actions">{seasons.length>0&&<select aria-label="Activity period" value={seasonId} onChange={e=>setSeasonId(e.target.value)}><option value="">Legacy / all-time</option>{seasons.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<select className="lang-select" value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">LT</option><option value="en">EN</option><option value="es">ES</option></select><button className="round" onClick={()=>supabase.auth.signOut()} title={t("signOut")}><LogOut size={17}/></button></div></header><main className="content"><div className="heading"><div className="eyebrow">{t("studioManagement")}</div><h1>{t(current.key)}</h1></div>{section==="dashboard"&&<Dashboard role={role} lang={lang} seasonId={seasonId}/>} {section==="profile"&&role==="teacher"&&<TeacherProfile session={session}/>} {section==="schedule"&&<ScheduleLink lang={lang}/>}  {section==="attendance"&&<Attendance lang={lang} seasonId={seasonId} role={role}/>} {section==="payments"&&<Payments role={role} lang={lang} seasonId={seasonId}/>} {section==="reservations"&&role==="admin"&&<LessonReservations lang={lang}/>} {section==="students"&&role==="admin"&&<Students role={role} lang={lang} seasonId={seasonId}/>} {section==="groups"&&role==="admin"&&<Groups role={role} lang={lang} seasonId={seasonId}/>} {section==="teachers"&&role==="admin"&&<Teachers role={role} lang={lang}/>} {section==="rentals"&&role==="admin"&&<Rentals role={role} lang={lang}/>} {section==="settings"&&<SettingsPage role={role} lang={lang} setLang={setLang} seasonId={seasonId} onSeasonCreated={(id)=>{setSeasonId(id);supabase.from("seasons").select("id,name").eq("is_active",true).order("starts_on",{ascending:false,nullsFirst:false}).then(({data})=>setSeasons((data??[]) as Array<{id:string;name:string}>))}}/>}</main><nav className="nav">{visibleNav.map(n=>{const Icon=n.icon;return <button key={n.id} className={section===n.id?"nav-btn active":"nav-btn"} onClick={()=>setSection(n.id)}><Icon size={18}/><span>{t(n.key)}</span></button>})}</nav></div>
 }
 
 function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mokytojų grafiką":lang==="es"?"Abrir horario de profesores":"Open teacher schedule";return <section className="panel empty"><CalendarCheck size={30}/><h2>{title}</h2><p className="muted">La Dance Stone · 2026–2027</p><button className="primary" onClick={()=>window.open("https://sokiu-mokytoju-grafikas2026-2027.netlify.app/","_blank","noopener,noreferrer")}>{lang==="lt"?"Atidaryti grafiką":lang==="es"?"Abrir horario":"Open schedule"}</button></section>}
 
-function TeacherProfile({lang,session}:{lang:Lang;session:any}){
+function TeacherProfile({session}:{session:any}){
   const [profile,setProfile]=useState<any>(null);
-  const [teacher,setTeacher]=useState<any>(null);
   const [groups,setGroups]=useState<string[]>([]);
   const [editing,setEditing]=useState(false);
   const [form,setForm]=useState({first_name:"",last_name:"",phone:"",bio:"",specialization:"",avatar_url:""});
@@ -222,7 +181,6 @@ function TeacherProfile({lang,session}:{lang:Lang;session:any}){
     ]);
     if(p.error||t.error){setError((p.error||t.error)?.message||"Nepavyko įkelti profilio");return}
     setProfile(p.data);
-    setTeacher(t.data);
     setForm({first_name:p.data?.first_name||"",last_name:p.data?.last_name||"",phone:p.data?.phone||"",bio:p.data?.bio||"",specialization:p.data?.specialization||"",avatar_url:p.data?.avatar_url||""});
     if(t.data?.id){
       const {data:g}=await supabase.from("group_teachers").select("groups(name)").eq("teacher_id",t.data.id);
