@@ -205,6 +205,7 @@ function ScheduleLink({lang}:{lang:Lang}){const title=lang==="lt"?"Atidaryti mok
 
 function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   const [monthlyClients,setMonthlyClients]=useState(0),[oneOffClients,setOneOffClients]=useState(0),[oneOffBookings,setOneOffBookings]=useState(0),[rentalClients,setRentalClients]=useState(0),[rentals,setRentals]=useState(0),[groups,setGroups]=useState(0),[outstanding,setOutstanding]=useState(0),[loading,setLoading]=useState(true);
+  const [dashboardMonth,setDashboardMonth]=useState(currentMonth());
   function clientKey(row:any){
     if(row.student_id)return "student:"+row.student_id;
     const email=String(row.email??"").trim().toLowerCase();
@@ -243,7 +244,6 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       })).size);
       setRentals(rentalRows.length);
       setGroups(gq.count??0);
-      const dashboardMonth=currentMonth();
       let chargeQuery:any=supabase.from("monthly_charges").select("amount_due,amount_paid,students!inner(is_active)").eq("students.is_active",true).eq("month",dashboardMonth+"-01").eq("source_active",true);
       if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
       const {data:charges}=await chargeQuery;
@@ -252,7 +252,8 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
     }
     load();
     return()=>{alive=false};
-  },[seasonId]);
+  },[seasonId,dashboardMonth]);
+  const dashboardMonthLabel=new Date(dashboardMonth+"-01T12:00:00").toLocaleDateString("lt-LT",{month:"long",year:"numeric"});
   return <div className="stack">
     {role==="admin"&&<section className="client-overview">
       <div className="client-overview-head"><div><div className="eyebrow">KLIENTŲ APŽVALGA</div><h2>Klientai pagal paslaugą</h2><p>Šokių abonementai, vienkartinės pamokos ir studijos nuoma skaičiuojami atskirai.</p></div></div>
@@ -262,9 +263,13 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
         <article className="client-segment"><div className="client-segment-icon"><Building2 size={20}/></div><div><span>Nuomos klientai</span><b>{loading?"—":rentalClients}</b><small>{rentals} nuomos rezervacijos</small></div></article>
       </div>
     </section>}
+    <section className="dashboard-month-filter">
+      <div><div className="eyebrow">MOKĖJIMŲ APŽVALGA</div><b>Pasirinkite mėnesį</b><span>„Neapmokėta“ suma skaičiuojama tik pagal pasirinktą mėnesį.</span></div>
+      <label className="field"><span>Mėnuo</span><input type="month" value={dashboardMonth} onChange={e=>setDashboardMonth(e.target.value)}/></label>
+    </section>
     <section className="stats">
       <div className="stat"><span>{tx(lang,"activeGroups")}</span><b>{loading?"—":groups}</b></div>
-      <div className="stat"><span>{tx(lang,"outstanding")}</span><b>{loading?"—":money(outstanding)}</b></div>
+      <div className="stat"><span>Neapmokėta · {dashboardMonthLabel}</span><b>{loading?"—":money(outstanding)}</b></div>
       <div className="stat"><span>Šokių klientai šį sezoną</span><b>{loading?"—":monthlyClients}</b></div>
     </section>
     <section className="panel empty"><CalendarCheck size={28}/><p>{tx(lang,"today")}</p></section>
