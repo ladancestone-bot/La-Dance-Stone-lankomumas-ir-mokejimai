@@ -243,7 +243,10 @@ function Dashboard({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       })).size);
       setRentals(rentalRows.length);
       setGroups(gq.count??0);
-      const {data:charges}=await supabase.from("monthly_charges").select("amount_due,amount_paid,students!inner(is_active)").eq("students.is_active",true);
+      const dashboardMonth=currentMonth();
+      let chargeQuery:any=supabase.from("monthly_charges").select("amount_due,amount_paid,students!inner(is_active)").eq("students.is_active",true).eq("month",dashboardMonth+"-01").eq("source_active",true);
+      if(seasonId)chargeQuery=chargeQuery.eq("season_id",seasonId);
+      const {data:charges}=await chargeQuery;
       setOutstanding((charges??[]).reduce((s:number,x:any)=>s+Math.max(0,Number(x.amount_due)-Number(x.amount_paid)),0));
       setLoading(false);
     }
