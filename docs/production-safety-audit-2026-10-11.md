@@ -36,4 +36,6 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] Stripe webhook and scheduled sync remain idempotent.
 - [ ] Payment corrections preserve an immutable original record and audit trail.
 - [ ] Attendance corrections retain prior revision history.
-- [ ] Build and automated checks pass before merging.
+- [x] GitHub Actions `Build check` passes for the current PR head commit `82af092b33fd03958fadddda7e06dd8b34342369` (run 178).
+- [ ] End-to-end authentication, payment-history, and role-scope tests pass in a staging database before merging.
+- [ ] Restrict `stripe_payments` browser grants and replace its all-authenticated SELECT policy after validating every caller; this remains an open production security issue.
