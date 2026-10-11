@@ -13,7 +13,7 @@ This document records verified risks and the required safe order of work. It is 
 - Stripe webhook and sync Edge Functions use the server-side service-role client to write Stripe ledger rows. The website-order import Edge Function calls `process_dropin_website_order` with a service-role bearer token.
 - `clear_group_attendance` deletes attendance and its revision records, so changing this safely requires a coordinated database and UI change.
 - `BILLING_TEST_MODE = true` in the current app; preserve it until reconciliation has been verified.
-- The payment-history UI currently filters rows by the linked charge's month (`monthly_charges.month`) instead of the actual payment timestamp (`payments.paid_at`). This can make a payment recorded in October appear under September if it was applied to a September charge. The payment-history filter should use a half-open date range on `paid_at`; the charge list itself should continue to use the selected charge month.
+- The payment-history UI currently filters rows by the linked charge's month (`monthly_charges.month`) instead of the actual payment timestamp (`payments.paid_at`). This can make a payment recorded in October appear under September if it was applied to a September charge. The payment-history filter should use a half-open date range on `paid_at`; the charge list itself should continue to use the selected charge month. `payments.paid_at` is `timestamptz`, and the app formats attendance timestamps in `Europe/Vilnius`; when implementing the filter, calculate the selected month's start and next month's start in `Europe/Vilnius` and convert both boundaries to ISO timestamps. Do not use naive UTC-midnight boundaries, which would shift the local month edge.
 
 ## Required implementation order
 
