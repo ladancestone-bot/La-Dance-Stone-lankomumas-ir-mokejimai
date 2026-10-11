@@ -153,8 +153,30 @@ function App(){
   useEffect(()=>{if(role==="teacher"&&section==="dashboard")setSection("profile");if(role==="admin"&&section==="profile")setSection("dashboard")},[role]);
   useEffect(()=>{const handler=(e:Event)=>{const detail=(e as CustomEvent).detail as Section;if(["dashboard","profile","schedule","attendance","payments"].includes(detail))setSection(detail)};window.addEventListener("lds-go-section",handler);return()=>window.removeEventListener("lds-go-section",handler)},[]);
   useEffect(()=>{if(role==="admin")supabase.functions.invoke("sync-stripe-payments")},[role]);
-  async function login(){setMessage("");setAuthBusy(true);const {error}=await supabase.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:window.location.origin}});setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."));setAuthBusy(false)}
-  async function loginWithPassword(){setMessage("");setAuthBusy(true);const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)setMessage(lang==="lt"?"Nepavyko prisijungti. Patikrinkite el. paštą ir slaptažodį.":lang==="es"?"No se pudo iniciar sesión. Comprueba el correo y la contraseña.":"Could not sign in. Check your email and password.");setAuthBusy(false)}
+  async function login(){
+    setMessage("");
+    setAuthBusy(true);
+    try{
+      const {error}=await supabase.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:window.location.origin}});
+      setMessage(error?error.message:(lang==="lt"?"Patikrinkite el. paštą ir atidarykite prisijungimo nuorodą.":lang==="es"?"Revisa tu correo y abre el enlace de acceso.":"Check your email for the secure sign-in link."));
+    }catch{
+      setMessage(lang==="lt"?"Nepavyko išsiųsti prisijungimo nuorodos. Patikrinkite interneto ryšį ir bandykite dar kartą.":lang==="es"?"No se pudo enviar el enlace. Comprueba tu conexión e inténtalo de nuevo.":"Could not send the sign-in link. Check your connection and try again.");
+    }finally{
+      setAuthBusy(false);
+    }
+  }
+  async function loginWithPassword(){
+    setMessage("");
+    setAuthBusy(true);
+    try{
+      const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
+      if(error)setMessage(lang==="lt"?"Nepavyko prisijungti. Patikrinkite el. paštą ir slaptažodį.":lang==="es"?"No se pudo iniciar sesión. Comprueba el correo y la contraseña.":"Could not sign in. Check your email and password.");
+    }catch{
+      setMessage(lang==="lt"?"Prisijungti nepavyko dėl ryšio klaidos. Bandykite dar kartą.":lang==="es"?"Error de conexión. Inténtalo de nuevo.":"A connection error occurred. Please try again.");
+    }finally{
+      setAuthBusy(false);
+    }
+  }
   if(!session)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><div className="eyebrow">ATTENDANCE & PAYMENTS</div><h1>{lang==="lt"?"Studijos valdymas vienoje vietoje.":lang==="es"?"Gestión del estudio en un solo lugar.":"Studio management, in one place."}</h1><p>{t("privateAccess")}</p><label>{t("email")}</label><input value={email} onChange={e=>setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@example.com"/><label>{t("password")}</label><input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="••••••••" onKeyDown={e=>{if(e.key==="Enter"&&email.trim()&&password&&!authBusy)loginWithPassword()}}/><button className="primary" onClick={loginWithPassword} disabled={!email.trim()||!password||authBusy}>{authBusy?t("signingIn"):t("signInPassword")}</button><button className="secondary auth-link-button" onClick={login} disabled={!email.trim()||authBusy}>{t("signIn")}</button>{message&&<div className="message" role="status">{message}</div>}<div className="language-mini"><Languages size={14}/><select value={lang} onChange={e=>setLang(e.target.value as Lang)}><option value="lt">Lietuvių</option><option value="en">English</option><option value="es">Español</option></select></div></section></main>;
   if(!role)return <main className="auth"><section className="auth-card"><div className="brand">LA DANCE STONE</div><h1>{t("accessPending")}</h1><p>{t("noRole")}</p><button className="primary" onClick={()=>supabase.auth.signOut()}>{t("signOut")}</button></section></main>;
   const teacherNav: { id: Section; key: TKey; icon: any }[] = [{id:"profile",key:"profile",icon:UserRound},{id:"schedule",key:"schedule",icon:CalendarCheck},{id:"attendance",key:"attendance",icon:UsersRound},{id:"payments",key:"payments",icon:CreditCard}];
