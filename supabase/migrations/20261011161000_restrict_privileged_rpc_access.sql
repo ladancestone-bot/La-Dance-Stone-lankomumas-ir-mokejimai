@@ -25,3 +25,22 @@ revoke execute on function public.process_dropin_website_order(uuid)
   from public, anon, authenticated;
 grant execute on function public.process_dropin_website_order(uuid)
   to service_role;
+
+-- These teacher RPCs are designed for signed-in studio staff and must never
+-- be callable through the anonymous PostgREST role.
+revoke execute on function public.teacher_can_access_group(uuid)
+  from public, anon;
+grant execute on function public.teacher_can_access_group(uuid)
+  to authenticated, service_role;
+
+revoke execute on function public.teacher_delete_payment(uuid)
+  from public, anon;
+grant execute on function public.teacher_delete_payment(uuid)
+  to authenticated, service_role;
+
+revoke execute on function public.teacher_update_payment(
+  uuid, numeric, public.payment_method, timestamp with time zone, text
+) from public, anon;
+grant execute on function public.teacher_update_payment(
+  uuid, numeric, public.payment_method, timestamp with time zone, text
+) to authenticated, service_role;
