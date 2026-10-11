@@ -39,3 +39,51 @@ This document records verified risks and the required safe order of work. It is 
 - [x] GitHub Actions `Build check` passes for the current PR head commit `82af092b33fd03958fadddda7e06dd8b34342369` (run 178).
 - [ ] End-to-end authentication, payment-history, and role-scope tests pass in a staging database before merging.
 - [ ] Restrict `stripe_payments` browser grants and replace its all-authenticated SELECT policy after validating every caller; this remains an open production security issue.
+
+
+## Security remediation and test plan — 2026-10-11
+
+### Guardrails
+- Work only on `design/espresso-burgundy-dashboard` and review through draft PR #1.
+- Do not merge, deploy, or apply migrations to production until the checks below pass.
+- Keep `BILLING_TEST_MODE = true`; do not send customer emails or real payment requests during tests.
+- Do not use the empty secondary Supabase project or create a paid staging branch without explicit cost approval.
+- Capture a schema snapshot and baseline row counts before any database test. Never delete production records as a test.
+
+### Phase 1 — review prepared migrations
+- [ ] Review `20261011160000_payment_change_audit.sql`: trigger behavior for payment UPDATE/DELETE, audit table RLS, and service-role-only access.
+- [ ] Review `20261011161000_restrict_privileged_rpc_access.sql`: confirm exact function signatures and verify all legitimate callers use authenticated or service-role contexts.
+- [ ] Review `20261011162000_lock_server_only_tables.sql`: confirm the website importer still works with service-role access and does not require browser access to token tables.
+- [ ] Correct stale statements in this audit: payment history is already fixed in the feature branch to use `payments.paid_at` with `Europe/Vilnius` month boundaries; update the CI reference to the latest passing PR head before final review.
+
+### Phase 2 — caller and permission checks
+- [ ] Inventory every app, SQL function, trigger and Edge Function that reads/writes `stripe_payments`, `student_consents`, `website_import_tokens`, `website_import_sync_runs` and `website_orders`.
+- [ ] Replace the all-authenticated `stripe_payments` SELECT policy with least-privilege admin access; revoke unnecessary `anon`/`authenticated` table grants. Keep trusted Edge Function writes through service role.
+- [ ] Give `website_orders` a deliberate admin-authorized access path before removing browser access; the current app reads this table.
+- [ ] Verify each SECURITY DEFINER function checks authorization internally, not just through UI visibility. Keep public execution revoked for privileged RPCs; allow `process_dropin_website_order` only to the trusted server workflow.
+- [ ] Verify teachers can only access groups assigned to their authenticated profile. Do not broaden policies to make tests pass.
+
+### Phase 3 — functional tests in a non-production database
+- [ ] Password login and existing OTP login both work in LT/EN/ES; invalid password, missing fields, busy state and Enter-key submit behave correctly.
+- [ ] Admin can read and manage all authorized studio records; teacher can only read/manage assigned groups.
+- [ ] Anonymous users cannot read consent records, import-token hashes, sync logs, full Stripe ledger, or private website orders.
+- [ ] Website order import still validates the token hash and processes a valid order; invalid/reused tokens fail safely.
+- [ ] Stripe checkout, signed webhook and payment sync work end-to-end in test mode and remain idempotent.
+- [ ] Payment history includes payments by actual `paid_at` local month (Europe/Vilnius), including month/year boundaries and DST transitions.
+- [ ] Payment update/delete creates an audit record with actor, timestamp, old values, new values/reason where available; totals and charge status remain correct.
+- [ ] Attendance correction preserves revision history. Do not use `clear_group_attendance` until its destructive history behavior has been addressed.
+- [ ] Monthly charge generation can be run twice for the same month without duplicate charges or changed totals.
+- [ ] Existing student, group, attendance, charge and payment counts and financial totals reconcile against the baseline.
+
+### Phase 4 — release gate
+- [ ] Build and tests pass on the exact reviewed PR head.
+- [ ] Review SQL diff and rollback/recovery approach with a schema/data snapshot available.
+- [ ] Confirm every migration is safe to run once and that repeated execution behavior is understood.
+- [ ] Only after all checks pass: remove draft status, obtain review, merge, then apply reviewed migrations in a controlled release window.
+- [ ] After release, re-run permission checks, payment reconciliation, checkout/import smoke tests, and security advisor checks.
+
+### Current blockers — do not release while open
+1. Production has an overly broad `stripe_payments` policy and unnecessary direct table grants.
+2. Production grants anonymous execution to privileged SECURITY DEFINER RPCs.
+3. No disposable staging database has been approved/created; no production migration has been applied.
+4. Payment correction and attendance revision behavior need end-to-end verification before release.
