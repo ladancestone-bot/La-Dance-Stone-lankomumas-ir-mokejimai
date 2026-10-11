@@ -571,3 +571,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--burgundy);box-shadow:
   .topbar{gap:8px}
   .topbar .brand{font-size:12px}
 }
+
+
+/* Auth: keep password and email-link sign-in actions visually distinct. */
+.auth-card .auth-link-button{display:block;width:100%;margin-top:10px;min-height:44px}
+.auth-card input[type="password"]{letter-spacing:.04em}
