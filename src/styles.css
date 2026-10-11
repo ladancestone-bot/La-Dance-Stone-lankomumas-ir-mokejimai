@@ -501,3 +501,73 @@ label,.field>span{color:#4f3a2e;font-weight:750}
   .nav-btn.active{color:var(--accent-dark)}
   .nav-btn svg{width:19px;height:19px}
 }
+
+
+/* LA DANCE STONE — Espresso / Burgundy visual refresh */
+:root{
+  --cream:#f7f1e9;--linen:#fffdfa;--sand:#eee1d4;--beige:#d9c2ae;
+  --taupe:#a98b78;--cocoa:#6b4a3f;--espresso:#2f1f17;--ink:#2b1b15;
+  --burgundy:#76283b;--burgundy-dark:#591827;--burgundy-soft:#f1e0e3;
+  --can:#55745b;--can-soft:#e3ece2;--cannot:#a33d43;--cannot-soft:#f7e4e3;
+  --maybe:#ad7b3f;--maybe-soft:#f4e8d8;
+}
+html,body{background:var(--cream);color:var(--ink)}
+body::before{opacity:.06;background-image:radial-gradient(#6b4a3f .45px,transparent .45px);background-size:8px 8px}
+h1,h2{color:var(--espresso)}
+.brand{display:flex;align-items:center;gap:10px;color:#fff7ef;font-family:"Cormorant Garamond",Georgia,serif;font-size:15px;letter-spacing:.12em}
+.topbar{background:#f7f1e9ed;border-bottom-color:#d9c2ae80}
+.primary{background:var(--burgundy);border-color:var(--burgundy);color:#fffaf5;border-radius:13px;box-shadow:0 5px 14px #76283b20}
+.primary:hover{background:var(--burgundy-dark)}
+.secondary{border-color:#d9c2ae;background:#fffdfa;color:var(--espresso);border-radius:13px}
+.secondary:hover{background:var(--sand)}
+.round,.icon-btn{border-color:#d9c2ae;background:#fffdfa;color:var(--espresso)}
+.content{max-width:1440px;padding:30px 28px}
+.heading{margin-bottom:20px}
+.heading .eyebrow{color:var(--burgundy);letter-spacing:.16em}
+.heading h1{font-size:clamp(36px,4vw,52px);margin:6px 0 12px}
+.stat,.panel,.card,.client-overview{background:#fffdfa;border-color:#e7d8ca;box-shadow:0 8px 24px #2f1f1709;border-radius:20px}
+.stat{border-top:3px solid #d9c2ae}
+.stat:nth-child(3n+1){border-top-color:var(--burgundy)}
+.stat b,.client-segment b{color:var(--espresso)}
+.client-segment{background:#fffdfa;border-color:#e7d8ca}
+.client-segment-icon{background:var(--burgundy-soft);color:var(--burgundy)}
+.nav{background:var(--espresso);border-top:0;box-shadow:0 -8px 30px #2f1f1718}
+.nav-btn{color:#e6d8ce;border-radius:12px}
+.nav-btn.active{background:var(--burgundy);color:#fffaf5}
+.pill.paid{background:var(--can-soft);color:#38583e}
+.pill.partially_paid,.pill.unpaid,.pill.pending{background:var(--maybe-soft);color:#7a5328}
+.pill.overdue,.pill.cancelled{background:var(--cannot-soft);color:#8c3038}
+.tabs .tab.active{color:var(--burgundy);border-bottom-color:var(--burgundy)}
+.method.active{background:var(--burgundy);border-color:var(--burgundy);color:#fffaf5}
+.att.selected.present{background:var(--can);border-color:var(--can)}
+.att.selected.absent{background:var(--cannot);border-color:var(--cannot)}
+.att.selected.sick{background:var(--maybe);border-color:var(--maybe)}
+.rental-time{background:#f5e9df;border-color:#e4d0c0;color:var(--espresso)}
+.auth{background:radial-gradient(ellipse at 75% 8%,#e7d0c4 0,transparent 32%),radial-gradient(ellipse at 5% 90%,#76283b1a 0,transparent 35%),var(--cream)}
+.auth-card{background:#fffdfa;border-color:#e7d8ca;box-shadow:0 24px 70px #2f1f1718}
+input,select,textarea{background:#fffdfa;border-color:#dfcbbb;border-radius:12px}
+input:focus,select:focus,textarea:focus{border-color:var(--burgundy);box-shadow:0 0 0 3px #76283b1c}
+.modal{background:var(--cream)}
+/* Desktop: a persistent dark navigation rail; mobile keeps the compact bottom bar. */
+@media(min-width:1000px){
+  .shell{padding-bottom:0;padding-left:238px}
+  .nav{top:0;bottom:0;left:0;right:auto;width:238px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;padding:28px 16px 20px;overflow-y:auto;overflow-x:hidden;border-right:1px solid #ffffff12}
+  .nav::before{content:"LA DANCE STONE";display:block;padding:4px 10px 26px;color:#fff7ef;font-family:"Cormorant Garamond",Georgia,serif;font-size:17px;letter-spacing:.12em;white-space:nowrap}
+  .nav-btn{flex:0 0 auto;justify-content:flex-start;gap:12px;min-height:46px;padding:0 14px;font-size:12px;border-radius:11px}
+  .nav-btn.active{box-shadow:inset 3px 0 #d8b99e}
+  .topbar{padding:16px 28px}
+  .content{padding:34px 32px}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:999px){
+  .nav{background:#2f1f17f5}
+  .nav-btn.active{background:var(--burgundy)}
+  .content{padding:26px 18px}
+}
+@media(max-width:650px){
+  .content{padding:24px 13px}
+  .heading h1{font-size:36px}
+  .stat,.panel{border-radius:17px}
+  .topbar{gap:8px}
+  .topbar .brand{font-size:12px}
+}
