@@ -12,10 +12,10 @@ This document records verified risks and the required safe order of work. It is 
 - A fresh catalog check confirms `student_consents`, `website_import_tokens`, `website_import_sync_runs` and `website_orders` all have RLS enabled but no policies. `anon` and `authenticated` still have broad table-level grants on three of these tables (`website_import_sync_runs` is service-role-only). With RLS enabled and no policies, ordinary API row access is denied today, but the unnecessary grants should still be removed; `website_orders` needs a deliberate authenticated policy first because the app currently reads it.
 - Stripe webhook and sync Edge Functions use the server-side service-role client to write Stripe ledger rows. The website-order import Edge Function calls `process_dropin_website_order` with a service-role bearer token.
 - A fresh live privilege query confirms seven `SECURITY DEFINER` RPCs are executable by `anon`: `add_manual_dropin_participant`, `add_quick_dropin_participant`, `clear_group_attendance`, `process_dropin_website_order`, `teacher_can_access_group`, `teacher_delete_payment` and `teacher_update_payment`. The prepared RPC migration now revokes anonymous execution from all seven, while retaining authenticated execution for staff-facing functions and service-role execution for trusted server workflows. `process_dropin_website_order` is restricted to `service_role` for the website importer.
-- The payment-history query has been corrected in the feature branch to filter `payments.paid_at` by a half-open month interval, with both boundaries calculated for `Europe/Vilnius`. A local runtime check verified expected UTC offsets on months spanning the 2026 daylight-saving transitions; full CI validation is still required.
+- The payment-history query has been corrected in the feature branch to filter `payments.paid_at` by a half-open month interval, with both boundaries calculated for `Europe/Vilnius`. The current PR head has a passing GitHub Actions build check (run 182). This is a build check, not an end-to-end production or staging test.
 - `clear_group_attendance` deletes attendance and its revision records, so changing this safely requires a coordinated database and UI change.
 - `BILLING_TEST_MODE = true` in the current app; preserve it until reconciliation has been verified.
-- The payment-history UI currently filters rows by the linked charge's month (`monthly_charges.month`) instead of the actual payment timestamp (`payments.paid_at`). This can make a payment recorded in October appear under September if it was applied to a September charge. The payment-history filter should use a half-open date range on `paid_at`; the charge list itself should continue to use the selected charge month. `payments.paid_at` is `timestamptz`, and the app formats attendance timestamps in `Europe/Vilnius`; when implementing the filter, calculate the selected month's start and next month's start in `Europe/Vilnius` and convert both boundaries to ISO timestamps. Do not use naive UTC-midnight boundaries, which would shift the local month edge.
+- Historical payment filtering now uses `payments.paid_at` in the feature branch rather than the linked charge month. It uses a half-open interval with both boundaries calculated for `Europe/Vilnius`; the linked charge month remains available for the charge list.
 
 ## Required implementation order
 
@@ -36,7 +36,7 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] Stripe webhook and scheduled sync remain idempotent.
 - [ ] Payment corrections preserve an immutable original record and audit trail.
 - [ ] Attendance corrections retain prior revision history.
-- [x] GitHub Actions `Build check` passes for the current PR head commit `82af092b33fd03958fadddda7e06dd8b34342369` (run 178).
+- [x] GitHub Actions `Build check` passes for current PR head commit `6eab87b8c6e2e2a01e78ede1729336a986d9fcdb` (run 182).
 - [ ] End-to-end authentication, payment-history, and role-scope tests pass in a staging database before merging.
 - [ ] Restrict `stripe_payments` browser grants and replace its all-authenticated SELECT policy after validating every caller; this remains an open production security issue.
 
