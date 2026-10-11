@@ -1226,14 +1226,41 @@ function Payments({role,lang,seasonId,fixedGroupId}:{role:Role;lang:Lang;seasonI
     {editing&&<PaymentEditModal payment={editing} lang={lang} close={()=>setEditing(null)} save={updatePayment}/>}
   </div>
 }
+function vilniusMonthBoundaryIso(month:string):string{
+  const match=/^(\\d{4})-(\\d{2})$/.exec(month);
+  if(!match)throw new Error("Invalid month; expected YYYY-MM");
+  const year=Number(match[1]),monthNumber=Number(match[2]);
+  if(monthNumber<1||monthNumber>12)throw new Error("Invalid month; expected YYYY-MM");
+  const target=Date.UTC(year,monthNumber-1,1,0,0,0);
+  let guess=target;
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Vilnius",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"});
+  for(let i=0;i<4;i++){
+    const parts=Object.fromEntries(formatter.formatToParts(new Date(guess)).filter(p=>p.type!=="literal").map(p=>[p.type,Number(p.value)])) as Record<string,number>;
+    const represented=Date.UTC(parts.year,parts.month-1,parts.day,parts.hour,parts.minute,parts.second);
+    const corrected=guess+(target-represented);
+    if(corrected===guess)break;
+    guess=corrected;
+  }
+  return new Date(guess).toISOString();
+}
 function PaymentHistory({role,lang,month}:{role:Role;lang:Lang;month:string}){
   const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
   async function load(){
     setLoading(true);setError("");
+    let start:string,end:string;
+    try{
+      const [year,monthNumber]=month.split("-").map(Number);
+      start=vilniusMonthBoundaryIso(month);
+      end=vilniusMonthBoundaryIso(monthNumber===12?String(year+1)+"-01":String(year)+"-"+String(monthNumber+1).padStart(2,"0"));
+    }catch{
+      setError("Nepavyko nustatyti pasirinkto mėnesio datų.");
+      setRows([]);setLoading(false);return;
+    }
     const {data,error:qError}=await supabase
       .from("payments")
       .select("id,amount,payment_method,paid_at,monthly_charge_id,students(first_name,last_name,email),monthly_charges!inner(month,groups(name))")
-      .eq("monthly_charges.month",month+"-01")
+      .gte("paid_at",start)
+      .lt("paid_at",end)
       .order("paid_at",{ascending:false});
     if(qError){setError(qError.message);setRows([]);setLoading(false);return}
     const out=(data??[]).map((x:any)=>({
