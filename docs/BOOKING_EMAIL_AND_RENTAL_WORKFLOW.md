@@ -22,9 +22,10 @@
 - First 3 hours: €20 per hour.
 - Every additional hour after the first 3 hours: €15 per hour.
 - Total = `min(hours, 3) × €20 + max(hours − 3, 0) × €15`.
-- Examples: 1 hour = €20; 2 hours = €40; 3 hours = €60; 4 hours = €75; 5 hours = €90; 6 hours = €105.
-- The booking UI must let customers choose duration and show the full total before they confirm.
-- Calculate the amount server-side as well; never trust a client-submitted total. Reject invalid durations and use the same calculation for checkout, emails, and admin records.
+- Examples: 1 hour = €20; 2 hours = €40; 3 hours = €60; 4 hours = €75; 5 hours = €90; 6 hours = €105; 7 hours = €120; 8 hours = €135.
+- The public UI lets customers choose a whole-hour duration from 1–8 and shows the estimated total.
+- Added `supabase/functions/_shared/rental-pricing.ts` as the canonical server-side pricing helper and `rental-pricing_test.ts` with price-tier, euro-cent, and invalid-duration tests.
+- Important: this helper is not yet wired into booking persistence or Stripe Checkout. Before launch, the server must derive duration from the saved reservation, calculate the amount with this helper, and use that same trusted amount in checkout, emails, and admin records. Never trust a client-submitted price.
 - Make the discounted additional-hour rate configurable in admin in a later pricing-settings step, but keep the current confirmed rate at €15/hour.
 
 ## Public booking UX
@@ -91,6 +92,8 @@
 - [ ] Correct child/adult subscription options and prices.
 - [ ] One-off lesson and monthly subscription are clear alternatives.
 - [ ] Rental duration selector calculates first 3 hours at €20/hour and additional hours at €15/hour.
+- [ ] Server-side rental pricing helper is wired into saved reservations and Stripe Checkout.
+- [ ] Rental pricing tests pass in the project's supported Deno environment.
 - [ ] Rental date/time availability prevents overlaps.
 - [ ] Rental confirmation states the 24-hour payment deadline.
 - [ ] Cash option instructs customer to call; no automatic paid state.
