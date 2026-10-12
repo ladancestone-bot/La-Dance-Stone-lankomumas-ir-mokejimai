@@ -121,8 +121,7 @@ async function loadEffectiveAttendance(groupId:string,date:string){
     const seen=new Set<string>();
     for(const revision of revisions??[])if(!seen.has(revision.attendance_id)){
       const studentId=(rows??[]).find(row=>row.id===revision.attendance_id)!.student_id;
-      if(revision.status==="__cleared__")delete result[studentId];
-      else result[studentId]=revision.status as AttendanceStatus;
+      result[studentId]=revision.status as AttendanceStatus;
       seen.add(revision.attendance_id);
     }
   }
@@ -735,8 +734,7 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
         const row=rowById.get(rev.attendance_id);
         if(row){
           map[row.student_id]??={};
-          if(rev.status==="__cleared__")delete map[row.student_id][row.attendance_date];
-          else map[row.student_id][row.attendance_date]=rev.status as AttendanceStatus;
+          map[row.student_id][row.attendance_date]=rev.status as AttendanceStatus;
         }
         seen.add(rev.attendance_id);
       }
