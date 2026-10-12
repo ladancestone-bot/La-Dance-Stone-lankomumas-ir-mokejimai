@@ -72,6 +72,7 @@
 /* Refined timetable: desktop week grid, mobile agenda cards, distinct class categories */
 .calendar-agenda{display:none}
 .calendar .event.class-event{background:#e6eadf;color:#3e5038;border-color:#c7d3bc}
+.calendar .event.class-event.green{background:#e6eadf;color:#3e5038;border-color:#c7d3bc}
 .calendar .event.class-event.pink{background:#512331;color:#fff7ef;border-color:#512331}
 .calendar .event.class-event.gold{background:#ead9ad;color:#5b4525;border-color:#c6a45e}
 .calendar .event.class-event.plum{background:#e8dce9;color:#5a3d60;border-color:#d0bdd3}
@@ -241,5 +242,5 @@ function renderCalendar(){
 function openClassEvent(el){const e=events[Number(el.dataset.classEvent)];if(!e||e.kind!=='class')return;classReturnView='timetable';$('classContextBackLabel').textContent='GRĮŽTI Į TVARKARAŠTĮ';showView('classes');showClassDetail(e.group);$('classGroup').value=String(e.option);document.querySelector('input[name="classBookingType"][value="group"]').checked=true;$('classGroupLabel').style.display='';$('classSingleNote').style.display='none';$('classToast').classList.remove('show');$('classDetail').scrollIntoView({behavior:'smooth',block:'start'})}
 $('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('nextWeek').onclick=()=>{week.setDate(week.getDate()+7);renderCalendar()};renderCalendar();
 </script>
-<!-- Preview deployment refresh: 2026-10-12; mobile agenda, navigation context, and corrected registration fees -->
+<!-- Preview deployment refresh: 2026-10-12; mobile agenda, varied class colors, contextual navigation, corrected fees -->
 </body></html>
