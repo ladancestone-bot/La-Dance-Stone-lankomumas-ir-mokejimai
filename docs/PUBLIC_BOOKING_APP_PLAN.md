@@ -38,10 +38,11 @@ Build the public-facing reservation experience first, then integrate it into the
    - This API is a later integration milestone and does not imply ChatGPT has automatic access until an authorized connector/tool is configured.
 
 ## Integration approach
-- First deliver the public booking experience as a distinct route/module, developed on this feature branch.
-- Reuse the current Supabase project and existing tables where the schema supports the required semantics; create reviewed migrations only where needed.
-- Keep one canonical record per booking and payment. Do not copy the same reservation into a separate independent database.
-- Later expose the booking experience through the existing Hostinger app/site and connect it to the administration views for reservations, attendance, monthly charges, payments, and rentals.
+- Build the customer-facing booking flow and its visual design as a fresh, separate module; do not reuse the old customer booking UI or old email template as the design baseline.
+- Build a fresh, branded email template and a dedicated email-sending integration for the new booking flow. First inspect the existing sender and configuration so it is not accidentally broken; the new flow must not depend on the old sender unless deliberately chosen later.
+- Reuse existing database tables only as a reference for field meanings and admin compatibility. Prefer new, clearly named booking-specific tables/migrations only where existing tables cannot safely support the new flow. Do not create a second disconnected production database.
+- Keep one canonical record per new booking and payment. The new module may use a staging/test schema or test records during development, but must not create or alter real customer records until approved.
+- Later connect the new booking records to the existing administration views through a reviewed compatibility layer, so the current app, existing customer data, rental history, and Google Sheets sync remain untouched until cutover is tested.
 - Do not merge to main, apply production migrations, switch the public booking URL, or disable existing sync until the migration and reconciliation checklist passes.
 
 ## Existing data / compatibility checks before implementation
