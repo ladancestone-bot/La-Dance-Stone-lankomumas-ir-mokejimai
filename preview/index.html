@@ -551,78 +551,66 @@ body,button,input,select,textarea{font-family:'Manrope',Arial,sans-serif}
 h1,h2,h3,.panel h3,.brandname{font-family:'Cormorant Garamond',Georgia,serif}
 button,.rent-time,.rent-day,.rent-slot,.field-label,.price,.pill,.site-link{font-family:'Manrope',Arial,sans-serif;font-variant-numeric:tabular-nums}
 
-/* The landing view begins directly with three choices; no duplicate brand header */
+/* Approved La Dance Stone landing screen: cream background + burgundy pill cards */
 body:has(#homeView.active) .top{display:none}
-#homeView .hero{
-  max-width:none;
-  margin:0 calc((min(100vw,1120px) - 100vw)/2) 18px;
-  padding:clamp(58px,11vh,108px) 28px 35px;
-  min-height:clamp(260px,38vh,390px);
-  display:flex;flex-direction:column;justify-content:flex-end;
-  align-items:flex-start;text-align:left;
-  border:0;border-radius:0 0 34px 34px;
-  overflow:hidden;
-  background:
-    linear-gradient(105deg,rgba(55,35,29,.80),rgba(80,54,43,.54) 54%,rgba(103,78,63,.34)),
-    radial-gradient(ellipse at 84% 24%,rgba(255,255,255,.26),transparent 26%),
-    radial-gradient(ellipse at 80% 78%,rgba(177,145,117,.45),transparent 34%),
-    linear-gradient(135deg,#d8c8b8,#8a7060 58%,#44332d);
-  box-shadow:0 16px 38px #38282112;
+body:has(#homeView.active){background:#f3e7da}
+#homeView.view.active{padding:0 0 48px}
+#homeView .hero{display:none}
+#homeView .choices{
+  display:grid;grid-template-columns:1fr;gap:16px;
+  width:100%;max-width:680px;margin:0 auto 24px;
 }
-#homeView .hero:before{
-  content:"";position:absolute;z-index:-1;
-  top:-18%;right:-12%;width:64%;height:132%;
-  border-radius:54% 0 0 54%;
-  border:1px solid rgba(255,255,255,.23);
-  background:linear-gradient(145deg,rgba(255,255,255,.17),rgba(80,49,36,.20));
-  transform:rotate(-13deg);
-}
-#homeView .hero:after{
-  content:"";position:absolute;z-index:-1;
-  right:13%;top:16%;width:35%;height:66%;
-  border-radius:50%;
-  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(41,27,23,.18));
-  filter:blur(1px);
-}
-#homeView .hero h1{
-  margin:0 0 14px;max-width:760px;
-  color:#fffaf5;font:500 clamp(46px,8vw,76px)/.94 'Cormorant Garamond',Georgia,serif;
-  letter-spacing:-.025em;text-shadow:0 2px 16px #24150f30;
-}
-#homeView .hero .home-values{
-  margin:0;color:rgba(255,250,245,.88);
-  font:600 10px/1.7 'Manrope',Arial,sans-serif;
-  letter-spacing:.16em;text-transform:uppercase;
-}
-#homeView .home-values span{padding:0 5px;color:#d6bd93}
-#homeView .choices{display:grid;grid-template-columns:1fr;gap:12px;margin:0 auto 24px}
 #homeView .choice{
-  display:grid;grid-template-columns:54px minmax(0,1fr) 32px;
-  grid-template-rows:auto auto auto;
-  column-gap:15px;align-items:center;
-  min-height:112px;padding:18px 17px;
-  border:1px solid #e8e0d9;border-radius:18px 25px 15px 25px;
-  background:#fff;box-shadow:0 8px 24px #38282108;
+  display:grid;grid-template-columns:64px minmax(0,1fr) 42px;
+  grid-template-rows:auto auto;column-gap:18px;align-items:center;
+  min-height:150px;padding:24px 24px;
+  border:1px solid rgba(255,245,233,.14);
+  border-radius:999px;background:linear-gradient(135deg,#681b2b 0%,#4b101d 100%);
+  color:#fff3e4;box-shadow:0 12px 26px rgba(70,28,28,.14);
+  transition:transform .18s ease,box-shadow .18s ease;
 }
-#homeView .choice:nth-child(1),#homeView .choice:nth-child(2),#homeView .choice:nth-child(3){background:#fff}
-#homeView .choice .num{grid-column:2;grid-row:1;font-size:9px;letter-spacing:.12em;color:#887a70}
-#homeView .choice .iconbox{grid-column:1;grid-row:1 / span 3;width:52px;height:52px;border-radius:15px;background:#f2e8dc;color:#481824;font-size:24px}
-#homeView .choice:nth-child(2) .iconbox{background:#efe5df;color:#71314f}
-#homeView .choice:nth-child(3) .iconbox{background:#e8eee8;color:#245747}
-#homeView .choice h3{grid-column:2;grid-row:2;margin:3px 0 1px;font:600 clamp(23px,4vw,29px)/1.02 'Cormorant Garamond',Georgia,serif;color:#481824}
-#homeView .choice p{grid-column:2;grid-row:3;margin:2px 0 0;max-width:none;font-size:12px;line-height:1.4;color:#887a70}
-#homeView .choice .arrow{grid-column:3;grid-row:1 / span 3;position:static;width:30px;height:30px;border-radius:50%;font-size:18px}
-#homeView .choice .num{grid-column:2}
+#homeView .choice:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(70,28,28,.19);border-color:#c8ab91}
+#homeView .choice .num{display:none}
+#homeView .choice .iconbox{
+  position:static;grid-column:1;grid-row:1 / span 2;
+  width:56px;height:56px;margin:0;border:0;border-radius:0;
+  display:grid;place-items:center;background:transparent;color:#f5e4ce;
+  font-size:39px;font-weight:400;
+}
+#homeView .choice h3{
+  grid-column:2;grid-row:1;margin:0 0 4px;
+  font:500 clamp(24px,4.5vw,31px)/1.05 'Cormorant Garamond',Georgia,serif;
+  letter-spacing:-.015em;color:#fff3e4;
+}
+#homeView .choice p{
+  grid-column:2;grid-row:2;margin:0;max-width:none;
+  font:400 13px/1.45 'Manrope',Arial,sans-serif;color:#e7d1bf;
+}
+#homeView .choice .arrow{
+  position:static;grid-column:3;grid-row:1 / span 2;
+  width:38px;height:38px;display:grid;place-items:center;
+  border:1px solid rgba(235,211,187,.7);border-radius:50%;
+  background:transparent;color:#f5e4ce;font-size:22px;
+}
 #homeView .note{display:none}
 @media(max-width:760px){
-  #homeView .hero{margin:0 -20px 16px;padding:0 23px 32px;min-height:290px;border-radius:0 0 28px 28px}
-  #homeView .hero h1{font-size:clamp(46px,12vw,62px);max-width:340px}
-  #homeView .hero .home-values{font-size:9px;letter-spacing:.12em}
-  #homeView .choices{gap:11px}
-  #homeView .choice{min-height:104px;padding:15px 13px;grid-template-columns:47px minmax(0,1fr) 27px;column-gap:12px}
-  #homeView .choice .iconbox{width:45px;height:45px;font-size:21px}
-  #homeView .choice h3{font-size:25px}
-  #homeView .choice .num{font-size:8px;letter-spacing:.1em}
+  #homeView.view.active{padding:clamp(92px,17vh,165px) 0 42px}
+  #homeView .choices{gap:16px;margin-bottom:20px}
+  #homeView .choice{
+    min-height:142px;padding:21px 20px;
+    grid-template-columns:52px minmax(0,1fr) 34px;column-gap:15px;
+    border-radius:999px;
+  }
+  #homeView .choice .iconbox{width:48px;height:48px;font-size:34px}
+  #homeView .choice h3{font-size:clamp(23px,6.1vw,29px)}
+  #homeView .choice p{font-size:12px}
+  #homeView .choice .arrow{width:34px;height:34px;font-size:20px}
+}
+@media(max-width:360px){
+  #homeView .choice{padding:18px 15px;grid-template-columns:42px minmax(0,1fr) 30px;column-gap:11px;min-height:130px}
+  #homeView .choice .iconbox{width:40px;height:40px;font-size:30px}
+  #homeView .choice h3{font-size:22px}
+  #homeView .choice p{font-size:11px}
 }
 </style>
 </head>
