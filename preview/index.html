@@ -86,5 +86,5 @@ const events=[{d:0,h:16,len:1,n:'Šokis vaikams',s:'7–12 m.',c:''},{d:0,h:19.2
 function renderCalendar(){let end=new Date(week);end.setDate(end.getDate()+6);$('calTitle').textContent=week.getFullYear()+' m. '+week.toLocaleDateString('lt-LT',{month:'long'})+' '+week.getDate()+'–'+end.getDate()+' d.';let html='<div></div>';for(let d=0;d<7;d++){let dt=new Date(week);dt.setDate(dt.getDate()+d);html+='<div class="day">'+days[d]+'<strong>'+dt.getDate()+'</strong></div>'}for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);html+='<div class="cell">'+(e?'<div class="event '+e.c+'" style="top:'+(e.h%1*66+3)+'px;height:'+Math.max(45,e.len*66-6)+'px"><b>'+String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round(e.h%1*60)).padStart(2,'0')+' · '+e.n+'</b>'+e.s+'</div>':'')+'</div>'}}$('calendar').innerHTML=html}
 $('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('nextWeek').onclick=()=>{week.setDate(week.getDate()+7);renderCalendar()};renderCalendar();
 </script>
-<!-- Preview deployment refresh: 2026-10-12 -->
+<!-- Preview deployment refresh: 2026-10-12; every rental slot displays its time range -->
 </body></html>
