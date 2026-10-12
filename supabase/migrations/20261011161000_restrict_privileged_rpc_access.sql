@@ -44,3 +44,16 @@ revoke execute on function public.teacher_update_payment(
 grant execute on function public.teacher_update_payment(
   uuid, numeric, public.payment_method, timestamp with time zone, text
 ) to authenticated, service_role;
+
+-- Admin payment RPCs also have SECURITY DEFINER and need explicit role grants.
+revoke execute on function public.admin_delete_payment(uuid)
+  from public, anon;
+grant execute on function public.admin_delete_payment(uuid)
+  to authenticated, service_role;
+
+revoke execute on function public.admin_update_payment(
+  uuid, numeric, public.payment_method, timestamp with time zone, text
+) from public, anon;
+grant execute on function public.admin_update_payment(
+  uuid, numeric, public.payment_method, timestamp with time zone, text
+) to authenticated, service_role;
