@@ -8,7 +8,7 @@ This document records verified risks and the required safe order of work. It is 
 - `payments` contains the actual payment rows and `monthly_charges.amount_paid/status` are recalculated by database functions.
 - `admin_delete_payment` and `teacher_delete_payment` both remove the payment row after subtracting its amount from the monthly charge. There is no payment-revision/audit trigger on `payments` in the inspected trigger list.
 - `admin_update_payment` and `teacher_update_payment` modify amount, method, paid-at time and notes in place. There is no payment-revision/audit trigger on `payments` in the inspected trigger list.
-- `stripe_payments` has a SELECT policy for all authenticated users (`qual = true`). The table stores payer name/email, amount, status, metadata and Stripe identifiers. Catalog privileges also grant broad table rights to `anon` and `authenticated`; RLS and grants must be considered together.
+- `stripe_payments` initially had a SELECT policy for all authenticated users (`qual = true`) and broad table grants. A new prepared migration `20261011163000_restrict_stripe_payment_ledger.sql` now removes browser writes and grants SELECT only to authenticated users whose own `user_roles` row is `admin`; trusted Edge Functions retain service-role access. This migration is branch-only and has not been applied to production; verify the policy against actual admin/non-admin accounts before release.
 - A fresh catalog check confirms `student_consents`, `website_import_tokens`, `website_import_sync_runs` and `website_orders` all have RLS enabled but no policies. `anon` and `authenticated` still have broad table-level grants on three of these tables (`website_import_sync_runs` is service-role-only). With RLS enabled and no policies, ordinary API row access is denied today, but the unnecessary grants should still be removed; `website_orders` needs a deliberate authenticated policy first because the app currently reads it.
 - Stripe webhook and sync Edge Functions use the server-side service-role client to write Stripe ledger rows. The website-order import Edge Function calls `process_dropin_website_order` with a service-role bearer token.
 - A fresh live privilege query confirms seven `SECURITY DEFINER` RPCs are executable by `anon`: `add_manual_dropin_participant`, `add_quick_dropin_participant`, `clear_group_attendance`, `process_dropin_website_order`, `teacher_can_access_group`, `teacher_delete_payment` and `teacher_update_payment`. The prepared RPC migration now revokes anonymous execution from all seven, while retaining authenticated execution for staff-facing functions and service-role execution for trusted server workflows. `process_dropin_website_order` is restricted to `service_role` for the website importer.
@@ -38,7 +38,7 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] Attendance corrections retain prior revision history.
 - [x] GitHub Actions `Build check` passes for current PR head commit `6eab87b8c6e2e2a01e78ede1729336a986d9fcdb` (run 182).
 - [ ] End-to-end authentication, payment-history, and role-scope tests pass in a staging database before merging.
-- [ ] Restrict `stripe_payments` browser grants and replace its all-authenticated SELECT policy after validating every caller; this remains an open production security issue.
+- [ ] Apply and verify the prepared `stripe_payments` least-privilege migration in an approved non-production database: admin reads allowed, teacher/anonymous reads and all browser writes denied; service-role webhook/sync remains functional.
 
 
 ## Security remediation and test plan — 2026-10-11
@@ -54,6 +54,7 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] Review `20261011160000_payment_change_audit.sql`: trigger behavior for payment UPDATE/DELETE, audit table RLS, and service-role-only access.
 - [ ] Review `20261011161000_restrict_privileged_rpc_access.sql`: confirm exact function signatures and verify all legitimate callers use authenticated or service-role contexts.
 - [ ] Review `20261011162000_lock_server_only_tables.sql`: confirm the website importer still works with service-role access and does not require browser access to token tables.
+- [ ] Review `20261011163000_restrict_stripe_payment_ledger.sql`: confirm admin-only SELECT using the current `user_roles` schema; test admin and non-admin accounts and Stripe service-role writers.
 - [ ] Correct stale statements in this audit: payment history is already fixed in the feature branch to use `payments.paid_at` with `Europe/Vilnius` month boundaries; update the CI reference to the latest passing PR head before final review.
 
 ### Phase 2 — caller and permission checks
@@ -83,7 +84,7 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] After release, re-run permission checks, payment reconciliation, checkout/import smoke tests, and security advisor checks.
 
 ### Current blockers — do not release while open
-1. Production has an overly broad `stripe_payments` policy and unnecessary direct table grants.
+1. Production still has an overly broad `stripe_payments` policy and unnecessary direct table grants until the new least-privilege migration is reviewed, tested and applied.
 2. Production grants anonymous execution to privileged SECURITY DEFINER RPCs.
 3. No disposable staging database has been approved/created; no production migration has been applied.
 4. Payment correction and attendance revision behavior need end-to-end verification before release.
