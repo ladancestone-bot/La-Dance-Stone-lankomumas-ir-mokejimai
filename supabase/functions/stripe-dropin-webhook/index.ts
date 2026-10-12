@@ -82,11 +82,12 @@ Deno.serve(async (req) => {
     return Response.json({ received: true, reservation_fee: true });
   }
 
-  if (metadata.payment_kind === "rental" && metadata.rental_id) {
+  const publicRentalId = metadata.rental_id || session.client_reference_id;
+  if ((metadata.payment_kind === "rental" && metadata.rental_id) || publicRentalId) {
     const { data: rental, error: rentalError } = await supabaseAdmin
       .from("studio_rentals")
       .select("id,customer_name,customer_email,customer_phone,price,payment_status,stripe_payment_id")
-      .eq("id", metadata.rental_id)
+      .eq("id", publicRentalId)
       .maybeSingle();
 
     if (rentalError || !rental) return new Response("rental not found", { status: 404 });
