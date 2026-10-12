@@ -23,7 +23,11 @@ Build the public-facing reservation experience first, then integrate it into the
    - Avoid duplicate bookings if a customer refreshes or submits twice.
 3. **Studio rental**
    - Show available time slots and prevent overlapping active rentals.
-   - Clearly show date, local start/end time, price, and payment state.
+   - Allow duration selection and show the full calculated total before confirmation.
+   - Current pricing: first 3 hours €20/hour; every additional hour €15/hour.
+   - Formula: `min(hours, 3) × 20 + max(hours − 3, 0) × 15`.
+   - Examples: 3h €60, 4h €75, 5h €90.
+   - Calculate price server-side and use the same total in checkout, confirmation emails, and admin.
 4. **Checkout and status**
    - Stripe Checkout is initiated only by a trusted server-side function.
    - A verified Stripe webhook updates the existing reservation/payment record idempotently.
@@ -55,6 +59,7 @@ Build the public-facing reservation experience first, then integrate it into the
 ## Acceptance checklist
 - [ ] Public booking works on mobile and desktop in LT/EN/ES.
 - [ ] Class capacity and rental conflicts are enforced server-side.
+- [ ] Rental duration pricing follows the confirmed 3-hour discount policy (€20/hour for the first 3 hours, €15/hour after that).
 - [ ] Double submissions and webhook retries do not create duplicates.
 - [ ] A Stripe payment becomes paid only after verified webhook processing.
 - [ ] Booking remains visible if email delivery fails.
