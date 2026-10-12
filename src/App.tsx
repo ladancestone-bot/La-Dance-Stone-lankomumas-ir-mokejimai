@@ -405,15 +405,23 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
       const {data:configs,error:configError}=await supabase.from("season_groups").select("id,group_id").eq("season_id",seasonId).eq("is_active",true);
       if(configError){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(configError.message);return}
       const configMap:Record<string,string>={};(configs??[]).forEach((x:any)=>configMap[x.group_id]=x.id);
-      const inserts=selectedGroups.filter(gid=>configMap[gid]).map(gid=>({season_id:seasonId,season_group_id:configMap[gid],student_id:id,enrolled_on:todayISO(),is_active:true}));
-      if(inserts.length!==selectedGroups.length){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError("Nepavyko patvirtinti visų grupių šiame sezone. Klientas paliktas archyve.");return}
-      const ended=await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("student_id",id);
-      if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}
+      if(selectedGroups.some(gid=>!configMap[gid])){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError("Nepavyko patvirtinti visų grupių šiame sezone. Klientas paliktas archyve.");return}
+      const selectedConfigIds=selectedGroups.map(gid=>configMap[gid]);
+      const {data:activeMemberships,error:activeError}=await supabase.from("season_enrollments").select("id,season_group_id").eq("season_id",seasonId).eq("student_id",id).eq("is_active",true);
+      if(activeError){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(activeError.message);return}
+      const toEnd=(activeMemberships??[]).filter((m:any)=>!selectedConfigIds.includes(m.season_group_id));
+      for(const membership of toEnd){const ended=await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("id",membership.id);if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}}
+      const activeConfigIds=new Set((activeMemberships??[]).map((m:any)=>m.season_group_id));
+      const inserts=selectedGroups.filter(gid=>!activeConfigIds.has(configMap[gid])).map(gid=>({season_id:seasonId,season_group_id:configMap[gid],student_id:id,enrolled_on:todayISO(),is_active:true}));
       if(inserts.length){const ins=await supabase.from("season_enrollments").upsert(inserts,{onConflict:"season_id,season_group_id,student_id"});if(ins.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ins.error.message);return}}
     } else {
-      const ended=await supabase.from("group_students").update({is_active:false}).eq("student_id",id);
-      if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}
-      if(selectedGroups.length){const ins=await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"});if(ins.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ins.error.message);return}}
+      const {data:activeMemberships,error:activeError}=await supabase.from("group_students").select("group_id").eq("student_id",id).eq("is_active",true);
+      if(activeError){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(activeError.message);return}
+      const toEnd=(activeMemberships??[]).filter((m:any)=>!selectedGroups.includes(m.group_id));
+      for(const membership of toEnd){const ended=await supabase.from("group_students").update({is_active:false}).eq("student_id",id).eq("group_id",membership.group_id);if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}}
+      const activeGroupIds=new Set((activeMemberships??[]).map((m:any)=>m.group_id));
+      const inserts=selectedGroups.filter(group_id=>!activeGroupIds.has(group_id)).map(group_id=>({student_id:id,group_id,is_active:true}));
+      if(inserts.length){const ins=await supabase.from("group_students").upsert(inserts,{onConflict:"student_id,group_id"});if(ins.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ins.error.message);return}}
     }
     setOpen(false);await load()
   }
