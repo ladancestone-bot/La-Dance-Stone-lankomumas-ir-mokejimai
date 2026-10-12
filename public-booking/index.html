@@ -77,7 +77,7 @@
     for(let n=1;n<=count;n++){const date=new Date(month.getFullYear(),month.getMonth(),n);const b=document.createElement('button');b.className='day';b.textContent=n;b.type='button';b.disabled=date<today;b.addEventListener('click',()=>{selectedDay=date;selectedTime=null;renderCalendar();renderTimes();updateSummary()});if(selectedDay&&selectedDay.getFullYear()===month.getFullYear()&&selectedDay.getMonth()===month.getMonth()&&selectedDay.getDate()===n)b.classList.add('selected');cal.append(b)}
   }
   function renderTimes(){
-    const box=$('times');box.innerHTML='';const list=chosenType==='rental'?timesRental:timesClass;
+    const box=$('times');box.innerHTML='';const list=chosenType==='rental'?timesRental.filter(t=>Number(t.split(':')[0])+rentalDuration<=22):timesClass;
     list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='time'+(selectedTime===t?' selected':'');b.textContent=chosenType==='rental'?t+' · '+rentalDuration+' val.':t;b.addEventListener('click',()=>{selectedTime=t;renderTimes();updateSummary()});box.append(b)});
     $('rental-note').classList.toggle('hidden',chosenType!=='rental');
     $('rental-duration-wrap').classList.toggle('hidden',chosenType!=='rental');
@@ -103,7 +103,7 @@
     renderTimes();updateSummary();
   }));
   $('plan').addEventListener('change',()=>{const p=$('plan').value;price=p==='adult1'?40:p==='adult3'?60:50;chosenType=p==='kids'?'kids':'subscription';document.querySelectorAll('.service').forEach(x=>x.classList.toggle('selected',x.dataset.type===chosenType));updateSummary()});
-  $('rental-duration').addEventListener('change',()=>{rentalDuration=Number($('rental-duration').value);if(chosenType==='rental')price=rentalPrice(rentalDuration);renderTimes();updateSummary()});
+  $('rental-duration').addEventListener('change',()=>{rentalDuration=Number($('rental-duration').value);if(chosenType==='rental')price=rentalPrice(rentalDuration);if(chosenType==='rental'&&selectedTime&&Number(selectedTime.split(':')[0])+rentalDuration>22)selectedTime=null;renderTimes();updateSummary()});
   document.querySelectorAll('input[name="payment"]').forEach(x=>x.addEventListener('change',updateSummary));
   $('prev').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()});
   $('next').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()});
