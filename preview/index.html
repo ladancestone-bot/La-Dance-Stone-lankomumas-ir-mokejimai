@@ -298,7 +298,7 @@ function renderCalendar(){
  agenda+='</tbody></table>';}
  $('calendarAgenda').innerHTML=agenda;
  const timetableScroll=document.querySelector('.timetable-panel .cal-scroll');
- if(timetableScroll&&window.matchMedia('(max-width: 760px)').matches){const firstAfternoonRow=Array.from($('calendar').querySelectorAll('.time')).find(el=>el.textContent.trim()==='15:00');if(firstAfternoonRow)timetableScroll.scrollTop=Math.max(0,firstAfternoonRow.offsetTop-timetableScroll.offsetTop-46);}
+ if(timetableScroll&&window.matchMedia('(max-width: 760px)').matches){const firstAfternoonRow=Array.from($('calendar').querySelectorAll('.time')).find(el=>el.textContent.trim()==='15:00');if(firstAfternoonRow)timetableScroll.scrollTop=Math.max(0,firstAfternoonRow.offsetTop-46);}
  $('calendarAgenda').querySelectorAll('[data-mobile-day]').forEach(btn=>btn.addEventListener('click',()=>{mobileDay=Number(btn.dataset.mobileDay);renderCalendar()}));
  $('calendarAgenda').querySelectorAll('[data-class-event]').forEach(el=>{const open=()=>openClassEvent(el);el.addEventListener('click',open);el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}})});
 }
