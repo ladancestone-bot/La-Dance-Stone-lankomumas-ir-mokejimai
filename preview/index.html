@@ -158,6 +158,64 @@
 .timetable-panel .calendar .event.rental-event{background:#eee3c9;color:#6e592c;border-color:#d9c18a}
 .timetable-panel .calendar .event.class-event{cursor:pointer}
 .timetable-panel .calendar .event.class-event:active{filter:brightness(.96)}
+
+/* Editorial redesign: clear hierarchy, quiet surfaces, readable mobile booking */
+.timetable-panel{border:1px solid #e8dfd2;border-radius:22px;background:#fffdf9;box-shadow:0 18px 45px rgba(55,35,29,.06);overflow:hidden}
+.timetable-intro{background:#f1e8dc;border:0;border-radius:16px;margin:0 0 20px;padding:20px 22px;gap:15px}
+.timetable-spark{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#e1d2b8;color:#6d4b35;font-size:23px;flex-shrink:0}
+.timetable-intro strong{font:600 23px 'Cormorant Garamond',serif;color:#48232e}
+.timetable-intro p{font-size:12px;color:#76675e;line-height:1.55}
+.timetable-panel .cal-toolbar{padding:16px 20px;background:#fffdf9;border-bottom:1px solid #eee6dc}
+.timetable-panel .cal-toolbar button{width:38px;height:38px;border-radius:50%;background:#f7f1e8;border:1px solid #e6d9c8;font-size:22px;transition:background .15s}
+.timetable-panel .cal-toolbar button:hover{background:#eadbc8}
+.timetable-panel .cal-title{font-size:14px;color:#382821;letter-spacing:.01em}
+.timetable-panel .calendar .day{background:#f8f3ec;color:#8a786b;border-color:#eae0d4;padding:12px 3px}
+.timetable-panel .calendar .day strong{font-size:20px;color:#48232e}
+.timetable-panel .calendar .time{background:#f8f3ec;color:#87786b;font-weight:600}
+.timetable-panel .calendar .cell{background:#fffdf9;border-color:#eee6dc}
+.timetable-panel .calendar .event{border-radius:8px;padding:6px 5px;box-shadow:none;justify-content:flex-start}
+.timetable-panel .calendar .event b{font-size:10px;font-weight:700}
+.timetable-panel .calendar .event span{font-size:9px;line-height:1.3}
+.timetable-panel .calendar .event.class-event{background:#e4e9df;color:#455440;border-color:#c6d0bd}
+.timetable-panel .calendar .event.class-event.gold{background:#f0e1d8;color:#795044;border-color:#dfc0b1}
+.timetable-panel .calendar .event.class-event.plum{background:#f2dce5;color:#854e68;border-color:#e3b9cc}
+.timetable-panel .calendar .event.class-event.pink{background:#512b39;color:#fff8f3;border-color:#512b39}
+.timetable-panel .calendar-help{padding:15px 20px 18px;background:#fffdf9}
+.timetable-panel .calendar-help p{margin:10px 0 0;font-size:10px;line-height:1.6;color:#98897d}
+.timetable-panel .timetable-legend{font-size:10px;color:#75675d}
+.timetable-panel .tt-legend-class{background:#e4e9df;border-color:#c6d0bd}
+.calendar-day-tabs{gap:5px;margin:0 0 14px}
+.calendar-day-tab{padding:10px 1px 9px;border:1px solid #e8dfd2;border-radius:11px;background:#fffdf9;color:#827267;font-size:10px;transition:background .15s,border-color .15s}
+.calendar-day-tab strong{font-size:16px;color:#382821;font-weight:600}
+.calendar-day-tab.active{background:#512b39;border-color:#512b39;color:#f8eee5}
+.calendar-day-tab.active strong{color:#fffaf5}
+.calendar-mobile-date{padding:16px 17px;background:#f1e8dc;border:0;border-radius:14px 14px 0 0;color:#48232e}
+.calendar-mobile-date strong{font-size:23px}
+.calendar-mobile-date span{font-size:11px}
+.calendar-mobile-table{border:1px solid #eee4d8;border-radius:0 0 14px 14px}
+.calendar-mobile-table th{padding:10px 12px;background:#faf6f0;color:#958478;font-size:9px}
+.calendar-mobile-table td{padding:13px 10px;border-color:#f0e8df}
+.calendar-mobile-table .mobile-time{width:88px;font-size:11px;color:#512b39}
+.mobile-event{border:1px solid #d1d9c9;border-left:4px solid #94a486;border-radius:10px;background:#e9eee4;padding:11px 12px;color:#3e5038}
+.mobile-event strong{font-size:12px;line-height:1.35}
+.mobile-event small{font-size:10px;line-height:1.5;color:#6f7767}
+.mobile-event.pink{background:#f6e8ed;border-color:#e3b9cc;border-left-color:#c77f9b;color:#854e68}
+.mobile-event.pink small{color:#956b7c}
+.mobile-event.gold{background:#f5e8df;border-color:#dfc0b1;border-left-color:#b88770;color:#795044}
+.mobile-event.plum{background:#f2dce5;border-color:#e3b9cc;border-left-color:#c77f9b;color:#854e68}
+.calendar-mobile-empty{padding:30px 16px;border:1px solid #eee4d8;border-radius:0 0 14px 14px;background:#fffdf9}
+@media(max-width:760px){
+ .timetable-panel .cal-scroll{display:none}
+ .timetable-panel .calendar-agenda{display:block;padding:14px;background:#fffdf9}
+ .timetable-panel .calendar-help{padding:14px 16px}
+ .timetable-panel .cal-toolbar{padding:14px 15px}
+ .timetable-panel .cal-toolbar button{width:36px;height:36px;flex-basis:36px}
+ .timetable-panel .cal-title{font-size:12px}
+ .timetable-intro{padding:16px;margin-bottom:16px}
+ .timetable-intro strong{font-size:21px}
+ .calendar-mobile-table .mobile-time{width:82px}
+}
+
 </style>
 </head>
 <body>
@@ -238,7 +296,7 @@
 </div>
 </div>
 </section>
-<section id="timetableView" class="view"><button class="back" data-view="home"><span>←</span>GRĮŽTI Į PASIRINKIMĄ</button><div class="viewhead"><div><div class="eyebrow">03 · Savaitės tvarkaraštis</div><h2>Visa savaitė — vienoje vietoje.</h2><p>Peržiūrėkite vaikų ir suaugusiųjų šokių pamokas. Paspaudus pamokos kortelę, galėsite pasirinkti registracijos būdą ir tęsti registraciją.</p></div><span class="pill">Savaitės planas</span></div><div class="timetable-intro"><span class="timetable-spark">✦</span><div><strong>Jūsų savaitės ritmas</strong><p>Šviesios kortelės žymi laisvą laiką, o pažymėtos pamokos yra paspaudžiamos.</p></div></div><div class="calendar-panel timetable-panel"><div class="cal-toolbar"><button id="prevWeek" aria-label="Ankstesnė savaitė">‹</button><div class="cal-title" id="calTitle">2026 m. spalio 12–18 d.</div><button id="nextWeek" aria-label="Kita savaitė">›</button></div><div class="cal-scroll"><div id="calendar" class="calendar"></div></div><div id="calendarAgenda" class="calendar-agenda"></div><div class="calendar-help"><div class="timetable-legend"><span><i class="tt-legend-class"></i>Šokių pamoka · paspauskite registracijai</span><span><i class="tt-legend-free"></i>Laisvas laikas</span><span><i class="tt-legend-rental"></i>Studijos nuoma</span></div><p>Tvarkaraščio laikai yra peržiūros pavyzdys. Prieš įjungiant tikrą registraciją, jie bus susieti su bendra užimtumo duomenų baze.</p></div></div></section>
+<section id="timetableView" class="view"><button class="back" data-view="home"><span>←</span>GRĮŽTI Į PASIRINKIMĄ</button><div class="viewhead"><div><div class="eyebrow">03 · Savaitės tvarkaraštis</div><h2>Rask savo šokį.</h2><p>Išsirinkite dieną ir jums tinkančią grupę. Paspauskite pamoką, kad peržiūrėtumėte registracijos pasirinkimus.</p></div><span class="pill">Savaitės planas</span></div><div class="timetable-intro"><span class="timetable-spark">✳</span><div><strong>Šokis prasideda čia.</strong><p>Pasirinkite pamoką ir ženkite pirmą žingsnį į šokį.</p></div></div><div class="calendar-panel timetable-panel"><div class="cal-toolbar"><button id="prevWeek" aria-label="Ankstesnė savaitė">‹</button><div class="cal-title" id="calTitle">2026 m. spalio 12–18 d.</div><button id="nextWeek" aria-label="Kita savaitė">›</button></div><div class="cal-scroll"><div id="calendar" class="calendar"></div></div><div id="calendarAgenda" class="calendar-agenda"></div><div class="calendar-help"><div class="timetable-legend"><span><i class="tt-legend-class"></i>Pasirinkite pamoką registracijai</span></div><p>Tai tvarkaraščio prototipas. Registracija dar nėra aktyvi.</p></div></div></section>
 <footer class="footer"><strong>LA DANCE STONE</strong><span>Šiuolaikinis šokis · Studijos nuoma · Kaunas</span><a href="https://ladancestone.lt" style="color:var(--wine);text-decoration:none">ladancestone.lt ↗</a></footer>
 </main>
 <script>
@@ -272,19 +330,17 @@ $('rentSubmit').onclick=()=>{const len=duration(),start=startHour(),end=start+le
 updateBookingSummary();
 const days=['Pr','An','Tr','Kt','Pn','Št','Sk'];let week=new Date(2026,9,12);let mobileDay=0;
 const events=[
-{d:0,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'green',kind:'class',group:'kids',option:0},
-{d:0,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:0},
-{d:1,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'gold',kind:'class',group:'kids',option:1},
-{d:1,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai · 13–18 m.',c:'gold',kind:'class',group:'kids',option:2},
-{d:1,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–6 m.',c:'plum',kind:'class',group:'kids',option:3},
-{d:2,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'',kind:'class',group:'kids',option:0},
-{d:2,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:0},
-{d:3,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'',kind:'class',group:'kids',option:1},
-{d:3,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai · 13–18 m.',c:'',kind:'class',group:'kids',option:2},
-{d:3,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–6 m.',c:'',kind:'class',group:'kids',option:3},
-{d:4,h:16,len:1,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
-{d:5,h:10,len:1.5,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
-{d:6,h:19,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:1}
+{d:0,h:16,len:1,n:'Vaikų šiuolaikinis šokis',s:'7–12 metų grupė',c:'green',kind:'class',group:'kids',option:0},
+{d:0,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiųjų grupė',c:'pink',kind:'class',group:'adult',option:0},
+{d:1,h:16,len:1,n:'Vaikų šiuolaikinis šokis',s:'7–12 metų grupė',c:'gold',kind:'class',group:'kids',option:1},
+{d:1,h:17,len:1,n:'Paauglių šiuolaikinis šokis',s:'13–18 metų grupė',c:'gold',kind:'class',group:'kids',option:2},
+{d:1,h:18,len:.75,n:'Mažųjų šokių grupė',s:'5–6 metų grupė',c:'plum',kind:'class',group:'kids',option:3},
+{d:2,h:16,len:1,n:'Vaikų šiuolaikinis šokis',s:'7–12 metų grupė',c:'',kind:'class',group:'kids',option:0},
+{d:2,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiųjų grupė',c:'pink',kind:'class',group:'adult',option:0},
+{d:3,h:16,len:1,n:'Vaikų šiuolaikinis šokis',s:'7–12 metų grupė',c:'',kind:'class',group:'kids',option:1},
+{d:3,h:17,len:1,n:'Paauglių šiuolaikinis šokis',s:'13–18 metų grupė',c:'',kind:'class',group:'kids',option:2},
+{d:3,h:18,len:.75,n:'Mažųjų šokių grupė',s:'5–6 metų grupė',c:'',kind:'class',group:'kids',option:3},
+{d:6,h:19,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiųjų grupė',c:'pink',kind:'class',group:'adult',option:1}
 ];
 function renderCalendar(){
  let end=new Date(week);end.setDate(end.getDate()+6);
