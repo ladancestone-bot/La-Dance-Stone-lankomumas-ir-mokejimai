@@ -14,24 +14,44 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
 
+  const authorization = req.headers.get("Authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+  const userResult = await supabase.auth.getUser(authorization.slice(7));
+  const user = userResult.data.user;
+  if (userResult.error || !user) return json({ error: "Unauthorized" }, 401);
+
+  const { data: userRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  if (rolesError) return json({ error: "Could not verify studio role" }, 500);
+  const roles = (userRoles ?? []).map((r: any) => String(r.role));
+  const isAdmin = roles.includes("admin");
+  const isTeacher = roles.includes("teacher");
+  if (!isAdmin && !isTeacher) return json({ error: "Studio role required" }, 403);
+
   const kind = body?.payment_kind;
   const payer = body?.payer ?? {};
 
   if (kind === "rental") {
     const rentalId = String(body?.rental_id || "");
-    if (!rentalId) return json({ error: "rental_id is required" }, { status: 400 });
+    if (!rentalId) return json({ error: "rental_id is required" }, 400);
+    if (!isAdmin) return json({ error: "Admin role required for rental checkout" }, 403);
 
     const { data: rental, error } = await supabase
       .from("studio_rentals")
-      .select("id,customer_name,customer_email,customer_phone,price,payment_status,payment_method")
+      .select("id,customer_name,customer_email,customer_phone,price,payment_status,payment_method,is_active")
       .eq("id", rentalId)
       .maybeSingle();
 
-    if (error || !rental) return json({ error: "Rental not found" }, { status: 404 });
-    if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, { status: 400 });
+    if (error || !rental) return json({ error: "Rental not found" }, 404);
+    if (rental.is_active === false) return json({ error: "This rental is archived" }, 400);
+    if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, 400);
+    const rentalAmount = Number(rental.price);
+    if (!Number.isFinite(rentalAmount) || rentalAmount <= 0) return json({ error: "Invalid rental price" }, 400);
 
     const email = String(payer.email || rental.customer_email || "").trim();
-    if (!email) return json({ error: "Customer email is required" }, { status: 400 });
+    if (!email) return json({ error: "Customer email is required" }, 400);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -41,7 +61,7 @@ Deno.serve(async (req) => {
         quantity: 1,
         price_data: {
           currency: "eur",
-          unit_amount: Math.round(Number(rental.price) * 100),
+          unit_amount: Math.round(rentalAmount * 100),
           product_data: { name: ("La Dance Stone – studijos nuoma – " + rental.customer_name).trim() },
         },
       }],
@@ -65,21 +85,39 @@ Deno.serve(async (req) => {
 
   const chargeId = body?.monthly_charge_id;
   if (kind !== "monthly_charge" || !chargeId) {
-    return json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, { status: 400 });
+    return json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, 400);
   }
 
   const { data: charge, error } = await supabase
     .from("monthly_charges")
-    .select("id,student_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
+    .select("id,student_id,group_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
     .eq("id", chargeId).maybeSingle();
 
-  if (error || !charge) return json({ error: "Monthly charge not found" }, { status: 404 });
+  if (error || !charge) return json({ error: "Monthly charge not found" }, 404);
+
+  if (isTeacher && !isAdmin) {
+    const { data: teacher, error: teacherError } = await supabase
+      .from("teachers")
+      .select("id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    if (teacherError) return json({ error: "Could not verify teacher assignment" }, 500);
+    if (!teacher) return json({ error: "Teacher profile required" }, 403);
+    const { data: assignment, error: assignmentError } = await supabase
+      .from("group_teachers")
+      .select("group_id")
+      .eq("teacher_id", teacher.id)
+      .eq("group_id", charge.group_id)
+      .maybeSingle();
+    if (assignmentError) return json({ error: "Could not verify group assignment" }, 500);
+    if (!assignment) return json({ error: "Teacher is not assigned to this group" }, 403);
+  }
 
   const remaining = Number(charge.amount_due) - Number(charge.amount_paid);
-  if (remaining <= 0) return json({ error: "This charge is already paid" }, { status: 400 });
+  if (!Number.isFinite(remaining) || remaining <= 0) return json({ error: "This charge is already paid or invalid" }, 400);
 
   const email = String(payer.email || charge.students?.parent_email || charge.students?.email || "").trim();
-  if (!email) return json({ error: "Payer email is required" }, { status: 400 });
+  if (!email) return json({ error: "Payer email is required" }, 400);
 
   const fullName = String(payer.full_name || charge.students?.parent_name || ((charge.students?.first_name || "") + " " + (charge.students?.last_name || ""))).trim();
   let payerId: string | null = null;
@@ -87,7 +125,7 @@ Deno.serve(async (req) => {
   if (existingPayer) payerId = existingPayer.id;
   else {
     const { data: newPayer, error: payerError } = await supabase.from("payers").insert({ full_name: fullName || "Payer", email, phone: payer.phone || null }).select("id").single();
-    if (payerError) return json({ error: "Could not create payer" }, { status: 500 });
+    if (payerError) return json({ error: "Could not create payer" }, 500);
     payerId = newPayer.id;
   }
   await supabase.from("monthly_charges").update({ payer_id: payerId }).eq("id", chargeId);

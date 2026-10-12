@@ -1,0 +1,60 @@
+name: Publish booking preview without replacing admin app
+
+on:
+  push:
+    branches:
+      - feature/public-booking-app
+    paths:
+      - 'preview/index.html'
+      - '.github/workflows/preview-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout existing admin app from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: site
+      - name: Checkout booking preview
+        uses: actions/checkout@v4
+        with:
+          ref: feature/public-booking-app
+          path: preview-source
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: site
+        run: npm install --no-package-lock
+      - name: Build existing admin app
+        working-directory: site
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: Add standalone booking preview under /preview/
+        run: |
+          mkdir -p site/dist/preview
+          cp preview-source/preview/index.html site/dist/preview/index.html
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload complete site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+      - name: Deploy site with preview
+        id: deployment
+        uses: actions/deploy-pages@v4
