@@ -1,4 +1,4 @@
-name: Publish booking design preview
+name: Publish booking preview without replacing admin app
 
 on:
   push:
@@ -15,28 +15,48 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-preview
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout preview branch
+      - name: Checkout existing admin app from main
         uses: actions/checkout@v4
-      - name: Prepare static preview
+        with:
+          ref: main
+          path: site
+      - name: Checkout booking preview
+        uses: actions/checkout@v4
+        with:
+          ref: feature/public-booking-app
+          path: preview-source
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Install dependencies
+        working-directory: site
+        run: npm ci
+      - name: Build existing admin app
+        working-directory: site
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: Add standalone booking preview under /preview/
         run: |
-          mkdir -p _site
-          cp preview/index.html _site/index.html
+          mkdir -p site/dist/preview
+          cp preview-source/preview/index.html site/dist/preview/index.html
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Upload preview artifact
+      - name: Upload complete site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-      - name: Deploy preview
+          path: site/dist
+      - name: Deploy site with preview
         id: deployment
         uses: actions/deploy-pages@v4
