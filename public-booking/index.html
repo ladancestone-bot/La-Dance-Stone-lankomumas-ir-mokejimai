@@ -107,12 +107,51 @@
   document.querySelectorAll('input[name="payment"]').forEach(x=>x.addEventListener('change',updateSummary));
   $('prev').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()});
   $('next').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()});
-  $('submit').addEventListener('click',()=>{
+  function vilniusLocalDateTimeIso(date, time) {
+    const [hour, minute] = time.split(':').map(Number);
+    const localParts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    });
+    const desiredUtc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, 0);
+    let candidate = desiredUtc;
+    for (let i = 0; i < 3; i++) {
+      const parts = Object.fromEntries(localParts.formatToParts(new Date(candidate)).map(p => [p.type, p.value]));
+      const representedUtc = Date.UTC(Number(parts.year), Number(parts.month)-1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
+      candidate += desiredUtc - representedUtc;
+    }
+    return new Date(candidate).toISOString();
+  }
+  $('submit').addEventListener('click', async ()=>{
     const missing=[];if(!selectedDay)missing.push('pasirinkite datą');if(!selectedTime)missing.push('pasirinkite laiką');if(!$('name').value.trim())missing.push('įrašykite vardą ir pavardę');if(!$('email').value.trim()||!$('email').validity.valid)missing.push('įrašykite galiojantį el. paštą');if(!$('terms').checked)missing.push('patvirtinkite sąlygas');
     const notice=$('notice');notice.classList.add('show');
     if(missing.length){notice.textContent='Dar reikia: '+missing.join('; ')+'.';notice.style.background='#f3e7cf';notice.style.borderColor='#b88a3e';notice.style.color='#685443';return}
+    if(chosenType==='rental' && document.querySelector('input[name="payment"]:checked')?.value==='stripe') {
+      notice.style.background='#f0e6d8';notice.style.borderColor='#d9c7ad';notice.style.color='#685443';
+      notice.textContent='Kuriama rezervacija ir ruošiama saugi mokėjimo nuoroda…';
+      $('submit').disabled=true;
+      try {
+        const supabaseUrl='https://tqzabmlrtbrylibafjfh.supabase.co';
+        const publicAnonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxemFibWxydGJyeWxpYmFmamZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzY2ODMsImV4cCI6MjEwNjU1MjY4M30.fM4GtCFW7s_3OFZq0AZJve_PhTs2ka3dY5JSbEN7Mt0';
+        const startsAt=vilniusLocalDateTimeIso(selectedDay,selectedTime);
+        const response=await fetch(supabaseUrl+'/functions/v1/create-public-rental-booking',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':publicAnonKey,'Authorization':'Bearer '+publicAnonKey},
+          body:JSON.stringify({name:$('name').value.trim(),email:$('email').value.trim(),phone:$('phone').value.trim(),starts_at:startsAt,duration_hours:rentalDuration})
+        });
+        const result=await response.json();
+        if(!response.ok) throw new Error(result.error||'Nepavyko sukurti rezervacijos.');
+        notice.textContent='Rezervacija sukurta. Nukreipiame į saugų „Stripe“ apmokėjimą…';
+        window.location.assign(result.payment_url);
+      } catch(error) {
+        notice.textContent=error instanceof Error?error.message:'Nepavyko sukurti rezervacijos. Bandykite dar kartą arba susisiekite su studija.';
+        notice.style.background='#f3e7cf';notice.style.borderColor='#b88a3e';notice.style.color='#685443';
+        $('submit').disabled=false;
+      }
+      return;
+    }
     notice.style.background='#edf1e7';notice.style.borderColor='#b9c6ac';notice.style.color='#3c5536';
-    notice.textContent='Dizaino peržiūra paruošta: '+$('name').value.trim()+', '+$('sum-service').textContent+', '+$('sum-date').textContent+', '+selectedTime+', '+priceLabel()+'. Tai nėra tikra rezervacija – duomenys nebuvo išsiųsti ir mokėjimas neatliktas.';
+    notice.textContent='Ši paslauga dar jungiama prie rezervacijų sistemos. Šiuo metu tikros rezervacijos per šį prototipą negalima pateikti.';
   });
   renderCalendar();renderTimes();updateSummary();
 })();
