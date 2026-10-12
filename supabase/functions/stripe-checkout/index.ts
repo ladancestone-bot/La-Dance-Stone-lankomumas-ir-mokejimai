@@ -44,11 +44,11 @@ Deno.serve(async (req) => {
       .eq("id", rentalId)
       .maybeSingle();
 
-    if (error || !rental) return json({ error: "Rental not found" }, { status: 404 });
-    if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, { status: 400 });
+    if (error || !rental) return json({ error: "Rental not found" }, 404);
+    if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, 400);
 
     const email = String(payer.email || rental.customer_email || "").trim();
-    if (!email) return json({ error: "Customer email is required" }, { status: 400 });
+    if (!email) return json({ error: "Customer email is required" }, 400);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
   const chargeId = body?.monthly_charge_id;
   if (kind !== "monthly_charge" || !chargeId) {
-    return json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, { status: 400 });
+    return json({ error: "payment_kind=monthly_charge and monthly_charge_id are required" }, 400);
   }
 
   const { data: charge, error } = await supabase
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     .select("id,student_id,group_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
     .eq("id", chargeId).maybeSingle();
 
-  if (error || !charge) return json({ error: "Monthly charge not found" }, { status: 404 });
+  if (error || !charge) return json({ error: "Monthly charge not found" }, 404);
 
   if (isTeacher && !isAdmin) {
     const { data: teacher, error: teacherError } = await supabase
@@ -111,10 +111,10 @@ Deno.serve(async (req) => {
   }
 
   const remaining = Number(charge.amount_due) - Number(charge.amount_paid);
-  if (remaining <= 0) return json({ error: "This charge is already paid" }, { status: 400 });
+  if (remaining <= 0) return json({ error: "This charge is already paid" }, 400);
 
   const email = String(payer.email || charge.students?.parent_email || charge.students?.email || "").trim();
-  if (!email) return json({ error: "Payer email is required" }, { status: 400 });
+  if (!email) return json({ error: "Payer email is required" }, 400);
 
   const fullName = String(payer.full_name || charge.students?.parent_name || ((charge.students?.first_name || "") + " " + (charge.students?.last_name || ""))).trim();
   let payerId: string | null = null;
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
   if (existingPayer) payerId = existingPayer.id;
   else {
     const { data: newPayer, error: payerError } = await supabase.from("payers").insert({ full_name: fullName || "Payer", email, phone: payer.phone || null }).select("id").single();
-    if (payerError) return json({ error: "Could not create payer" }, { status: 500 });
+    if (payerError) return json({ error: "Could not create payer" }, 500);
     payerId = newPayer.id;
   }
   await supabase.from("monthly_charges").update({ payer_id: payerId }).eq("id", chargeId);
