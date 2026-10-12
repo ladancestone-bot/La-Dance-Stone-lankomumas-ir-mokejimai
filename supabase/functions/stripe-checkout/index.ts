@@ -14,12 +14,29 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
 
+  const authorization = req.headers.get("Authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+  const userResult = await supabase.auth.getUser(authorization.slice(7));
+  const user = userResult.data.user;
+  if (userResult.error || !user) return json({ error: "Unauthorized" }, 401);
+
+  const { data: userRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  if (rolesError) return json({ error: "Could not verify studio role" }, 500);
+  const roles = (userRoles ?? []).map((r: any) => String(r.role));
+  const isAdmin = roles.includes("admin");
+  const isTeacher = roles.includes("teacher");
+  if (!isAdmin && !isTeacher) return json({ error: "Studio role required" }, 403);
+
   const kind = body?.payment_kind;
   const payer = body?.payer ?? {};
 
   if (kind === "rental") {
     const rentalId = String(body?.rental_id || "");
-    if (!rentalId) return json({ error: "rental_id is required" }, { status: 400 });
+    if (!rentalId) return json({ error: "rental_id is required" }, 400);
+    if (!isAdmin) return json({ error: "Admin role required for rental checkout" }, 403);
 
     const { data: rental, error } = await supabase
       .from("studio_rentals")
@@ -70,10 +87,28 @@ Deno.serve(async (req) => {
 
   const { data: charge, error } = await supabase
     .from("monthly_charges")
-    .select("id,student_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
+    .select("id,student_id,group_id,amount_due,amount_paid,month,students(first_name,last_name,email,parent_email,parent_name)")
     .eq("id", chargeId).maybeSingle();
 
   if (error || !charge) return json({ error: "Monthly charge not found" }, { status: 404 });
+
+  if (isTeacher && !isAdmin) {
+    const { data: teacher, error: teacherError } = await supabase
+      .from("teachers")
+      .select("id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    if (teacherError) return json({ error: "Could not verify teacher assignment" }, 500);
+    if (!teacher) return json({ error: "Teacher profile required" }, 403);
+    const { data: assignment, error: assignmentError } = await supabase
+      .from("group_teachers")
+      .select("group_id")
+      .eq("teacher_id", teacher.id)
+      .eq("group_id", charge.group_id)
+      .maybeSingle();
+    if (assignmentError) return json({ error: "Could not verify group assignment" }, 500);
+    if (!assignment) return json({ error: "Teacher is not assigned to this group" }, 403);
+  }
 
   const remaining = Number(charge.amount_due) - Number(charge.amount_paid);
   if (remaining <= 0) return json({ error: "This charge is already paid" }, { status: 400 });
