@@ -401,8 +401,20 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
         if(chargeUpdate.error){setError(chargeUpdate.error.message);return}
       }
     }
-    if(seasonId){const {data:configs}=await supabase.from("season_groups").select("id,group_id").eq("season_id",seasonId).eq("is_active",true);const configMap:Record<string,string>={};(configs??[]).forEach((x:any)=>configMap[x.group_id]=x.id);await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("student_id",id);const inserts=selectedGroups.filter(gid=>configMap[gid]).map(gid=>({season_id:seasonId,season_group_id:configMap[gid],student_id:id,enrolled_on:todayISO(),is_active:true}));if(inserts.length){const ins=await supabase.from("season_enrollments").upsert(inserts,{onConflict:"season_id,season_group_id,student_id"});if(ins.error){setError(ins.error.message);return}}}
-    else{await supabase.from("group_students").update({is_active:false}).eq("student_id",id);if(selectedGroups.length)await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"})}
+    if(seasonId){
+      const {data:configs,error:configError}=await supabase.from("season_groups").select("id,group_id").eq("season_id",seasonId).eq("is_active",true);
+      if(configError){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(configError.message);return}
+      const configMap:Record<string,string>={};(configs??[]).forEach((x:any)=>configMap[x.group_id]=x.id);
+      const inserts=selectedGroups.filter(gid=>configMap[gid]).map(gid=>({season_id:seasonId,season_group_id:configMap[gid],student_id:id,enrolled_on:todayISO(),is_active:true}));
+      if(inserts.length!==selectedGroups.length){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError("Nepavyko patvirtinti visų grupių šiame sezone. Klientas paliktas archyve.");return}
+      const ended=await supabase.from("season_enrollments").update({is_active:false,ended_on:todayISO()}).eq("season_id",seasonId).eq("student_id",id);
+      if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}
+      if(inserts.length){const ins=await supabase.from("season_enrollments").upsert(inserts,{onConflict:"season_id,season_group_id,student_id"});if(ins.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ins.error.message);return}}
+    } else {
+      const ended=await supabase.from("group_students").update({is_active:false}).eq("student_id",id);
+      if(ended.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ended.error.message);return}
+      if(selectedGroups.length){const ins=await supabase.from("group_students").upsert(selectedGroups.map(group_id=>({student_id:id,group_id,is_active:true})),{onConflict:"student_id,group_id"});if(ins.error){if(editing?.is_active===false)await supabase.from("students").update({is_active:false}).eq("id",id);setError(ins.error.message);return}}
+    }
     setOpen(false);await load()
   }
   return <div className="stack">{error&&<div className="alert">{error}</div>}
