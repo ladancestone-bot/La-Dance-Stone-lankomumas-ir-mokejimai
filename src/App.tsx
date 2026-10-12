@@ -119,7 +119,12 @@ async function loadEffectiveAttendance(groupId:string,date:string){
     const {data: revisions, error: revisionError}=await supabase.from("attendance_revisions").select("attendance_id,status,created_at,id").in("attendance_id",ids).order("created_at",{ascending:false}).order("id",{ascending:false});
     if(revisionError)throw revisionError;
     const seen=new Set<string>();
-    for(const revision of revisions??[])if(!seen.has(revision.attendance_id)){result[(rows??[]).find(row=>row.id===revision.attendance_id)!.student_id]=revision.status as AttendanceStatus;seen.add(revision.attendance_id)}
+    for(const revision of revisions??[])if(!seen.has(revision.attendance_id)){
+      const studentId=(rows??[]).find(row=>row.id===revision.attendance_id)!.student_id;
+      if(revision.status==="__cleared__")delete result[studentId];
+      else result[studentId]=revision.status as AttendanceStatus;
+      seen.add(revision.attendance_id);
+    }
   }
   return result;
 }
@@ -728,7 +733,11 @@ function Attendance({lang,seasonId,role}:{lang:Lang;seasonId:string;role:Role}){
       for(const rev of revisions??[]){
         if(seen.has(rev.attendance_id))continue;
         const row=rowById.get(rev.attendance_id);
-        if(row){map[row.student_id]??={};map[row.student_id][row.attendance_date]=rev.status as AttendanceStatus}
+        if(row){
+          map[row.student_id]??={};
+          if(rev.status==="__cleared__")delete map[row.student_id][row.attendance_date];
+          else map[row.student_id][row.attendance_date]=rev.status as AttendanceStatus;
+        }
         seen.add(rev.attendance_id);
       }
     }
