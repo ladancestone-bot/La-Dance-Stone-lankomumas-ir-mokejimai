@@ -207,7 +207,7 @@ $('prevRentWeek').onclick=()=>{const d=rentSelectedDate();d.setDate(d.getDate()-
 $('nextRentWeek').onclick=()=>{const d=rentSelectedDate();d.setDate(d.getDate()+7);$('rentDate').value=localISO(d);updateBookingSummary()};
 $('rentSubmit').onclick=()=>{const len=duration(),start=startHour(),end=start+len,day=(rentSelectedDate().getDay()+6)%7;const issue=end>22?'Pasirinkite pradžią ir trukmę taip, kad rezervacija baigtųsi iki 22:00.':hasConflict(day,start,len)?'Pasirinktas laikas turi užimtų valandų. Prašome pasirinkti kitą laiką arba trumpesnę trukmę.':'Tai tik dizaino prototipas: laikas parinktas kaip vienas '+len+' val. intervalas, tačiau rezervacija dar neišsaugoma ir mokėjimas neatliekamas.';$('rentToast').textContent=issue;$('rentToast').classList.add('show')};
 updateBookingSummary();
-const days=['Pr','An','Tr','Kt','Pn','Št','Sk'];let week=new Date(2026,9,12);
+const days=['Pr','An','Tr','Kt','Pn','Št','Sk'];let week=new Date(2026,9,12);let mobileDay=0;
 const events=[
 {d:0,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'green',kind:'class',group:'kids',option:0},
 {d:0,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:0},
@@ -230,13 +230,20 @@ function renderCalendar(){
  for(let d=0;d<7;d++){let dt=new Date(week);dt.setDate(dt.getDate()+d);html+='<div class="day">'+days[d]+'<strong>'+dt.getDate()+'</strong></div>'}
  for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'–'+finish+'</b><span>'+e.n+'</span><span>'+e.s+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
  $('calendar').innerHTML=html;
- let agenda='';
- for(let d=0;d<7;d++){const dt=new Date(week);dt.setDate(dt.getDate()+d);const dayEvents=events.filter(e=>e.d===d).sort((a,b)=>a.h-b.h);agenda+='<section class="calendar-agenda-day"><div class="calendar-agenda-heading"><strong>'+['Pirmadienis','Antradienis','Trečiadienis','Ketvirtadienis','Penktadienis','Šeštadienis','Sekmadienis'][d]+'</strong><span>'+dt.getDate()+' '+dt.toLocaleDateString('lt-LT',{month:'long'})+'</span></div>';
- if(!dayEvents.length){agenda+='<div class="calendar-agenda-empty">Šią dieną suplanuotų pamokų nėra.</div>'}
- dayEvents.forEach(e=>{const st=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const eh=e.h+e.len;const fin=String(Math.floor(eh)).padStart(2,'0')+':'+String(Math.round((eh%1)*60)).padStart(2,'0');const type=e.kind==='rental'?'rental':(e.c==='pink'?'pink':(e.group==='kids'&&e.option===2?'gold':(e.group==='kids'&&e.option===3?'plum':'')));agenda+='<div class="calendar-agenda-event '+type+'" '+(e.kind==='class'?'role="button" tabindex="0" data-class-event="'+events.indexOf(e)+'"':'')+'><div class="calendar-agenda-time">'+st+'–'+fin+'</div><div class="calendar-agenda-card"><strong>'+e.n+'</strong><small>'+e.s+(e.kind==='class'?' · Paspauskite registracijai':' · Studijos nuoma')+'</small></div></div>'});
- agenda+='</section>'}
+ let agenda='<div class="calendar-day-tabs" role="group" aria-label="Pasirinkite savaitės dieną">';
+ const shortDays=['Pr','An','Tr','Kt','Pn','Št','Sk'];
+ const fullDays=['Pirmadienis','Antradienis','Trečiadienis','Ketvirtadienis','Penktadienis','Šeštadienis','Sekmadienis'];
+ for(let d=0;d<7;d++){const dayDate=new Date(week);dayDate.setDate(dayDate.getDate()+d);agenda+='<button type="button" class="calendar-day-tab '+(d===mobileDay?'active':'')+'" data-mobile-day="'+d+'" aria-pressed="'+(d===mobileDay?'true':'false')+'">'+shortDays[d]+'<strong>'+dayDate.getDate()+'</strong></button>'}
+ agenda+='</div>';
+ const dayDate=new Date(week);dayDate.setDate(dayDate.getDate()+mobileDay);
+ const dayEvents=events.filter(e=>e.d===mobileDay).sort((a,b)=>a.h-b.h);
+ agenda+='<div class="calendar-mobile-date"><strong>'+fullDays[mobileDay]+'</strong><span>'+dayDate.getDate()+' '+dayDate.toLocaleDateString('lt-LT',{month:'long'})+'</span></div>';
+ if(!dayEvents.length){agenda+='<div class="calendar-mobile-empty">Šią dieną suplanuotų pamokų nėra.<br><strong>Laisvas laikas</strong></div>'}
+ else{agenda+='<table class="calendar-mobile-table"><thead><tr><th>Laikas</th><th>Užsiėmimas</th></tr></thead><tbody>';
+ dayEvents.forEach(e=>{const st=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const eh=e.h+e.len;const fin=String(Math.floor(eh)).padStart(2,'0')+':'+String(Math.round((eh%1)*60)).padStart(2,'0');const type=e.kind==='rental'?'rental':(e.c==='pink'?'pink':(e.group==='kids'&&e.option===2?'gold':(e.group==='kids'&&e.option===3?'plum':'')));const eventBody='<strong>'+e.n+'</strong><small>'+e.s+(e.kind==='class'?' · Paspauskite registracijai':' · Studijos nuoma')+'</small>';const action=e.kind==='class'?'<button class="mobile-event '+type+'" type="button" data-class-event="'+events.indexOf(e)+'">'+eventBody+'</button>':'<div class="mobile-event '+type+'">'+eventBody+'</div>';agenda+='<tr><td class="mobile-time">'+st+'–'+fin+'</td><td>'+action+'</td></tr>'});
+ agenda+='</tbody></table>';}
  $('calendarAgenda').innerHTML=agenda;
- $('calendar').querySelectorAll('[data-class-event]').forEach(el=>{const open=()=>openClassEvent(el);el.addEventListener('click',open);el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}})});
+ $('calendarAgenda').querySelectorAll('[data-mobile-day]').forEach(btn=>btn.addEventListener('click',()=>{mobileDay=Number(btn.dataset.mobileDay);renderCalendar()}));
  $('calendarAgenda').querySelectorAll('[data-class-event]').forEach(el=>{const open=()=>openClassEvent(el);el.addEventListener('click',open);el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}})});
 }
 function openClassEvent(el){const e=events[Number(el.dataset.classEvent)];if(!e||e.kind!=='class')return;classReturnView='timetable';$('classContextBackLabel').textContent='GRĮŽTI Į TVARKARAŠTĮ';showView('classes');showClassDetail(e.group);$('classGroup').value=String(e.option);document.querySelector('input[name="classBookingType"][value="group"]').checked=true;$('classGroupLabel').style.display='';$('classSingleNote').style.display='none';$('classToast').classList.remove('show');$('classDetail').scrollIntoView({behavior:'smooth',block:'start'})}
@@ -244,3 +251,37 @@ $('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('n
 </script>
 <!-- Preview deployment refresh: 2026-10-12; mobile agenda, varied class colors, contextual navigation, corrected fees -->
 </body></html>
+/* Compact mobile weekly timetable: day switcher + real schedule table */
+.calendar-agenda{display:none}
+@media(max-width:760px){
+.timetable-panel .cal-scroll{display:none}
+.timetable-panel .calendar-agenda{display:block;padding:12px;background:#fcfaf6}
+.timetable-panel .cal-toolbar{padding:11px 12px;gap:8px}
+.timetable-panel .cal-toolbar button{flex:0 0 34px;width:34px;height:34px}
+.timetable-panel .cal-title{font-size:12px;text-align:center;line-height:1.35}
+.calendar-day-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:2px 0 12px}
+.calendar-day-tab{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fffdfa;color:var(--muted);padding:8px 0 7px;font-size:9px;line-height:1.15}
+.calendar-day-tab strong{display:block;margin-top:5px;font-size:14px;color:var(--choc)}
+.calendar-day-tab.active{background:var(--wine);border-color:var(--wine);color:#f3e5d7}
+.calendar-day-tab.active strong{color:white}
+.calendar-mobile-date{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;background:#f2e8d8;border:1px solid var(--line);border-bottom:0;border-radius:11px 11px 0 0;color:var(--wine)}
+.calendar-mobile-date strong{font:600 21px 'Cormorant Garamond',serif}
+.calendar-mobile-date span{font-size:10px;color:var(--muted)}
+.calendar-mobile-table{width:100%;border-collapse:separate;border-spacing:0;background:#fffdfa;border:1px solid var(--line);border-radius:0 0 11px 11px;overflow:hidden}
+.calendar-mobile-table th{padding:9px 10px;text-align:left;background:#faf5ed;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.calendar-mobile-table td{padding:12px 10px;border-bottom:1px solid #eee5d9;vertical-align:middle}
+.calendar-mobile-table tr:last-child td{border-bottom:0}
+.calendar-mobile-table .mobile-time{width:104px;white-space:nowrap;font-size:11px;font-weight:700;color:var(--wine)}
+.mobile-event{display:block;width:100%;text-align:left;border:0;border-left:4px solid #c7d3bc;border-radius:0;background:#f8f8f2;padding:7px 9px;color:var(--choc);line-height:1.35}
+.mobile-event strong{display:block;font-size:11px;font-weight:700}
+.mobile-event small{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
+.mobile-event.pink{border-left-color:var(--wine);background:#f7eef0}
+.mobile-event.gold{border-left-color:var(--gold);background:#faf5e9}
+.mobile-event.plum{border-left-color:#b99bbd;background:#f7f1f7}
+.mobile-event.rental{border-left-color:#ddc798;background:#fbf5e9}
+.calendar-mobile-empty{padding:24px 14px;text-align:center;border:1px solid var(--line);border-radius:0 0 11px 11px;background:#fffdfa;color:var(--muted);font-size:12px;line-height:1.6}
+.timetable-panel .calendar-help{padding:13px 12px}
+.timetable-intro{padding:15px 16px;gap:12px}
+.timetable-intro strong{font-size:19px}
+.timetable-intro p{font-size:11px;line-height:1.5}
+}
