@@ -35,6 +35,8 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Include standalone booking preview
+        run: mkdir -p dist/preview && cp preview/index.html dist/preview/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
