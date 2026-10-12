@@ -616,6 +616,66 @@ body:has(#homeView.active){background:#f3e7da}
   #homeView .choice h3{font-size:22px}
   #homeView .choice p{font-size:11px}
 }
+
+/* Refined burgundy + chocolate card palette — visual-only polish */
+:root{--wine:#4a1725;--choc:#382821;--paper:#fffaf3;--cream:#f3e8dc;--line:#e2d2c1;--gold:#b79a61}
+.class-choices .choice{background:linear-gradient(135deg,#4a1725 0%,#381d25 58%,#382821 100%);border:1px solid #70414a;border-radius:25px;color:#fff8ef;box-shadow:0 12px 28px #381d2518;overflow:hidden}
+.class-choices .choice:hover{border-color:#c2a66f;box-shadow:0 16px 32px #381d2525;transform:translateY(-3px)}
+.class-choices .choice .num{color:#d8c18f}
+.class-choices .choice .iconbox{color:#f4e7d5;border-color:#c3a56d;background:#ffffff0b}
+.class-choices .choice h3{color:#fff8ef}
+.class-choices .choice p{color:#e7d8ce}
+.class-choices .choice .arrow{color:#fff5e9;border-color:#b99d75;background:#ffffff0b}
+.class-week-preview{background:linear-gradient(135deg,#f7eee2 0%,#efe0d0 100%);border-color:#c9b18e;box-shadow:0 12px 30px #38282112}
+.class-week-scroll{border-color:#d5c0a8;background:#fffaf4;box-shadow:0 5px 16px #3828210b}
+.class-week-day{background:#fffaf4;border-right-color:#e1d2c2}
+.class-week-day:nth-child(odd){background:#f8f0e7}
+.class-week-day>strong{color:#4a1725;border-bottom-color:#d9c4af}
+.class-week-day>span:not(.class-no-session){color:#4a1725}
+.class-week-day small{color:#78665b}
+.class-week-day .class-free{color:#927d6d}
+.class-week-day.quiet{background:#eee0d1}
+.class-option{border-color:#d7c4b0;background:#fffaf4;box-shadow:0 3px 10px #38282108}
+.class-option:has(input:checked){border-color:#4a1725;background:linear-gradient(110deg,#f1e1e3,#f7eee2);box-shadow:inset 0 0 0 1px #4a17252b,0 5px 15px #4a172510}
+.class-option-copy strong{color:#4a1725}
+.class-option-mark{color:#9b7a48}
+.class-option-price{color:#4a1725}
+.class-registration-panel,.class-detail-aside{border-color:#ddcbb8}
+.class-detail-aside{background:linear-gradient(160deg,#fffaf4,#f5e9dc)}
+.class-schedule-row{border-color:#e1d0bd}
+.class-schedule-row time{background:#4a1725;color:#fff7ee;border-radius:999px;padding:7px 10px}
+.class-adult-offer{background:linear-gradient(120deg,#4a1725,#382821);border-color:#70414a;color:#fff6eb}
+.class-adult-offer small{color:#ead9c9}
+.class-payment-note{border-left-color:#4a1725;background:#f1e4d7;color:#665348}
+.class-confirmation{border-color:#d7c0a8;background:linear-gradient(150deg,#fffaf4,#f6eadc)}
+.class-confirm-check{background:#4a1725;color:#fff7ee}
+.class-confirmation h3{color:#4a1725}
+.class-confirmation-details{background:#f6eade;border-color:#deccb9}
+.class-confirmation-row{border-color:#e2d0bd}
+.class-confirmation-row strong{color:#4a1725}
+.class-email-note{background:#efe0d1}
+.class-email-note>span,.class-email-note strong{color:#4a1725}
+.rental-highlights>div{background:linear-gradient(145deg,#4a1725,#382821);border-color:#70414a;box-shadow:0 9px 20px #38282112}
+.rental-highlights span{color:#d8c18f}
+.rental-highlights strong{color:#fff7ee}
+.rental-highlights small{color:#e7d8ce}
+.gallery-card{border-color:#d2bca3;box-shadow:0 10px 24px #38282116}
+.gallery-caption{background:#f7eee3}
+.gallery-caption strong{color:#4a1725}
+.gallery-caption span{color:#78665b}
+.gallery-calendar{border-color:#d6c0a7}
+.gallery-calendar-head{color:#4a1725}
+.rent-slot:not(.busy):not(.chosen){background:#f0e3d6;border-color:#d8c1aa;color:#4a1725}
+.rent-slot:not(.busy):not(.chosen) small{color:#715b4d}
+.rent-slot.busy{background:#4a1725;border-color:#6b3544;color:#fff7ee}
+.rent-slot.chosen{background:#d9c18c;border-color:#a88a51;color:#382821}
+.booking-summary{background:#f1e4d7;border-color:#d4bda2}
+.price-card{background:linear-gradient(145deg,#4a1725 0%,#3d2028 62%,#382821 100%);border:1px solid #70414a;box-shadow:0 12px 28px #3828211c}
+.price-card .rule{border-color:#ffffff35}
+.price-card .action{background:#fff8ef;color:#4a1725}
+.cal-toolbar{background:linear-gradient(110deg,#4a1725,#382821);color:#fff8ef}
+@media(max-width:760px){.class-choices .choice{border-radius:21px;padding:20px 58px 20px 82px}.class-week-preview{padding:17px}.rental-highlights>div{border-radius:13px}}
+
 </style>
 </head>
 <body>
@@ -675,7 +735,7 @@ body:has(#homeView.active){background:#f3e7da}
 </div>
 <div class="choice-head class-choice-head"><h2>Pasirinkite pamoką</h2><p>Atidarykite kortelę, kad pamatytumėte laikus ir registracijos pasirinkimus.</p></div>
 <div class="choices class-choices">
-<button class="choice" data-class="kids"><span class="num">01 / VAIKAMS IR PAAUGLIAMS</span><span class="iconbox">✳</span><h3>Šiuolaikinis šokis</h3><p>Amžiaus grupės, savaitės laikai ir registracija į vieną pamoką arba grupę.</p><span class="arrow">↗</span></button>
+<button class="choice" data-class="kids"><span class="num">01 / VAIKAMS IR PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>Amžiaus grupės, savaitės laikai ir registracija į vieną pamoką arba grupę.</p><span class="arrow">↗</span></button>
 <button class="choice" data-class="adult"><span class="num">02 / SUAUGUSIEMS</span><span class="iconbox">✳</span><h3>Šiuolaikinis šokis</h3><p>Pirmadieniais ir trečiadieniais · 19:15–20:00.</p><span class="arrow">↗</span></button>
 
 </div>
