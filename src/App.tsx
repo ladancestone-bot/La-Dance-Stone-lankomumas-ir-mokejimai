@@ -385,9 +385,10 @@ function Students({role,lang,seasonId}:{role:Role;lang:Lang;seasonId:string}){
   }
   async function save(){
     if(!form.first_name.trim()||!form.last_name.trim())return;
+    if(editing?.is_active===false && selectedGroups.length===0){setError("Norint atkurti klientą, priskirkite jį bent vienai grupei.");return}
     const selectedPrice=prices.find(p=>p.id===form.billing_price_id);
     const billingChanged=Boolean(editing && (editing.billing_price_id??"")!==(form.billing_price_id||""));
-    const payload={...form,email:form.email||null,phone:form.phone||null,date_of_birth:form.date_of_birth||null,parent_name:form.parent_name||null,parent_phone:form.parent_phone||null,parent_email:form.parent_email||null,notes:form.notes||null,payment_preference:form.payment_preference||null,billing_price_id:form.billing_price_id||null};
+    const payload={...form,is_active:true,email:form.email||null,phone:form.phone||null,date_of_birth:form.date_of_birth||null,parent_name:form.parent_name||null,parent_phone:form.parent_phone||null,parent_email:form.parent_email||null,notes:form.notes||null,payment_preference:form.payment_preference||null,billing_price_id:form.billing_price_id||null};
     const r=editing?await supabase.from("students").update(payload).eq("id",editing.id).select().single():await supabase.from("students").insert(payload).select().single();
     if(r.error){setError(r.error.message);return} const id=(r.data as any).id;
     if(editing && billingChanged){
