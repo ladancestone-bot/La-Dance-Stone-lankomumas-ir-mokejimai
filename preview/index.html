@@ -290,6 +290,64 @@
   .availability-section .rent-day{padding:9px 2px}
   .availability-section .rent-day button strong{font-size:19px}
 }
+
+/* Premium matte jewel tones for class cards; preserve the Editorial Atelier layout */
+.timetable-panel .calendar .event.class-event:not(.gold):not(.plum):not(.pink){
+  background:#245747!important;
+  color:#fffaf3!important;
+  border-color:#245747!important;
+  border-left-color:#173f33!important;
+}
+.timetable-panel .calendar .event.class-event.gold{
+  background:#9b682a!important;
+  color:#fffaf3!important;
+  border-color:#9b682a!important;
+  border-left-color:#704719!important;
+}
+.timetable-panel .calendar .event.class-event.plum{
+  background:#71314f!important;
+  color:#fff8f4!important;
+  border-color:#71314f!important;
+  border-left-color:#4f2037!important;
+}
+.timetable-panel .calendar .event.class-event.pink{
+  background:#4b1d2a!important;
+  color:#fff8f4!important;
+  border-color:#4b1d2a!important;
+  border-left-color:#35121c!important;
+}
+.timetable-panel .calendar-mobile-table .mobile-event:not(.gold):not(.plum):not(.pink):not(.rental){
+  background:#245747!important;color:#fffaf3!important;border-color:#245747!important;
+}
+.timetable-panel .calendar-mobile-table .mobile-event.gold{
+  background:#9b682a!important;color:#fffaf3!important;border-color:#9b682a!important;
+}
+.timetable-panel .calendar-mobile-table .mobile-event.plum{
+  background:#71314f!important;color:#fff8f4!important;border-color:#71314f!important;
+}
+.timetable-panel .calendar-mobile-table .mobile-event.pink{
+  background:#4b1d2a!important;color:#fff8f4!important;border-color:#4b1d2a!important;
+}
+/* Rental availability stays visually unchanged; only its table viewport is shorter and scrollable */
+.availability-section .cal-scroll{
+  max-height:390px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.availability-section .rent-day{
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+.availability-section .rent-time{
+  position:sticky;
+  left:0;
+  z-index:2;
+}
+@media(max-width:760px){
+  .availability-section .cal-scroll{max-height:340px}
+}
 </style>
 </head>
 <body>
