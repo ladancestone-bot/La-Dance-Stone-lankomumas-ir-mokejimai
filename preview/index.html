@@ -95,6 +95,39 @@
 .calendar-agenda-event:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .calendar-agenda-empty{padding:14px 16px;color:#948577;font-size:11px;font-style:italic}
 @media(max-width:760px){.timetable-panel .cal-scroll{display:none}.timetable-panel .calendar-agenda{display:block;padding:12px;background:#fcfaf6}.timetable-panel .cal-toolbar{padding:14px 16px}.timetable-panel .cal-title{font-size:13px;text-align:center}.timetable-panel .calendar-help{padding:16px}.calendar-agenda-heading strong{font-size:21px}.calendar-agenda-event{padding:14px 12px}.calendar-agenda-time{min-width:78px;font-size:11px}}
+/* Compact mobile weekly timetable: day switcher + real schedule table */
+.calendar-agenda{display:none}
+@media(max-width:760px){
+.timetable-panel .cal-scroll{display:none}
+.timetable-panel .calendar-agenda{display:block;padding:12px;background:#fcfaf6}
+.timetable-panel .cal-toolbar{padding:11px 12px;gap:8px}
+.timetable-panel .cal-toolbar button{flex:0 0 34px;width:34px;height:34px}
+.timetable-panel .cal-title{font-size:12px;text-align:center;line-height:1.35}
+.calendar-day-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:2px 0 12px}
+.calendar-day-tab{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fffdfa;color:var(--muted);padding:8px 0 7px;font-size:9px;line-height:1.15}
+.calendar-day-tab strong{display:block;margin-top:5px;font-size:14px;color:var(--choc)}
+.calendar-day-tab.active{background:var(--wine);border-color:var(--wine);color:#f3e5d7}
+.calendar-day-tab.active strong{color:white}
+.calendar-mobile-date{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;background:#f2e8d8;border:1px solid var(--line);border-bottom:0;border-radius:11px 11px 0 0;color:var(--wine)}
+.calendar-mobile-date strong{font:600 21px 'Cormorant Garamond',serif}
+.calendar-mobile-date span{font-size:10px;color:var(--muted)}
+.calendar-mobile-table{width:100%;border-collapse:separate;border-spacing:0;background:#fffdfa;border:1px solid var(--line);border-radius:0 0 11px 11px;overflow:hidden}
+.calendar-mobile-table th{padding:9px 10px;text-align:left;background:#faf5ed;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.calendar-mobile-table td{padding:12px 10px;border-bottom:1px solid #eee5d9;vertical-align:middle}
+.calendar-mobile-table tr:last-child td{border-bottom:0}
+.calendar-mobile-table .mobile-time{width:104px;white-space:nowrap;font-size:11px;font-weight:700;color:var(--wine)}
+.mobile-event{display:block;width:100%;text-align:left;border:0;border-left:4px solid #c7d3bc;border-radius:0;background:#f8f8f2;padding:7px 9px;color:var(--choc);line-height:1.35}
+.mobile-event strong{display:block;font-size:11px;font-weight:700}
+.mobile-event small{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
+.mobile-event.pink{border-left-color:var(--wine);background:#f7eef0}
+.mobile-event.gold{border-left-color:var(--gold);background:#faf5e9}
+.mobile-event.plum{border-left-color:#b99bbd;background:#f7f1f7}
+.mobile-event.rental{border-left-color:#ddc798;background:#fbf5e9}
+.calendar-mobile-empty{padding:24px 14px;text-align:center;border:1px solid var(--line);border-radius:0 0 11px 11px;background:#fffdfa;color:var(--muted);font-size:12px;line-height:1.6}
+.timetable-panel .calendar-help{padding:13px 12px}
+.timetable-intro{padding:15px 16px;gap:12px}
+.timetable-intro strong{font-size:19px}
+.timetable-intro p{font-size:11px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -251,37 +284,4 @@ $('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('n
 </script>
 <!-- Preview deployment refresh: 2026-10-12; mobile agenda, varied class colors, contextual navigation, corrected fees -->
 </body></html>
-/* Compact mobile weekly timetable: day switcher + real schedule table */
-.calendar-agenda{display:none}
-@media(max-width:760px){
-.timetable-panel .cal-scroll{display:none}
-.timetable-panel .calendar-agenda{display:block;padding:12px;background:#fcfaf6}
-.timetable-panel .cal-toolbar{padding:11px 12px;gap:8px}
-.timetable-panel .cal-toolbar button{flex:0 0 34px;width:34px;height:34px}
-.timetable-panel .cal-title{font-size:12px;text-align:center;line-height:1.35}
-.calendar-day-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:2px 0 12px}
-.calendar-day-tab{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fffdfa;color:var(--muted);padding:8px 0 7px;font-size:9px;line-height:1.15}
-.calendar-day-tab strong{display:block;margin-top:5px;font-size:14px;color:var(--choc)}
-.calendar-day-tab.active{background:var(--wine);border-color:var(--wine);color:#f3e5d7}
-.calendar-day-tab.active strong{color:white}
-.calendar-mobile-date{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;background:#f2e8d8;border:1px solid var(--line);border-bottom:0;border-radius:11px 11px 0 0;color:var(--wine)}
-.calendar-mobile-date strong{font:600 21px 'Cormorant Garamond',serif}
-.calendar-mobile-date span{font-size:10px;color:var(--muted)}
-.calendar-mobile-table{width:100%;border-collapse:separate;border-spacing:0;background:#fffdfa;border:1px solid var(--line);border-radius:0 0 11px 11px;overflow:hidden}
-.calendar-mobile-table th{padding:9px 10px;text-align:left;background:#faf5ed;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line)}
-.calendar-mobile-table td{padding:12px 10px;border-bottom:1px solid #eee5d9;vertical-align:middle}
-.calendar-mobile-table tr:last-child td{border-bottom:0}
-.calendar-mobile-table .mobile-time{width:104px;white-space:nowrap;font-size:11px;font-weight:700;color:var(--wine)}
-.mobile-event{display:block;width:100%;text-align:left;border:0;border-left:4px solid #c7d3bc;border-radius:0;background:#f8f8f2;padding:7px 9px;color:var(--choc);line-height:1.35}
-.mobile-event strong{display:block;font-size:11px;font-weight:700}
-.mobile-event small{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
-.mobile-event.pink{border-left-color:var(--wine);background:#f7eef0}
-.mobile-event.gold{border-left-color:var(--gold);background:#faf5e9}
-.mobile-event.plum{border-left-color:#b99bbd;background:#f7f1f7}
-.mobile-event.rental{border-left-color:#ddc798;background:#fbf5e9}
-.calendar-mobile-empty{padding:24px 14px;text-align:center;border:1px solid var(--line);border-radius:0 0 11px 11px;background:#fffdfa;color:var(--muted);font-size:12px;line-height:1.6}
-.timetable-panel .calendar-help{padding:13px 12px}
-.timetable-intro{padding:15px 16px;gap:12px}
-.timetable-intro strong{font-size:19px}
-.timetable-intro p{font-size:11px;line-height:1.5}
 }
