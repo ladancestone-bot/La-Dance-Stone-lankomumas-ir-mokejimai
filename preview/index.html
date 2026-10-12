@@ -348,6 +348,77 @@
 @media(max-width:760px){
   .availability-section .cal-scroll{max-height:340px}
 }
+
+/* Rental calendar: same compact seven-day viewport principle as the timetable.
+   Keep the existing rental colors/card styling; change only sizing and scrolling. */
+.availability-section .rental-calendar{
+  width:100%;
+  min-width:0;
+  grid-template-columns:48px repeat(7,minmax(0,1fr));
+}
+.availability-section .cal-scroll{
+  max-height:390px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.availability-section .rent-day{
+  position:sticky;
+  top:0;
+  z-index:5;
+  min-width:0;
+  padding:10px 1px;
+}
+.availability-section .rent-day button{
+  padding:0;
+  width:100%;
+  font-size:9px;
+}
+.availability-section .rent-day button strong{
+  font-size:20px;
+}
+.availability-section .rent-time{
+  position:sticky;
+  left:0;
+  z-index:2;
+  min-height:48px;
+  padding:8px 1px;
+  font-size:9px;
+}
+.availability-section .rent-cell{
+  height:48px;
+  min-width:0;
+  padding:2px;
+  overflow:hidden;
+}
+.availability-section .rent-slot{
+  min-width:0;
+  padding:3px 2px;
+  gap:2px;
+  border-radius:5px;
+  align-items:center;
+  text-align:center;
+  overflow:hidden;
+}
+.availability-section .rent-slot strong{
+  font-size:8px;
+  line-height:1.1;
+  letter-spacing:0;
+  overflow-wrap:anywhere;
+}
+.availability-section .rent-slot small{display:none}
+@media(max-width:760px){
+  .availability-section .cal-scroll{max-height:340px}
+  .availability-section .rental-calendar{grid-template-columns:35px repeat(7,minmax(0,1fr))}
+  .availability-section .rent-day{padding:8px 0}
+  .availability-section .rent-day button{font-size:8px}
+  .availability-section .rent-day button strong{font-size:17px;margin-top:3px}
+  .availability-section .rent-time{font-size:8px;min-height:44px;padding:6px 0}
+  .availability-section .rent-cell{height:44px;padding:1px}
+  .availability-section .rent-slot{padding:2px 0}
+  .availability-section .rent-slot strong{font-size:6.5px;letter-spacing:-.02em}
+}
 </style>
 </head>
 <body>
