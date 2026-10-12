@@ -40,12 +40,15 @@ Deno.serve(async (req) => {
 
     const { data: rental, error } = await supabase
       .from("studio_rentals")
-      .select("id,customer_name,customer_email,customer_phone,price,payment_status,payment_method")
+      .select("id,customer_name,customer_email,customer_phone,price,payment_status,payment_method,is_active")
       .eq("id", rentalId)
       .maybeSingle();
 
     if (error || !rental) return json({ error: "Rental not found" }, 404);
+    if (rental.is_active === false) return json({ error: "This rental is archived" }, 400);
     if (rental.payment_status === "paid") return json({ error: "This rental is already paid" }, 400);
+    const rentalAmount = Number(rental.price);
+    if (!Number.isFinite(rentalAmount) || rentalAmount <= 0) return json({ error: "Invalid rental price" }, 400);
 
     const email = String(payer.email || rental.customer_email || "").trim();
     if (!email) return json({ error: "Customer email is required" }, 400);
@@ -58,7 +61,7 @@ Deno.serve(async (req) => {
         quantity: 1,
         price_data: {
           currency: "eur",
-          unit_amount: Math.round(Number(rental.price) * 100),
+          unit_amount: Math.round(rentalAmount * 100),
           product_data: { name: ("La Dance Stone – studijos nuoma – " + rental.customer_name).trim() },
         },
       }],
@@ -111,7 +114,7 @@ Deno.serve(async (req) => {
   }
 
   const remaining = Number(charge.amount_due) - Number(charge.amount_paid);
-  if (remaining <= 0) return json({ error: "This charge is already paid" }, 400);
+  if (!Number.isFinite(remaining) || remaining <= 0) return json({ error: "This charge is already paid or invalid" }, 400);
 
   const email = String(payer.email || charge.students?.parent_email || charge.students?.email || "").trim();
   if (!email) return json({ error: "Payer email is required" }, 400);
