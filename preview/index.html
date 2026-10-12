@@ -149,6 +149,15 @@
  .timetable-panel .calendar-help{padding:12px}
  .timetable-panel .timetable-legend{gap:8px;font-size:9px}
 }
+
+/* Harmonized class-card palette: muted botanical, rose, lilac and wine */
+.timetable-panel .calendar .event.class-event{background:#e4e9df;color:#455440;border-color:#c6d0bd}
+.timetable-panel .calendar .event.class-event.gold{background:#f0e1d8;color:#795044;border-color:#dfc0b1}
+.timetable-panel .calendar .event.class-event.plum{background:#e9e1eb;color:#68516e;border-color:#d3c2d8}
+.timetable-panel .calendar .event.class-event.pink{background:#512b39;color:#fff8f3;border-color:#512b39}
+.timetable-panel .calendar .event.rental-event{background:#eee3c9;color:#6e592c;border-color:#d9c18a}
+.timetable-panel .calendar .event.class-event{cursor:pointer}
+.timetable-panel .calendar .event.class-event:active{filter:brightness(.96)}
 </style>
 </head>
 <body>
@@ -284,6 +293,7 @@ function renderCalendar(){
  for(let d=0;d<7;d++){let dt=new Date(week);dt.setDate(dt.getDate()+d);html+='<div class="day">'+days[d]+'<strong>'+dt.getDate()+'</strong></div>'}
  for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'–'+finish+'</b><span>'+e.n+'</span><span>'+e.s+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
  $('calendar').innerHTML=html;
+ $('calendar').querySelectorAll('[data-class-event]').forEach(el=>{el.addEventListener('click',()=>openClassEvent(el));el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openClassEvent(el)}})});
  let agenda='<div class="calendar-day-tabs" role="group" aria-label="Pasirinkite savaitės dieną">';
  const shortDays=['Pr','An','Tr','Kt','Pn','Št','Sk'];
  const fullDays=['Pirmadienis','Antradienis','Trečiadienis','Ketvirtadienis','Penktadienis','Šeštadienis','Sekmadienis'];
