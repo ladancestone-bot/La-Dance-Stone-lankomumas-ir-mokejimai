@@ -10,12 +10,53 @@
     :root{font-family:Jost,Arial,sans-serif;color:#261b15;background:#f6f0e6;--cream:#f6f0e6;--linen:#fbf8f2;--sand:#ece2d2;--beige:#d9c7ad;--taupe:#8b7764;--cocoa:#6b4f3c;--espresso:#3a2a20;--green:#526a4c}
     *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#e7d9c7 0,transparent 34%),var(--cream)}button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1100px;margin:auto;padding:0 20px}.nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #d9c7ad88;gap:12px}.brand{font-weight:700;letter-spacing:.17em;font-size:12px}.tag{font-size:11px;letter-spacing:.12em;color:var(--taupe);text-transform:uppercase}.hero{padding:38px 0 24px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:20px}.hero h1{font:600 clamp(38px,7vw,64px)/.94 'Cormorant Garamond',Georgia,serif;margin:8px 0 12px;color:var(--espresso)}.hero p{color:var(--taupe);margin:0;line-height:1.6;max-width:560px}.badge{border:1px solid var(--beige);background:#fbf8f2aa;border-radius:99px;padding:9px 13px;font-size:12px;white-space:nowrap}.steps{display:flex;gap:7px;margin:18px 0 24px}.step{font-size:12px;padding:10px 13px;border-radius:99px;background:#e9dfd0;color:#806d5a}.step.active{background:var(--espresso);color:white}.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:18px;align-items:start}.panel{border:1px solid #d9c7ad;background:#fbf8f2e8;border-radius:24px;padding:22px;box-shadow:0 12px 32px #3a2a2008}.panel h2{font:600 29px 'Cormorant Garamond',Georgia,serif;margin:0 0 7px;color:var(--espresso)}.sub{font-size:13px;line-height:1.55;color:var(--taupe);margin:0 0 18px}.services{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.service{text-align:left;border:1px solid var(--beige);border-radius:17px;background:#fffdf8;padding:15px;color:var(--espresso);min-height:112px}.service strong{display:block;margin:8px 0 4px}.service small{display:block;color:var(--taupe);line-height:1.45}.service .price{font-weight:700;color:var(--cocoa)}.service.selected{border:2px solid var(--cocoa);padding:14px;background:#f3e8da}.icon{font-size:19px}.bar{height:1px;background:#e8ddcd;margin:22px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin:12px 0}.calendar-head button{width:36px;height:36px;border:1px solid var(--beige);border-radius:50%;background:var(--linen)}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.dayname{text-align:center;color:var(--taupe);font-size:10px;padding:8px 0}.day{min-height:44px;border:1px solid transparent;background:transparent;border-radius:12px;color:var(--espresso)}.day:hover{background:var(--sand)}.day.selected{background:var(--espresso);color:white}.day:disabled{opacity:.25;cursor:not-allowed}.times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.time{border:1px solid var(--beige);background:#fffdf8;border-radius:12px;padding:12px 5px;font-size:12px}.time.selected{background:var(--espresso);color:white;border-color:var(--espresso)}.field{display:block;font-size:12px;font-weight:600;margin:13px 0 6px}.input{width:100%;min-height:46px;padding:11px 13px;border:1px solid var(--beige);border-radius:13px;background:#fffdf8;color:var(--espresso)}.choice{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--beige);padding:13px;border-radius:14px;margin:9px 0;background:#fffdf8}.choice input{margin-top:5px;accent-color:var(--cocoa)}.choice small{display:block;color:var(--taupe);font-size:12px;line-height:1.45;margin-top:3px}.primary,.secondary{width:100%;min-height:49px;border-radius:99px;font-weight:600}.primary{background:var(--espresso);color:white;border:1px solid var(--espresso);margin-top:14px}.secondary{background:transparent;border:1px solid var(--beige);color:var(--espresso);margin-top:8px}.summary{position:sticky;top:14px}.summary-line{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px solid #e8ddcd;font-size:13px}.summary-line span{color:var(--taupe)}.total{font-size:23px;font-weight:700}.note{border-radius:15px;background:#f0e6d8;padding:13px;color:#685443;font-size:12px;line-height:1.55;margin-top:14px}.notice{display:none;margin-top:15px;padding:15px;border:1px solid #b9c6ac;background:#edf1e7;border-radius:15px;color:#3c5536;font-size:13px;line-height:1.55}.notice.show{display:block}.fine{font-size:11px;color:var(--taupe);line-height:1.5;margin-top:12px}.footer{padding:28px 0 38px;color:var(--taupe);font-size:12px}.footer a{color:var(--cocoa)}.hidden{display:none!important}
     @media(max-width:760px){.wrap{padding:0 14px}.nav{padding:16px 0}.hero{padding:28px 0 14px;grid-template-columns:1fr}.badge{justify-self:start}.steps{overflow:auto;padding-bottom:3px}.step{white-space:nowrap}.layout{grid-template-columns:1fr}.panel{padding:17px;border-radius:20px}.summary{position:static;order:-1}.services{gap:8px}.service{padding:12px;min-height:105px}.service.selected{padding:11px}.times{grid-template-columns:repeat(3,minmax(0,1fr))}.day{min-height:39px}.panel h2{font-size:27px}}
+  
+    .simple-hero{max-width:790px;margin:0 auto;padding:clamp(48px,10vh,100px) 0 60px;text-align:center}
+    .simple-hero h1{font:600 clamp(40px,8vw,66px)/.98 'Cormorant Garamond',Georgia,serif;color:var(--espresso);margin:16px 0}
+    .simple-hero>p{font-size:15px;line-height:1.7;color:var(--taupe);max-width:480px;margin:0 auto}
+    .entry-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:38px 0 22px;text-align:left}
+    .entry-card{display:flex;flex-direction:column;align-items:flex-start;min-height:235px;padding:26px;border:1px solid var(--beige);border-radius:22px;background:#fbf8f2;color:var(--espresso);text-align:left;box-shadow:0 14px 35px #3a2a2008;transition:transform .18s,border-color .18s}
+    .entry-card:hover{transform:translateY(-3px);border-color:var(--cocoa)}
+    .entry-icon{display:grid;place-items:center;width:43px;height:43px;border-radius:50%;background:#eee3d4;color:var(--cocoa);font-size:24px}
+    .entry-title{font:600 30px 'Cormorant Garamond',Georgia,serif;margin:18px 0 7px}
+    .entry-copy{font-size:13px;line-height:1.65;color:var(--taupe);max-width:260px}
+    .entry-action{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:auto;padding-top:24px;font-size:13px;font-weight:600;color:var(--cocoa)}
+    .entry-action b{font-size:20px}
+    .landing-help{font-size:12px;color:var(--taupe);line-height:1.8;margin-top:28px}
+    .landing-help a{color:var(--cocoa)}
+    .back-home{display:inline-block;margin:18px 0 0;color:var(--cocoa);font-size:13px;text-decoration:none}
+    @media(max-width:560px){.simple-hero{padding:48px 0 40px}.entry-cards{grid-template-columns:1fr;gap:12px;margin-top:28px}.entry-card{min-height:185px;padding:21px}.entry-title{margin-top:13px;font-size:28px}.entry-action{padding-top:16px}}
+
   </style>
 </head>
 <body>
   <header class="wrap nav"><div><div class="brand">LA DANCE STONE</div><div class="tag" style="margin-top:4px">Šokių studija · Kaunas</div></div><a href="https://ladancestone.lt" style="color:var(--cocoa);font-size:13px">← Į svetainę</a></header>
-  <main class="wrap">
-    <section class="hero"><div><div class="tag">Rezervacija internetu</div><h1>Rask savo laiką<br>šokiui.</h1><p>Pasirinkite paslaugą, patogią datą ir laiką. Rezervacijos informacija bus išsiųsta el. paštu.</p></div><div class="badge">✦ Paprasta rezervuoti telefone</div></section>
+
+  <section id="landing" class="wrap">
+    <div class="simple-hero">
+      <div class="tag">LA DANCE STONE · KAUNAS</div>
+      <h1>Kuo galime jums padėti?</h1>
+      <p>Pasirinkite, ko ieškote. Visa reikalinga informacija bus vienoje vietoje.</p>
+      <div class="entry-cards">
+        <button class="entry-card" id="go-rental">
+          <span class="entry-icon">⌂</span>
+          <span class="entry-title">Studijos nuoma</span>
+          <span class="entry-copy">Nuomos kaina, sąlygos ir laisvo laiko rezervacija.</span>
+          <span class="entry-action">Peržiūrėti nuomą <b>→</b></span>
+        </button>
+        <button class="entry-card" id="go-classes">
+          <span class="entry-icon">♡</span>
+          <span class="entry-title">Pamokos ir registracija</span>
+          <span class="entry-copy">Pasirinkite šokių grupę, sužinokite kainą ir registruokitės.</span>
+          <span class="entry-action">Rinktis pamoką <b>→</b></span>
+        </button>
+      </div>
+      <div class="landing-help">Nežinote, ką pasirinkti? <a href="https://ladancestone.lt">Apsilankykite mūsų svetainėje</a> arba skambinkite <a href="tel:+37065567797">+370 655 67797</a>.</div>
+    </div>
+  </section>
+
+  <main id="booking-main" class="wrap hidden">
+    <a href="#" id="back-home" class="back-home">← Grįžti į pasirinkimą</a><section class="hero"><div><div class="tag">Rezervacija internetu</div><h1>Rask savo laiką<br>šokiui.</h1><p>Pasirinkite paslaugą, patogią datą ir laiką. Rezervacijos informacija bus išsiųsta el. paštu.</p></div><div class="badge">✦ Paprasta rezervuoti telefone</div></section>
     <div class="steps"><div class="step active">1 · Paslauga</div><div class="step active">2 · Data ir laikas</div><div class="step">3 · Duomenys</div><div class="step">4 · Apmokėjimas</div></div>
     <div class="layout">
       <div class="stack">
@@ -134,6 +175,17 @@
     notice.style.background='#f3e7cf';notice.style.borderColor='#b88a3e';notice.style.color='#685443';
     notice.textContent='Tai tik dizaino peržiūra. Rezervacijos ir mokėjimai šiame puslapyje dar neaktyvūs.';
   });
+
+  function openBooking(type) {
+    $('landing').classList.add('hidden');
+    $('booking-main').classList.remove('hidden');
+    const target = document.querySelector('.service[data-type="'+type+'"]');
+    if (target) target.click();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  $('go-rental').addEventListener('click',()=>openBooking('rental'));
+  $('go-classes').addEventListener('click',()=>openBooking('dropin'));
+  $('back-home').addEventListener('click',e=>{e.preventDefault();$('booking-main').classList.add('hidden');$('landing').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
   renderCalendar();renderTimes();updateSummary();
 })();
 </script>
