@@ -12,7 +12,7 @@ This document records verified risks and the required safe order of work. It is 
 - A fresh catalog check confirms `student_consents`, `website_import_tokens`, `website_import_sync_runs` and `website_orders` all have RLS enabled but no policies. `anon` and `authenticated` still have broad table-level grants on three of these tables (`website_import_sync_runs` is service-role-only). With RLS enabled and no policies, ordinary API row access is denied today, but the unnecessary grants should still be removed; `website_orders` needs a deliberate authenticated policy first because the app currently reads it.
 - Stripe webhook and sync Edge Functions use the server-side service-role client to write Stripe ledger rows. The website-order import Edge Function calls `process_dropin_website_order` with a service-role bearer token.
 - A fresh live privilege query confirms seven `SECURITY DEFINER` RPCs are executable by `anon`: `add_manual_dropin_participant`, `add_quick_dropin_participant`, `clear_group_attendance`, `process_dropin_website_order`, `teacher_can_access_group`, `teacher_delete_payment` and `teacher_update_payment`. The prepared RPC migration now revokes anonymous execution from all seven, while retaining authenticated execution for staff-facing functions and service-role execution for trusted server workflows. `process_dropin_website_order` is restricted to `service_role` for the website importer.
-- The payment-history query has been corrected in the feature branch to filter `payments.paid_at` by a half-open month interval, with both boundaries calculated for `Europe/Vilnius`. The current PR head has a passing GitHub Actions build check (run 182). This is a build check, not an end-to-end production or staging test.
+- The payment-history query has been corrected in the feature branch to filter `payments.paid_at` by a half-open month interval, with both boundaries calculated for `Europe/Vilnius`. The prior PR head passed GitHub Actions build check run 182; subsequent commits still need their own passing check. This is a build check, not an end-to-end production or staging test.
 - `clear_group_attendance` deletes attendance and its revision records, so changing this safely requires a coordinated database and UI change.
 - `BILLING_TEST_MODE = true` in the current app; preserve it until reconciliation has been verified.
 - Historical payment filtering now uses `payments.paid_at` in the feature branch rather than the linked charge month. It uses a half-open interval with both boundaries calculated for `Europe/Vilnius`; the linked charge month remains available for the charge list.
@@ -36,7 +36,7 @@ This document records verified risks and the required safe order of work. It is 
 - [ ] Stripe webhook and scheduled sync remain idempotent.
 - [ ] Payment corrections preserve an immutable original record and audit trail.
 - [ ] Attendance corrections retain prior revision history.
-- [x] GitHub Actions `Build check` passes for current PR head commit `6eab87b8c6e2e2a01e78ede1729336a986d9fcdb` (run 182).
+- [x] GitHub Actions `Build check` passed for earlier PR commit `6eab87b8c6e2e2a01e78ede1729336a986d9fcdb` (run 182); confirm a passing check for the latest reviewed commit before release.
 - [ ] End-to-end authentication, payment-history, and role-scope tests pass in a staging database before merging.
 - [ ] Apply and verify the prepared `stripe_payments` least-privilege migration in an approved non-production database: admin reads allowed, teacher/anonymous reads and all browser writes denied; service-role webhook/sync remains functional.
 
@@ -59,7 +59,7 @@ This document records verified risks and the required safe order of work. It is 
 
 ### Phase 2 — caller and permission checks
 - [ ] Inventory every app, SQL function, trigger and Edge Function that reads/writes `stripe_payments`, `student_consents`, `website_import_tokens`, `website_import_sync_runs` and `website_orders`.
-- [ ] Replace the all-authenticated `stripe_payments` SELECT policy with least-privilege admin access; revoke unnecessary `anon`/`authenticated` table grants. Keep trusted Edge Function writes through service role.
+- [ ] After non-production verification, apply the prepared least-privilege `stripe_payments` migration; keep trusted Edge Function writes through service role.
 - [ ] Give `website_orders` a deliberate admin-authorized access path before removing browser access; the current app reads this table.
 - [ ] Verify each SECURITY DEFINER function checks authorization internally, not just through UI visibility. Keep public execution revoked for privileged RPCs; allow `process_dropin_website_order` only to the trusted server workflow.
 - [ ] Verify teachers can only access groups assigned to their authenticated profile. Do not broaden policies to make tests pass.
