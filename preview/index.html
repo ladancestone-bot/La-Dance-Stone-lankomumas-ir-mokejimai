@@ -316,7 +316,7 @@ $('durationPlus').onclick=()=>{const max=maxAllowedDuration((rentSelectedDate().
 $('prevRentWeek').onclick=()=>{const d=rentSelectedDate();d.setDate(d.getDate()-7);$('rentDate').value=localISO(d);updateBookingSummary()};
 $('nextRentWeek').onclick=()=>{const d=rentSelectedDate();d.setDate(d.getDate()+7);$('rentDate').value=localISO(d);updateBookingSummary()};
 $('rentSubmit').onclick=()=>{const len=duration(),start=startHour(),end=start+len,day=(rentSelectedDate().getDay()+6)%7;const issue=end>22?'Pasirinkite pradžią ir trukmę taip, kad rezervacija baigtųsi iki 22:00.':hasConflict(day,start,len)?'Pasirinktas laikas turi užimtų valandų. Prašome pasirinkti kitą laiką arba trumpesnę trukmę.':'Tai tik dizaino prototipas: laikas parinktas kaip vienas '+len+' val. intervalas, tačiau rezervacija dar neišsaugoma ir mokėjimas neatliekamas.';$('rentToast').textContent=issue;$('rentToast').classList.add('show')};
-updateBookingSummary();
+try{updateBookingSummary()}catch(error){console.error('Nuomos kalendoriaus inicializavimo klaida:',error)}
 const days=['Pr','An','Tr','Kt','Pn','Št','Sk'];let week=new Date(2026,9,12);let mobileDay=0;
 const events=[
 {d:0,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'green',kind:'class',group:'kids',option:0},
