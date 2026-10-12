@@ -128,6 +128,27 @@
 .timetable-intro{padding:15px 16px;gap:12px}
 .timetable-intro strong{font-size:19px}
 .timetable-intro p{font-size:11px;line-height:1.5}
+
+/* C variant: compact seven-day timetable, scoped only to dance classes */
+.timetable-panel .cal-scroll{overflow:auto}
+.timetable-panel .calendar{min-width:0;grid-template-columns:58px repeat(7,minmax(0,1fr))}
+.timetable-panel .calendar .day:first-child{position:sticky;left:0;z-index:5;background:#fcf8f2}
+.timetable-panel .calendar .time{position:sticky;left:0;z-index:1}
+.timetable-panel .calendar .day{top:0}
+@media(max-width:760px){
+ .timetable-panel .cal-scroll{display:block;height:430px;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ .timetable-panel .calendar{width:100%;min-width:0;grid-template-columns:39px repeat(7,minmax(0,1fr));grid-auto-rows:46px}
+ .timetable-panel .calendar .day{position:sticky;top:0;z-index:4;padding:8px 1px 5px;font-size:9px;background:#fcf8f2}
+ .timetable-panel .calendar .day strong{font-size:15px;margin-top:3px}
+ .timetable-panel .calendar .time{position:sticky;left:0;z-index:3;height:46px;min-width:0;padding:7px 1px 0;font-size:9px;background:#f8f1e7}
+ .timetable-panel .calendar .cell{height:46px;min-width:0;padding:2px}
+ .timetable-panel .calendar .event{min-height:0;padding:3px 1px;border-radius:5px;overflow:hidden;gap:1px}
+ .timetable-panel .calendar .event b{font-size:7px;line-height:1.15;overflow-wrap:anywhere}
+ .timetable-panel .calendar .event span{font-size:7px;line-height:1.1;margin-top:1px;overflow-wrap:anywhere}
+ .timetable-panel .calendar-agenda{display:none!important}
+ .timetable-panel .calendar-help{padding:12px}
+ .timetable-panel .timetable-legend{gap:8px;font-size:9px}
+}
 </style>
 </head>
 <body>
@@ -276,6 +297,8 @@ function renderCalendar(){
  dayEvents.forEach(e=>{const st=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const eh=e.h+e.len;const fin=String(Math.floor(eh)).padStart(2,'0')+':'+String(Math.round((eh%1)*60)).padStart(2,'0');const type=e.kind==='rental'?'rental':(e.c==='pink'?'pink':(e.group==='kids'&&e.option===2?'gold':(e.group==='kids'&&e.option===3?'plum':'')));const eventBody='<strong>'+e.n+'</strong><small>'+e.s+(e.kind==='class'?' · Paspauskite registracijai':' · Studijos nuoma')+'</small>';const action=e.kind==='class'?'<button class="mobile-event '+type+'" type="button" data-class-event="'+events.indexOf(e)+'">'+eventBody+'</button>':'<div class="mobile-event '+type+'">'+eventBody+'</div>';agenda+='<tr><td class="mobile-time">'+st+'–'+fin+'</td><td>'+action+'</td></tr>'});
  agenda+='</tbody></table>';}
  $('calendarAgenda').innerHTML=agenda;
+ const timetableScroll=document.querySelector('.timetable-panel .cal-scroll');
+ if(timetableScroll&&window.matchMedia('(max-width: 760px)').matches){const firstAfternoonRow=Array.from($('calendar').querySelectorAll('.time')).find(el=>el.textContent.trim()==='15:00');if(firstAfternoonRow)timetableScroll.scrollTop=Math.max(0,firstAfternoonRow.offsetTop-timetableScroll.offsetTop-46);}
  $('calendarAgenda').querySelectorAll('[data-mobile-day]').forEach(btn=>btn.addEventListener('click',()=>{mobileDay=Number(btn.dataset.mobileDay);renderCalendar()}));
  $('calendarAgenda').querySelectorAll('[data-class-event]').forEach(el=>{const open=()=>openClassEvent(el);el.addEventListener('click',open);el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}})});
 }
