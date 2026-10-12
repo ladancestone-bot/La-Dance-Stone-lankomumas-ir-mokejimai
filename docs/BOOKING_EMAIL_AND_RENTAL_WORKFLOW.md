@@ -16,7 +16,16 @@
 ## Booking types
 1. Group class / one-off lesson.
 2. Monthly subscription.
-3. Studio rental, €20 per hour.
+3. Studio rental, with a volume discount for bookings longer than 3 hours.
+
+## Rental price calculation — confirmed studio policy
+- First 3 hours: €20 per hour.
+- Every additional hour after the first 3 hours: €15 per hour.
+- Total = `min(hours, 3) × €20 + max(hours − 3, 0) × €15`.
+- Examples: 1 hour = €20; 2 hours = €40; 3 hours = €60; 4 hours = €75; 5 hours = €90; 6 hours = €105.
+- The booking UI must let customers choose duration and show the full total before they confirm.
+- Calculate the amount server-side as well; never trust a client-submitted total. Reject invalid durations and use the same calculation for checkout, emails, and admin records.
+- Make the discounted additional-hour rate configurable in admin in a later pricing-settings step, but keep the current confirmed rate at €15/hour.
 
 ## Public booking UX
 - Mobile-first and Lithuanian-first, with English and Spanish ready.
@@ -24,6 +33,7 @@
 - Customer can choose an available date, session, age group/service, and then choose:
   - one-off lesson; or
   - an applicable monthly subscription.
+- For rental, customer chooses date, start time, and duration; show total price including the >3-hour discount before confirmation.
 - Show clear total price, local date/time (Europe/Vilnius), remaining capacity where relevant, terms, and payment state.
 - Avoid duplicate bookings and overbooking using server-side checks.
 
@@ -47,7 +57,7 @@
 - Preserve subscription renewal/billing behavior only after current payment model is reviewed and confirmed.
 
 ### Studio rental
-- Price: €20 per hour.
+- Price: first 3 hours €20/hour; each additional hour €15/hour (e.g. 3h €60, 4h €75, 5h €90).
 - Payment methods: Stripe card or cash/manual payment.
 - Deadline: rental must be paid within 24 hours of reservation.
 - For cash: customer must phone the studio to inform the studio; booking stays awaiting manual confirmation and is not treated as paid.
@@ -80,6 +90,7 @@
 ## Acceptance criteria
 - [ ] Correct child/adult subscription options and prices.
 - [ ] One-off lesson and monthly subscription are clear alternatives.
+- [ ] Rental duration selector calculates first 3 hours at €20/hour and additional hours at €15/hour.
 - [ ] Rental date/time availability prevents overlaps.
 - [ ] Rental confirmation states the 24-hour payment deadline.
 - [ ] Cash option instructs customer to call; no automatic paid state.
