@@ -38,7 +38,7 @@ jobs:
           node-version: 20
       - name: Install dependencies
         working-directory: site
-        run: npm install
+        run: npm install --no-package-lock
       - name: Build existing admin app
         working-directory: site
         run: npm run build
