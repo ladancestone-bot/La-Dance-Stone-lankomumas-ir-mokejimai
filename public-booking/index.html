@@ -37,7 +37,8 @@
           <div class="calendar-head"><button id="prev" aria-label="Ankstesnis mėnuo">‹</button><strong id="month-label">Spalis 2026</strong><button id="next" aria-label="Kitas mėnuo">›</button></div>
           <div class="days" id="calendar"></div>
           <div class="bar"></div><label class="field">Pasirinkite laiką</label><div class="times" id="times"></div>
-          <div id="rental-note" class="note hidden">Nuoma kainuoja 20 € už valandą. Galutinis užimtumas turi būti patvirtintas serverio pusėje. Po rezervacijos nuoma turi būti apmokėta per 24 valandas. Pasirinkę grynuosius, privalote mums paskambinti.</div>
+          <div id="rental-note" class="note hidden">Pirmos 3 valandos kainuoja po 20 €/val., kiekviena papildoma valanda – 15 €/val. Po rezervacijos nuomą reikia apmokėti per 24 valandas. Pasirinkę grynuosius, paskambinkite +370 655 67797. Patekimo instrukcijos siunčiamos tik patvirtinus apmokėjimą.</div>
+          <div id="rental-duration-wrap" class="hidden"><label class="field" for="rental-duration">Nuomos trukmė</label><select id="rental-duration" class="input"><option value="1">1 valanda</option><option value="2">2 valandos</option><option value="3">3 valandos</option><option value="4">4 valandos</option><option value="5">5 valandos</option><option value="6">6 valandos</option><option value="7">7 valandos</option><option value="8">8 valandos</option></select><p class="fine">Po 3 valandų kiekviena papildoma valanda kainuoja 15 €.</p></div>
         </section>
         <section class="panel"><h2>Jūsų duomenys</h2><p class="sub">Šiuos duomenis naudosime rezervacijai ir patvirtinimui el. paštu.</p>
           <label class="field" for="name">Vardas ir pavardė</label><input class="input" id="name" autocomplete="name" placeholder="Jūsų vardas ir pavardė">
@@ -60,10 +61,11 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  let chosenType='dropin', price=10, selectedDay=null, selectedTime=null, month=new Date(2026,9,1);
+  let chosenType='dropin', price=10, selectedDay=null, selectedTime=null, month=new Date(), rentalDuration=1; month.setDate(1);
   const monthNames=['Sausis','Vasaris','Kovas','Balandis','Gegužė','Birželis','Liepa','Rugpjūtis','Rugsėjis','Spalis','Lapkritis','Gruodis'];
   const timesClass=['16:00','17:00','18:00','19:15'];
   const timesRental=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  const rentalPrice = hours => Math.min(hours,3)*20 + Math.max(hours-3,0)*15;
   const priceLabel = () => chosenType==='rental' ? price+' €' : chosenType==='dropin' ? price+' €' : price+' € / mėn.';
   function renderCalendar(){
     $('month-label').textContent=monthNames[month.getMonth()]+' '+month.getFullYear();
@@ -71,26 +73,28 @@
     ['Pr','An','Tr','Kt','Pn','Št','Sk'].forEach(n=>{const d=document.createElement('div');d.className='dayname';d.textContent=n;cal.append(d)});
     const first=(month.getDay()+6)%7, count=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
     for(let i=0;i<first;i++){const e=document.createElement('span');cal.append(e)}
-    for(let n=1;n<=count;n++){const b=document.createElement('button');b.className='day';b.textContent=n;b.type='button';b.addEventListener('click',()=>{selectedDay=new Date(month.getFullYear(),month.getMonth(),n);selectedTime=null;renderCalendar();renderTimes();updateSummary()});if(selectedDay&&selectedDay.getFullYear()===month.getFullYear()&&selectedDay.getMonth()===month.getMonth()&&selectedDay.getDate()===n)b.classList.add('selected');cal.append(b)}
+    const today=new Date();today.setHours(0,0,0,0);
+    for(let n=1;n<=count;n++){const date=new Date(month.getFullYear(),month.getMonth(),n);const b=document.createElement('button');b.className='day';b.textContent=n;b.type='button';b.disabled=date<today;b.addEventListener('click',()=>{selectedDay=date;selectedTime=null;renderCalendar();renderTimes();updateSummary()});if(selectedDay&&selectedDay.getFullYear()===month.getFullYear()&&selectedDay.getMonth()===month.getMonth()&&selectedDay.getDate()===n)b.classList.add('selected');cal.append(b)}
   }
   function renderTimes(){
     const box=$('times');box.innerHTML='';const list=chosenType==='rental'?timesRental:timesClass;
-    list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='time'+(selectedTime===t?' selected':'');b.textContent=chosenType==='rental'?t+' · 1 val.':t;b.addEventListener('click',()=>{selectedTime=t;renderTimes();updateSummary()});box.append(b)});
+    list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='time'+(selectedTime===t?' selected':'');b.textContent=chosenType==='rental'?t+' · '+rentalDuration+' val.':t;b.addEventListener('click',()=>{selectedTime=t;renderTimes();updateSummary()});box.append(b)});
     $('rental-note').classList.toggle('hidden',chosenType!=='rental');
+    $('rental-duration-wrap').classList.toggle('hidden',chosenType!=='rental');
   }
   function updateSummary(){
     const serviceNames={dropin:'Vienkartinė pamoka',subscription:'Suaugusiųjų abonementas',kids:'Vaikų abonementas',rental:'Studijos nuoma'};
     $('sum-service').textContent=chosenType==='subscription'?$('plan').selectedOptions[0].text.split(' · ')[0]:serviceNames[chosenType];
     $('sum-date').textContent=selectedDay?selectedDay.toLocaleDateString('lt-LT',{year:'numeric',month:'long',day:'numeric'}):'Pasirinkite datą';
     $('sum-time').textContent=selectedTime||'Pasirinkite laiką';
-    $('sum-duration').textContent=chosenType==='rental'?'1 val.':chosenType==='dropin'?'1 pamoka':chosenType==='kids'||chosenType==='subscription'?'Mėnesinis':'—';
+    $('sum-duration').textContent=chosenType==='rental'?rentalDuration+' val.':chosenType==='dropin'?'1 pamoka':chosenType==='kids'||chosenType==='subscription'?'Mėnesinis':'—';
     $('sum-payment').textContent=document.querySelector('input[name="payment"]:checked')?.value==='cash'?'Grynaisiais':'Kortele per Stripe';
     $('sum-price').textContent=priceLabel();
     $('summary-note').textContent=chosenType==='rental'?'Nuomą reikia apmokėti per 24 val. Patekimo į studiją atmintinę el. paštu gausite tik patvirtinus apmokėjimą.':'El. paštu gausite rezervacijos santrauką ir mokėjimo informaciją.';
   }
   document.querySelectorAll('.service').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.service').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');
-    chosenType=btn.dataset.type;price=Number(btn.dataset.price);
+    chosenType=btn.dataset.type;price=Number(btn.dataset.price); if(chosenType==='rental') price=rentalPrice(rentalDuration);
     $('subscription-options').classList.toggle('hidden',!['subscription','kids'].includes(chosenType));
     $('class-options').classList.toggle('hidden',chosenType==='rental');
     $('payment-methods').classList.toggle('hidden',chosenType==='subscription'||chosenType==='kids');
@@ -99,6 +103,7 @@
     renderTimes();updateSummary();
   }));
   $('plan').addEventListener('change',()=>{const p=$('plan').value;price=p==='adult1'?40:p==='adult3'?60:50;chosenType=p==='kids'?'kids':'subscription';document.querySelectorAll('.service').forEach(x=>x.classList.toggle('selected',x.dataset.type===chosenType));updateSummary()});
+  $('rental-duration').addEventListener('change',()=>{rentalDuration=Number($('rental-duration').value);if(chosenType==='rental')price=rentalPrice(rentalDuration);renderTimes();updateSummary()});
   document.querySelectorAll('input[name="payment"]').forEach(x=>x.addEventListener('change',updateSummary));
   $('prev').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()});
   $('next').addEventListener('click',()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()});
