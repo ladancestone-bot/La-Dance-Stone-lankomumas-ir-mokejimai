@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   const details = session.customer_details;
   const payerEmail = details?.email ?? session.customer_email ?? null;
   const payerName = details?.name ?? null;
-  const paymentKind = amountTotal === 5 ? "reservation_fee" : (metadata.payment_kind || "unknown");
+  const paymentKind = amountTotal === 5 ? "reservation_fee" : (metadata.payment_kind || (session.client_reference_id ? "public_rental" : "unknown"));
 
   await supabaseAdmin.from("stripe_payments").upsert({
     stripe_payment_id: stripePaymentId,
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     paid_at: new Date().toISOString(),
     payment_kind: paymentKind,
     monthly_charge_id: metadata.monthly_charge_id || null,
-    rental_id: metadata.rental_id || null,
+    rental_id: metadata.rental_id || session.client_reference_id || null,
     metadata,
     updated_at: new Date().toISOString(),
   }, { onConflict: "stripe_payment_id" });
