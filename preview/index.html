@@ -1063,6 +1063,18 @@ body:has(#homeView.active){background:#f3e7da}
 #rentalView .rental-checkin-steps>div:first-child b{background:#b65a69}
 @media(max-width:760px){#rentalView .rental-hero h2{font-size:clamp(48px,11vw,66px)}#rentalView .rental-amenities{gap:4px;margin-bottom:19px}#rentalView .rental-amenity{font-size:8px;letter-spacing:0}#rentalView .rental-amenity-icon{width:clamp(50px,13vw,70px);height:clamp(50px,13vw,70px)}#rentalView .rental-checkin{grid-template-columns:1fr;gap:15px;padding:19px 17px;border-radius:20px}#rentalView .rental-checkin-title{gap:14px}#rentalView .rental-checkin h3{font-size:34px}#rentalView .rental-checkin-steps{border-left:0;border-top:1px solid #cfa9a6;padding:14px 0 0;gap:8px}#rentalView .rental-checkin-steps>div{font-size:13px}#rentalView .rental-checkin-steps b{flex-basis:25px;height:25px;font-size:12px}}
 @media(max-width:390px){#rentalView .rental-site-home{padding:13px 17px;font-size:13px}#rentalView .rental-back{margin-bottom:20px}#rentalView .rental-amenity{font-size:7px}#rentalView .rental-amenity-icon{width:49px;height:49px}}
+
+/* Rental gallery prototype: avoid presenting unrelated images as studio photos. */
+.rental-gallery-prototype{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:stretch}
+.rental-gallery-prototype .gallery-card-main{grid-column:1/-1}
+.rental-gallery-prototype .gallery-card-main img{width:100%;aspect-ratio:16/8;object-fit:cover;display:block}
+.rental-gallery-prototype .gallery-card-use{overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#f5e9dc}
+.rental-gallery-prototype .gallery-card-use .gallery-caption{padding:18px 20px 22px}
+.rental-gallery-prototype .gallery-caption strong{display:block}
+.rental-gallery-prototype .gallery-caption span{display:block;margin-top:5px}
+.gallery-photo-placeholder{min-height:220px;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;background:linear-gradient(135deg,#efe0d7,#f8f1e8);color:var(--wine);font-size:14px}
+.gallery-photo-placeholder .placeholder-icon{font-size:46px;line-height:1;border:1px solid currentColor;border-radius:18px;width:72px;height:72px;display:grid;place-items:center}
+@media(max-width:640px){.rental-gallery-prototype{grid-template-columns:1fr;gap:18px}.rental-gallery-prototype .gallery-card-main{grid-column:auto}.rental-gallery-prototype .gallery-card-main img{aspect-ratio:4/3}.gallery-photo-placeholder{min-height:180px}}
 </style>
 </head>
 <body>
@@ -1112,12 +1124,17 @@ body:has(#homeView.active){background:#f3e7da}
     <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M8 20V13q0-3 4-3h16q4 0 4 3v7l3 5v6H5v-6zM8 20h24M12 10l3-5h10l3 5M10 26h4m12 0h4"/><circle cx="12" cy="28" r="2"/><circle cx="28" cy="28" r="2"/></svg></span><span>Parkavimas<br>iki 3 val. nemokamai</span></div>
   </div>
 </div>
-<div class="rental-gallery">
-  <article class="gallery-card"><img src="https://assets.zyrosite.com/cdn-cgi/image/format%3Dauto%2Cw%3D2800%2Ch%3D2102%2Cfit%3Dcrop/mxBXMb8brLT3X2qV/image00001-0prBS3KY0TyTVlFL.jpeg" alt="Tikra La Dance Stone studijos erdvė su trimis arkiniais veidrodžiais" loading="lazy"><div class="gallery-caption"><strong>Mūsų studija</strong><span>Veidrodžiai, erdvė judesiui ir jauki atmosfera</span></div></article>
-  <article class="gallery-card"><img src="https://assets.zyrosite.com/cdn-cgi/image/format%3Dauto%2Cw%3D1440%2Ch%3D960%2Cfit%3Dcrop/mxBXMb8brLT3X2qV/siulqikinis-sokis-7hxg4yLSMMtaPBCZ.png" alt="Šiuolaikinio šokio užsiėmimas" loading="lazy"><div class="gallery-caption"><strong>Judesys ir kūryba</strong><span>Šokiui, jogai ir individualioms treniruotėms</span></div></article>
-  <article class="gallery-card"><img src="https://assets.zyrosite.com/cdn-cgi/image/format%3Dauto%2Cw%3D768%2Ch%3D514%2Cfit%3Dcrop/mxBXMb8brLT3X2qV/c8916662-2e1a-4acc-8b7d-ca098553579f-1AzqXilhhNxSkbAq.png" alt="Kūrybinė veikla La Dance Stone studijoje" loading="lazy"><div class="gallery-caption"><strong>Daugiau nei šokis</strong><span>Kūrybiniams susitikimams ir dirbtuvėms</span></div></article>
+<div class="rental-gallery rental-gallery-prototype">
+  <article class="gallery-card gallery-card-main"><img src="https://assets.zyrosite.com/cdn-cgi/image/format%3Dauto%2Cw%3D2800%2Ch%3D2102%2Cfit%3Dcrop/mxBXMb8brLT3X2qV/image00001-0prBS3KY0TyTVlFL.jpeg" alt="La Dance Stone studijos erdvė su veidrodžiais ir užuolaidomis" loading="lazy"><div class="gallery-caption"><strong>Mūsų studija</strong><span>Tikra studijos erdvė, veidrodžiai ir jauki atmosfera</span></div></article>
+  <article class="gallery-card gallery-card-use">
+    <div class="gallery-photo-placeholder phone-placeholder" role="img" aria-label="Vieta tikrai rezervacijos telefonu nuotraukai"><span class="placeholder-icon" aria-hidden="true">▯</span><span>Čia bus tavo pateikta nuotrauka su telefonu</span></div>
+    <div class="gallery-caption"><strong>Rezervacija internetu</strong><span>Patogus laiko pasirinkimas internetu</span></div>
+  </article>
+  <article class="gallery-card gallery-card-use">
+    <div class="gallery-photo-placeholder collage-placeholder" role="img" aria-label="Vieta tavo keturių nuotraukų koliažui"><span class="placeholder-icon" aria-hidden="true">▦</span><span>Čia bus tavo keturių nuotraukų koliažas</span></div>
+    <div class="gallery-caption"><strong>Daugiafunkcinė erdvė</strong><span>Šokiams, jogai, dirbtuvėms, kūrybiniams susitikimams ir seminarams</span></div>
+  </article>
 </div>
-<div class="rental-highlights"><div><span>01</span><strong>Veidrodžiai</strong><small>Erdvė judesiui ir šokiams</small></div><div><span>02</span><strong>Garso sistema</strong><small>Muzikai ir repeticijoms</small></div><div><span>03</span><strong>Patogumai</strong><small>Kondicionierius ir nemokamas parkavimas</small></div></div>
 <section class="rental-checkin">
   <div class="rental-checkin-title"><span class="rental-checkin-phone" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="14" cy="25" r="5"/><path d="m18 21 11-11 5 5-11 11M25 14l4 4"/></svg></span><div><h3>Self check-in</h3><em>Nuoma vyksta Airbnb principu</em></div></div>
   <div class="rental-checkin-steps"><div><b>1</b><span>Užsiregistruojate ir pasirenkate laiką</span></div><div><b>2</b><span>Atliekate mokėjimą</span></div><div><b>3</b><span>Gaunate atvykimo informaciją</span></div><div><b>4</b><span>Atvykstate į studiją</span></div></div>
