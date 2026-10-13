@@ -958,6 +958,41 @@ body:has(#homeView.active){background:#f3e7da}
  .class-choices.class-choices-four>.choice .choice-schedule-label{margin-top:3px}
 }
 
+
+/* Updated group-card design: clean, rounded, modern burgundy */
+.class-choices .choice,
+.class-choices .choice:nth-child(2),
+.class-choices .choice:nth-child(3),
+.class-choices .choice:nth-child(4){
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 42px;
+ grid-template-rows:auto auto auto;
+ align-items:center;
+ column-gap:16px;
+ min-height:0;
+ padding:24px 24px 24px 28px;
+ border:1px solid #773047;
+ border-radius:38px;
+ border-left:1px solid #773047;
+ background:#5b1028;
+ color:#fff8f2;
+ box-shadow:0 9px 25px rgba(72,16,37,.12);
+}
+.class-choices .choice:hover{transform:translateY(-2px);border-color:#e4c56d;box-shadow:0 13px 28px rgba(72,16,37,.17)}
+.class-choices .choice .num{grid-column:1;grid-row:1;display:block;font-size:11px;line-height:1.35;letter-spacing:.14em;color:#edcf78;font-weight:700}
+.class-choices .choice h3{grid-column:1;grid-row:2;font:500 27px/1.15 'Cormorant Garamond',serif;color:#fff8f2;margin:7px 0 5px}
+.class-choices .choice p{grid-column:1;grid-row:3;font-size:13px;line-height:1.5;color:#f3e5e2;margin:0}
+.class-choices .choice .arrow{position:static;grid-column:2;grid-row:1 / span 3;transform:none;display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:#fff8ef;color:#5b1028;font-size:23px;transition:background .18s,color .18s}
+.class-choices .choice:hover .arrow{background:#edcf78;color:#5b1028}
+@media(max-width:760px){
+ .class-choices{gap:12px}
+ .class-choices .choice,.class-choices .choice:nth-child(2),.class-choices .choice:nth-child(3),.class-choices .choice:nth-child(4){grid-template-columns:minmax(0,1fr) 36px;column-gap:12px;padding:20px 17px 20px 22px;border-radius:32px}
+ .class-choices .choice .num{font-size:10px}
+ .class-choices .choice h3{font-size:24px;margin:6px 0 4px}
+ .class-choices .choice p{font-size:12px;line-height:1.45}
+ .class-choices .choice .arrow{width:36px;height:36px;font-size:20px}
+}
+
 </style>
 </head>
 <body>
@@ -1040,12 +1075,12 @@ body:has(#homeView.active){background:#f3e7da}
 </div></div>
 <div class="class-week-note"><span>✦</span> Galite rinktis mėnesio abonementą už 50 € / mėn. (papildomas 5 € registracijos mokestis) arba vienkartinę pamoką už 10 €.</div>
 </div>
-<div class="choice-head class-choice-head"><h2>Pasirinkite savo grupę</h2><p>Pasirinkite amžiaus grupę — atsidarys jos tvarkaraštis, kainos ir registracijos forma.</p></div>
+<div class="choice-head class-choice-head"><h2>Pasirinkite savo grupę</h2><p>Pasirinkite amžiaus grupę — atsidarys registracijos forma ir kainos.</p></div>
 <div class="choices class-choices class-choices-four">
-<button class="choice" data-class="kids57"><span class="num">01 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>5–7 metų vaikams · Antradieniais ir ketvirtadieniais.</p><span class="arrow" aria-hidden="true">→</span></button>
-<button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams<br><span class="choice-schedule-label">Galimi du variantai:</span><br>Pirmadieniais ir trečiadieniais · 16:00–17:00<br>Antradieniais ir ketvirtadieniais · 16:00–17:00</p><span class="arrow" aria-hidden="true">→</span></button>
-<button class="choice" data-class="teens"><span class="num">03 / PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>13–18 metų paaugliams<br><span class="choice-schedule-label">Galimi du variantai:</span><br>Pirmadieniais ir trečiadieniais · 17:00–18:00<br>Antradieniais ir ketvirtadieniais · 17:00–18:00</p><span class="arrow" aria-hidden="true">→</span></button>
-<button class="choice" data-class="adult"><span class="num">04 / SUAUGUSIEMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>Pasirinkite 1, 2 arba 3 treniruotes per savaitę.</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="kids57"><span class="num">VAIKAMS</span><h3>Šiuolaikinis šokis vaikams</h3><p>5–7 metų vaikams</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="kids712"><span class="num">VAIKAMS</span><h3>Šiuolaikinis šokis vaikams</h3><p>7–12 metų vaikams</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="teens"><span class="num">PAAUGLIAMS</span><h3>Šiuolaikinis šokis paaugliams</h3><p>13–18 metų paaugliams</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="adult"><span class="num">SUAUGUSIEMS</span><h3>Šiuolaikinis šokis suaugusiesiems</h3><p>Pasirinkite 1, 2 arba 3 treniruotes per savaitę.</p><span class="arrow" aria-hidden="true">→</span></button>
 </div>
 </div>
 <div id="classDetail" class="class-detail" style="display:none">
