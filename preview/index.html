@@ -701,6 +701,12 @@ body:has(#homeView.active){background:#f3e7da}
 }
 #homeView .choice .iconbox svg{width:35px;height:35px;stroke-width:1.55}
 
+
+/* Use a separate, unboxed icon class on the three home cards */
+#homeView .choice .home-icon{position:absolute;left:24px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:46px;height:46px;margin:0;padding:0;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#f7ead9}
+#homeView .choice .home-icon svg{display:block;width:35px;height:35px;fill:none;stroke:currentColor;stroke-width:1.55}
+@media(max-width:760px){#homeView .choice .home-icon{left:22px;width:42px;height:42px}#homeView .choice .home-icon svg{width:32px;height:32px}}
+
 </style>
 </head>
 <body>
@@ -712,9 +718,9 @@ body:has(#homeView.active){background:#f3e7da}
   <p class="home-values">KŪNAS <span>·</span> SAVIRAIŠKA <span>·</span> BENDRUOMENĖ</p>
 </div>
 <div class="choices">
-<button class="choice" data-view="timetable"><span class="num">SAVAITĖS PLANAS</span><span class="iconbox" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="7" width="23" height="21" rx="2"/><path d="M10 4v6M22 4v6M5 13h22M11 13v14M19 13v14M5 20h22"/></svg></span><h3>Tvarkaraštis</h3><p>Užsiėmimų laikai</p><span class="arrow">→</span></button>
-<button class="choice" data-view="rental"><span class="num">STUDIJOS ERDVĖ</span><span class="iconbox" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 14.5 16 4l12.5 10.5M7 12v16h18V12M13 28v-9h6v9"/></svg></span><h3>Studijos nuoma</h3><p>Laisvi laikai ir rezervacija</p><span class="arrow">→</span></button>
-<button class="choice" data-view="classes"><span class="num">ŠOKIŲ PAMOKOS</span><span class="iconbox" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 10h10M11 15h10M11 20h5"/><path d="m19 22 2 2 4-5"/></svg></span><h3>Registracija į pamokas</h3><p>Grupės ir registracija</p><span class="arrow">→</span></button>
+<button class="choice" data-view="timetable"><span class="num">SAVAITĖS PLANAS</span><span class="home-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="7" width="23" height="21" rx="2"/><path d="M10 4v6M22 4v6M5 13h22M11 13v14M19 13v14M5 20h22"/></svg></span><h3>Tvarkaraštis</h3><p>Užsiėmimų laikai</p><span class="arrow">→</span></button>
+<button class="choice" data-view="rental"><span class="num">STUDIJOS ERDVĖ</span><span class="home-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 14.5 16 4l12.5 10.5M7 12v16h18V12M13 28v-9h6v9"/></svg></span><h3>Studijos nuoma</h3><p>Laisvi laikai ir rezervacija</p><span class="arrow">→</span></button>
+<button class="choice" data-view="classes"><span class="num">ŠOKIŲ PAMOKOS</span><span class="home-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 10h10M11 15h10M11 20h5"/><path d="m19 22 2 2 4-5"/></svg></span><h3>Registracija į pamokas</h3><p>Grupės ir registracija</p><span class="arrow">→</span></button>
 </div>
 </section>
 <section id="rentalView" class="view">
