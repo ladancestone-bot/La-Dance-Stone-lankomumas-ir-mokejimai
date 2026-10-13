@@ -690,6 +690,17 @@ body:has(#homeView.active){background:#f3e7da}
 /* Consistent, purpose-specific line icons on home cards */
 #homeView .choice .iconbox svg{display:block;width:31px;height:31px;color:#f7ead9;stroke:currentColor}
 #homeView .choice .iconbox{background:#ffffff08;border-color:#c3a56d}
+
+/* Elegant home icons: remove the visible square tile behind each symbol */
+#homeView .choice .iconbox,
+#homeView .choices .choice .iconbox{
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  border-radius:50%;
+}
+#homeView .choice .iconbox svg{width:35px;height:35px;stroke-width:1.55}
+
 </style>
 </head>
 <body>
