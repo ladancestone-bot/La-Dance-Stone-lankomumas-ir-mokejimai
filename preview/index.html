@@ -825,6 +825,18 @@ body:has(#homeView.active){background:#f3e7da}
 .top{display:flex;align-items:center;justify-content:center;gap:18px;padding:18px 0;border-bottom:1px solid var(--line)}.site-link{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 22px;border:1px solid #c6ad7d;border-radius:999px;background:linear-gradient(135deg,#fffaf1,#f0e3ce);color:var(--wine);font:600 12px Jost,Arial,sans-serif;letter-spacing:.03em;text-decoration:none;box-shadow:0 5px 18px #4b1d2a0c;white-space:nowrap;transition:transform .2s,box-shadow .2s}.site-link:hover{transform:translateY(-1px);box-shadow:0 8px 22px #4b1d2a15}.site-link span{font-size:18px}.brand{display:none!important}.timetable-back{margin:4px 0 22px}.timetable-heading{padding-top:2px}@media(max-width:760px){.top{padding:15px 0}.site-link{padding:12px 20px;font-size:12px}.timetable-back{margin-bottom:20px}}
 
 
+
+/* Clearer, compact timetable event cards: show age groups at a glance */
+.timetable-panel .calendar .event{justify-content:flex-start;align-items:flex-start;gap:2px;padding:5px 4px;min-width:0;overflow:hidden;word-break:normal}
+.timetable-panel .calendar .event b{font-size:9px;line-height:1.1;white-space:nowrap}
+.timetable-panel .calendar .event .event-name{font-size:8px;line-height:1.08;margin-top:1px;overflow-wrap:anywhere}
+.timetable-panel .calendar .event .event-audience{font-size:8px;line-height:1.12;margin-top:2px;font-weight:600;overflow-wrap:anywhere}
+@media(max-width:760px){
+ .timetable-panel .calendar .event{padding:4px 3px;gap:2px}
+ .timetable-panel .calendar .event b{font-size:8px}
+ .timetable-panel .calendar .event .event-name{font-size:7.5px;line-height:1.05}
+ .timetable-panel .calendar .event .event-audience{font-size:7.5px;line-height:1.08;margin-top:2px}
+}
 /* Tighten the vertical spacing between the main and contextual navigation */
 #timetableView.active{padding-top:8px}
 #timetableView .timetable-back{margin-top:4px;margin-bottom:14px}
@@ -1010,7 +1022,7 @@ function renderCalendar(){
  $('calTitle').textContent=week.getFullYear()+' m. '+week.toLocaleDateString('lt-LT',{month:'long'})+' '+week.getDate()+'–'+end.getDate()+' d.';
  let html='<div></div>';
  for(let d=0;d<7;d++){let dt=new Date(week);dt.setDate(dt.getDate()+d);html+='<div class="day">'+days[d]+'<strong>'+dt.getDate()+'</strong></div>'}
- for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'–'+finish+'</b><span>'+e.n+'</span><span>'+e.s+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
+ for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');const audience=e.kind==='class'?e.s.replace(' · ','<br>'):'Pavyzdinis laikas';inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" aria-label="'+startTime+'–'+finish+' · '+e.n+' · '+e.s+' · Paspauskite registracijai" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'</b><span class="event-name">'+(e.kind==='rental'?'Studijos nuoma':'Šiuolaikinis šokis')+'</span><span class="event-audience">'+audience+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
  $('calendar').innerHTML=html;
  $('calendar').querySelectorAll('[data-class-event]').forEach(el=>{el.addEventListener('click',()=>openClassEvent(el));el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openClassEvent(el)}})});
  let agenda='<div class="calendar-day-tabs" role="group" aria-label="Pasirinkite savaitės dieną">';
