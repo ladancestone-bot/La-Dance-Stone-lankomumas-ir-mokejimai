@@ -1033,6 +1033,36 @@ body:has(#homeView.active){background:#f3e7da}
  .brand-footer-logo-image{width:min(100%,165px);max-height:75px}
 }
 
+
+/* Rental page top redesign only; booking calendar and reservation logic below remain intact */
+#rentalView .rental-intro{padding:8px 0 0;text-align:center}
+#rentalView .rental-site-home{display:block;width:max-content;max-width:100%;margin:0 auto 18px;padding:15px 28px;border-radius:999px;background:#958174;color:#fffaf5;text-decoration:none;font-size:clamp(14px,2vw,19px);font-weight:600;box-shadow:0 7px 18px #6b4d3c20}
+#rentalView .rental-back{display:block;margin:0 auto 25px;font-size:14px}
+#rentalView .rental-address{margin-bottom:15px;color:var(--wine);font-size:11px;letter-spacing:.19em;text-transform:uppercase}
+#rentalView .rental-address span{font-size:15px;margin-right:9px}
+#rentalView .rental-hero{text-align:center;margin:0 auto;max-width:850px}
+#rentalView .rental-hero h2{font:600 clamp(48px,8vw,82px)/.98 'Cormorant Garamond',serif;color:var(--wine);letter-spacing:-.04em;margin:0}
+#rentalView .rental-title-line{width:105px;height:2px;background:var(--wine);margin:17px auto 12px}
+#rentalView .rental-subtitle{font:italic 500 clamp(24px,4.3vw,39px)/1.12 'Cormorant Garamond',serif;color:var(--wine);margin:0 auto 17px}
+#rentalView .rental-description{font-size:clamp(14px,1.8vw,18px);line-height:1.55;color:#7d3b4b;max-width:740px;margin:0 auto 23px}
+#rentalView .rental-amenities{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 auto 24px;max-width:900px}
+#rentalView .rental-amenity{display:flex;align-items:center;flex-direction:column;gap:7px;text-align:center;color:var(--wine);font-size:clamp(9px,1.2vw,12px);line-height:1.3;letter-spacing:.025em;text-transform:uppercase;min-width:0}
+#rentalView .rental-amenity-icon{width:clamp(58px,9vw,92px);height:clamp(58px,9vw,92px);display:grid;place-items:center;border-radius:50%;background:#f2e1dc;flex:0 0 auto}
+#rentalView .rental-amenity-icon svg{width:52%;height:52%;stroke:var(--wine);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#rentalView .rental-checkin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:24px;background:linear-gradient(110deg,#f6e7df,#f9eee7);border:1px solid #ead7ce;border-radius:24px;padding:22px 25px;margin:22px 0 36px}
+#rentalView .rental-checkin-title{display:flex;align-items:center;gap:16px;min-width:0}
+#rentalView .rental-checkin-phone{width:56px;height:78px;flex:0 0 56px;border:3px solid var(--wine);border-radius:13px;display:grid;place-items:center;position:relative}
+#rentalView .rental-checkin-phone:before{content:'';position:absolute;top:5px;width:19px;height:4px;border-radius:5px;background:var(--wine)}
+#rentalView .rental-checkin-phone:after{content:'';position:absolute;bottom:5px;width:10px;height:3px;border-radius:4px;background:var(--wine)}
+#rentalView .rental-checkin-phone svg{width:32px;height:32px;stroke:var(--wine);fill:none;stroke-width:2.2}
+#rentalView .rental-checkin h3{font:600 clamp(28px,3.7vw,42px)/1 'Cormorant Garamond',serif;color:var(--wine);margin:0 0 7px}
+#rentalView .rental-checkin em{font:italic 500 16px 'Cormorant Garamond',serif;color:#8d4758}
+#rentalView .rental-checkin-steps{border-left:1px solid #cfa9a6;padding-left:22px;display:grid;gap:9px}
+#rentalView .rental-checkin-steps>div{display:flex;align-items:center;gap:12px;font-size:clamp(12px,1.4vw,15px);line-height:1.25;color:#7d3447}
+#rentalView .rental-checkin-steps b{display:grid;place-items:center;flex:0 0 27px;height:27px;border-radius:50%;background:var(--wine);color:white;font-size:13px}
+#rentalView .rental-checkin-steps>div:first-child b{background:#b65a69}
+@media(max-width:760px){#rentalView .rental-hero h2{font-size:clamp(48px,11vw,66px)}#rentalView .rental-amenities{gap:4px;margin-bottom:19px}#rentalView .rental-amenity{font-size:8px;letter-spacing:0}#rentalView .rental-amenity-icon{width:clamp(50px,13vw,70px);height:clamp(50px,13vw,70px)}#rentalView .rental-checkin{grid-template-columns:1fr;gap:15px;padding:19px 17px;border-radius:20px}#rentalView .rental-checkin-title{gap:14px}#rentalView .rental-checkin h3{font-size:34px}#rentalView .rental-checkin-steps{border-left:0;border-top:1px solid #cfa9a6;padding:14px 0 0;gap:8px}#rentalView .rental-checkin-steps>div{font-size:13px}#rentalView .rental-checkin-steps b{flex-basis:25px;height:25px;font-size:12px}}
+@media(max-width:390px){#rentalView .rental-site-home{padding:13px 17px;font-size:13px}#rentalView .rental-back{margin-bottom:20px}#rentalView .rental-amenity{font-size:7px}#rentalView .rental-amenity-icon{width:49px;height:49px}}
 </style>
 </head>
 <body>
@@ -1064,14 +1094,34 @@ body:has(#homeView.active){background:#f3e7da}
 </div>
 </section>
 <section id="rentalView" class="view">
-<button class="back" data-view="home"><span>←</span>Grįžti į pasirinkimą</button>
-<div class="viewhead"><div><p>Šviesi, jauki ir estetiška šokių studija Kaune repeticijoms, individualioms treniruotėms, šokių pamokoms ir kūrybiniams susitikimams.</p></div><span class="pill">70 kv. m · Kaunas</span></div>
+<div class="rental-intro">
+  <a class="rental-site-home" href="https://www.ladancestone.lt/">← &nbsp; Grįžti į svetainės pradžią</a>
+  <button class="back rental-back" data-view="home"><span>←</span>Grįžti į pasirinkimą</button>
+  <div class="rental-address"><span aria-hidden="true">●</span> V. Krėvės pr. 57, Kaunas</div>
+  <header class="rental-hero">
+    <h2>Studijos nuoma</h2>
+    <div class="rental-title-line"></div>
+    <p class="rental-subtitle">Daugiafunkcinė, jauki ir estetiška<br class="rental-desktop-break"> šokių studija</p>
+    <p class="rental-description">Tinka repeticijoms, individualioms treniruotėms, šokių pamokoms, kūrybiniams susitikimams ir dirbtuvėms.</p>
+  </header>
+  <div class="rental-amenities" aria-label="Studijos privalumai">
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><rect x="7" y="4" width="26" height="32" rx="1"/><rect x="11" y="8" width="18" height="24"/><path d="m14 18 5-5m-5 13 12-12m-4 14 4-4"/></svg></span><span>Dideli<br>veidrodžiai</span></div>
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M20 4v32M6 12l28 16M6 28l28-16M20 4l-4 5m4-5 4 5M20 36l-4-5m4 5 4-5M6 12l6 1m-6-1 2 6m26 10-6-1m6 1-2-6M6 28l6-1m-6 1 2-6m26-10-6 1m6-1-2 6"/></svg></span><span>Kondicionierius</span></div>
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M5 16h8l12-8v24l-12-8H5zM30 15q7 5 0 10M32 10q12 10 0 20"/></svg></span><span>Audio<br>sistema</span></div>
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M20 7c-5-1-7 4-5 7l5 5-13 9q-3 3 1 5h24q4-2 0-5L20 19"/></svg></span><span>Rūbinė</span></div>
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M8 20V13q0-3 4-3h16q4 0 4 3v7l3 5v6H5v-6zM8 20h24M12 10l3-5h10l3 5M10 26h4m12 0h4"/><circle cx="12" cy="28" r="2"/><circle cx="28" cy="28" r="2"/></svg></span><span>Parkavimas<br>iki 3 val. nemokamai</span></div>
+  </div>
+</div>
 <div class="rental-gallery">
-<article class="gallery-card"><img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=82" alt="Jaukus, modernus interjeras"><div class="gallery-caption"><strong>70 kv. m erdvė</strong><span>Patogiai veiklai ir repeticijoms</span></div></article>
+<article class="gallery-card"><img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=82" alt="Jauki studijos erdvė"><div class="gallery-caption"><strong>70 kv. m erdvė</strong><span>Patogiai veiklai ir repeticijoms</span></div></article>
 <article class="gallery-card phone-card"><img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=82" alt="Judėjimui ir treniruotėms pritaikyta erdvė"><div class="phone-overlay"><div class="phone-top">LA DANCE STONE</div><div class="phone-title">Rezervacija</div><div class="phone-month">Spalis 2026</div><div class="phone-days"><span>Pr</span><span>An</span><span>Tr</span><span>Kt</span><span>Pn</span><span>Št</span><span>Sk</span><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b></div><div class="phone-time">Pasirinkite laiką</div><span class="phone-button">TĘSTI</span></div><div class="gallery-caption"><strong>Patogi rezervacija internetu</strong><span>Pasirinkite laiką vienu kartu</span></div></article>
 <article class="gallery-card calendar-gallery-card"><div class="gallery-calendar"><div class="gallery-calendar-head"><span>ŠIOS SAVAITĖS UŽIMTUMAS</span><b>12–18 D.</b></div><div class="gallery-calendar-grid"><span>LAIKAS</span><span>PR</span><span>AN</span><span>TR</span><span>KT</span><span>PN</span><span>ŠT</span><span>09</span><i></i><i></i><i></i><i></i><i></i><i></i><span>10</span><i></i><i class="g-busy"></i><i></i><i></i><i class="g-busy"></i><i></i><span>11</span><i></i><i class="g-busy"></i><i></i><i></i><i></i><i></i><span>12</span><i></i><i></i><i></i><i class="g-busy"></i><i></i><i></i><span>13</span><i></i><i></i><i></i><i></i><i class="g-busy"></i><i></i><span>14</span><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gallery-calendar-legend"><span><i class="g-free"></i>Laisva</span><span><i class="g-reserved"></i>Užimta</span></div></div><div class="gallery-caption"><strong>Visos savaitės užimtumas</strong><span>Laikai matomi vienoje lentelėje</span></div></article>
 </div>
 <div class="rental-highlights"><div><span>01</span><strong>Veidrodžiai</strong><small>Erdvė judesiui ir šokiams</small></div><div><span>02</span><strong>Garso sistema</strong><small>Muzikai ir repeticijoms</small></div><div><span>03</span><strong>Patogumai</strong><small>Kondicionierius ir nemokamas parkavimas</small></div></div>
+<section class="rental-checkin">
+  <div class="rental-checkin-title"><span class="rental-checkin-phone" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="14" cy="25" r="5"/><path d="m18 21 11-11 5 5-11 11M25 14l4 4"/></svg></span><div><h3>Self check-in</h3><em>Nuoma vyksta Airbnb principu</em></div></div>
+  <div class="rental-checkin-steps"><div><b>1</b><span>Užsiregistruojate ir pasirenkate laiką</span></div><div><b>2</b><span>Atliekate mokėjimą</span></div><div><b>3</b><span>Gaunate atvykimo informaciją</span></div><div><b>4</b><span>Atvykstate į studiją</span></div></div>
+</section>
 <section class="availability-section"><div class="availability-heading"><div><div class="eyebrow">Interaktyvus užimtumo vaizdas</div><h2>Laisvų valandų kalendorius.</h2><p>Paspauskite ant dienos arba laisvos valandos. Pasirinktas laikotarpis bus pažymėtas vientisai — nereikia rezervuoti kiekvienos valandos atskirai.</p></div><span class="pill">Dizaino prototipas · pavyzdiniai duomenys</span></div>
 <div class="calendar-panel"><div class="cal-toolbar"><button id="prevRentWeek" aria-label="Ankstesnė savaitė">‹</button><div class="cal-title" id="rentWeekLabel">2026 m. spalio 12–18 d.</div><button id="nextRentWeek" aria-label="Kita savaitė">›</button></div><div class="cal-scroll"><div id="rentalCalendar" class="rental-calendar"></div></div><div class="calendar-help"><div class="availability-legend"><span><i class="legend-block free"></i>Laisva</span><span><i class="legend-block reserved"></i>Užimta</span><span><i class="legend-block chosen"></i>Jūsų pasirinkimas</span></div><p id="selectionHint">Pasirinktas laikas bus parodytas lentelėje kaip vienas ištisinis intervalas.</p><p>Pažymėjimai yra demonstraciniai. Tikras studijos užimtumas bus rodomas prijungus rezervacijų duomenų bazę.</p></div></div></section>
 <div class="rental-layout" id="rentalBooking">
