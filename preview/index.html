@@ -737,6 +737,19 @@ body:has(#homeView.active){background:#f3e7da}
 .adult-days-field small{font-size:11px;color:#806d60}
 @media(max-width:760px){.class-choices-four{grid-template-columns:1fr;gap:12px}.class-choices-four .choice{min-height:180px}}
 
+
+/* Premium registration-card polish; weekly timetable intentionally unchanged */
+.class-choices .choice{position:relative;overflow:hidden;text-align:left;border:1px solid #dfc9a9;border-radius:8px 24px 8px 24px;background:linear-gradient(145deg,#fffdf9 0%,#f5ecdf 100%);box-shadow:0 8px 24px #3828210a;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.class-choices .choice:hover,.class-choices .choice:focus-visible{transform:translateY(-4px);border-color:#b59655;box-shadow:0 16px 32px #38282118}
+.class-choices .choice:focus-visible{outline:3px solid #b59655;outline-offset:3px}
+.class-choices .choice .num{color:#8a6b42;letter-spacing:.14em}
+.class-choices .choice .iconbox{background:transparent!important;border:0!important;color:#8a6b42;font-size:25px}
+.class-choices .choice .arrow{color:#8a6b42;transition:transform .22s ease}
+.class-choices .choice:hover .arrow{transform:translate(3px,-3px)}
+.class-choice-head h2{color:var(--wine)}
+.class-choice-head p{max-width:560px}
+.class-detail-back:focus-visible,#classSubmit:focus-visible{outline:3px solid #b59655;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.class-choices .choice,.class-choices .choice .arrow{transition:none}.class-choices .choice:hover{transform:none}}
 </style>
 </head>
 <body>
@@ -819,7 +832,7 @@ body:has(#homeView.active){background:#f3e7da}
 </div></div>
 <div class="class-week-note"><span>✦</span> Galite rinktis mėnesio abonementą už 50 € / mėn. (papildomas 5 € registracijos mokestis) arba vienkartinę pamoką už 10 €.</div>
 </div>
-<div class="choice-head class-choice-head"><h2>Pasirinkite pamoką</h2><p>Atidarykite kortelę, kad pamatytumėte laikus ir registracijos pasirinkimus.</p></div>
+<div class="choice-head class-choice-head"><h2>Pasirinkite savo grupę</h2><p>Pasirinkite amžiaus grupę — atsidarys jos tvarkaraštis, kainos ir registracijos forma.</p></div>
 <div class="choices class-choices class-choices-four">
 <button class="choice" data-class="kids57"><span class="num">01 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>5–7 metų vaikams · Antradieniais ir ketvirtadieniais.</p><span class="arrow">↗</span></button>
 <button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams · Galimi du savaitės grafikai.</p><span class="arrow">↗</span></button>
@@ -841,7 +854,7 @@ body:has(#homeView.active){background:#f3e7da}
 <div class="fields"><label>Vardas<input type="text" id="classFirstName" autocomplete="given-name" placeholder="Vardas" required></label><label>Pavardė<input type="text" id="classLastName" autocomplete="family-name" placeholder="Pavardė" required></label><label>Gimimo data<input type="date" id="classBirthDate" required></label><label>Telefono numeris<input type="tel" id="classPhone" autocomplete="tel" placeholder="+370..." required></label><label>El. paštas registracijai<input type="email" id="classEmail" autocomplete="email" placeholder="vardas@pastas.lt" required></label><label id="classGroupLabel">Pasirinkite grupę<select id="classGroup" required></select></label></div>
 <div class="class-single-note" id="classSingleNote" style="display:none">Pasirinkta paslauga ir jos mokestis bus patvirtinti registracijos metu. Šiame prototipe vieta dar neužsakoma ir mokėjimas neatliekamas.</div>
 <div class="class-payment-note" id="classPaymentNote">Registraciją galite pateikti dabar — mėnesio abonementą ir mokėjimą galėsite suderinti vėliau.</div>
-<button class="action" id="classSubmit">Pateikti registraciją</button><div id="classToast" class="toast"></div>
+<button class="action" id="classSubmit">Tęsti registraciją</button><div id="classToast" class="toast"></div>
 <div id="classConfirmation" class="class-confirmation" style="display:none" aria-live="polite"><div class="class-confirm-check">✓</div><div class="eyebrow">La Dance Stone</div><h3>Registracija sėkminga!</h3><p id="classConfirmationIntro">Registracijos informacija paruošta.</p><div id="classConfirmationDetails" class="class-confirmation-details"></div><div class="class-email-note"><span>✉</span><p><strong>Patvirtinimas el. paštu</strong><br>Šioje peržiūroje tikras el. laiškas dar neišsiunčiamas.</p></div><button class="action" id="classBackToGroups" type="button">Grįžti į pamokas</button></div></div>
 <aside class="class-detail-aside"><div class="eyebrow">Pamokų laikas</div><h3>Savaitės tvarkaraštis.</h3><div id="classScheduleRows" class="class-schedule-rows"></div><div class="class-aside-price"><span>Vienkartinė pamoka</span><strong>10 €</strong><small>Vaikams ir suaugusiesiems. Vaikų registracijai išankstinis abonemento mokėjimas nebūtinas.</small></div></aside>
 </div>
