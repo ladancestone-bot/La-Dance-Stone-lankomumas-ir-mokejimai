@@ -801,9 +801,9 @@ body:has(#homeView.active){background:#f3e7da}
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 <div class="class-calendar-time">18:00</div>
 <div class="class-calendar-slot free">Laisvas laikas</div>
-<div class="class-calendar-slot booked"><strong>18:00–18:45</strong><span>Vaikai</span><small>5–6 m.</small></div>
+<div class="class-calendar-slot booked"><strong>18:00–18:45</strong><span>Vaikai</span><small>5–7 m.</small></div>
 <div class="class-calendar-slot free">Laisvas laikas</div>
-<div class="class-calendar-slot booked"><strong>18:00–18:45</strong><span>Vaikai</span><small>5–6 m.</small></div>
+<div class="class-calendar-slot booked"><strong>18:00–18:45</strong><span>Vaikai</span><small>5–7 m.</small></div>
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 <div class="class-calendar-time">19:00</div>
 <div class="class-calendar-slot booked"><strong>19:15–20:00</strong><span>Suaugusieji</span></div>
@@ -817,7 +817,7 @@ body:has(#homeView.active){background:#f3e7da}
 <div class="class-calendar-time">21:00</div>
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 </div></div>
-<div class="class-week-note"><span>✦</span> Galite rinktis mėnesio abonementą, vienkartinę pamoką už 10 € arba bandomąjį apsilankymą su 5 € registracijos mokesčiu.</div>
+<div class="class-week-note"><span>✦</span> Galite rinktis mėnesio abonementą už 50 € / mėn. (papildomas 5 € registracijos mokestis) arba vienkartinę pamoką už 10 €.</div>
 </div>
 <div class="choice-head class-choice-head"><h2>Pasirinkite pamoką</h2><p>Atidarykite kortelę, kad pamatytumėte laikus ir registracijos pasirinkimus.</p></div>
 <div class="choices class-choices class-choices-four">
@@ -831,7 +831,7 @@ body:has(#homeView.active){background:#f3e7da}
 <button class="back class-detail-back" id="classBack"><span>←</span>GRĮŽTI PRIE PAMOKŲ PASIRINKIMO</button>
 <div class="class-detail-hero"><div><div class="eyebrow">Jūsų pasirinkimas</div><h2 id="classTitle"></h2><p id="classDescription"></p></div><span class="pill">La Dance Stone · Kaunas</span></div>
 <div class="class-detail-grid">
-<div class="panel class-registration-panel" id="classRegistrationPanel"><div class="eyebrow">Registracija</div><h3>Pasirinkite, kaip norite prisijungti.</h3><p>Galite rinktis mėnesio abonementą su 5 € registracijos mokesčiu, vienkartinę pamoką už 10 € arba bandomąją pamoką su 5 € registracijos mokesčiu.</p>
+<div class="panel class-registration-panel" id="classRegistrationPanel"><div class="eyebrow">Registracija</div><h3>Pasirinkite, kaip norite prisijungti.</h3><p>Galite rinktis mėnesio abonementą arba vienkartinę pamoką už 10 €. Abonementui taikomas 5 € registracijos mokestis.</p>
 <div class="class-option-cards">
 <label class="class-option"><input type="radio" name="classBookingType" value="group" checked><span class="class-option-copy"><strong>Mėnesio abonementas</strong><small>Reguliarios treniruotės pasirinktoje grupėje. Papildomai taikomas 5 € registracijos mokestis.</small></span><span class="class-option-mark">01</span></label>
 <label class="class-option"><input type="radio" name="classBookingType" value="single"><span class="class-option-copy"><strong>Vienkartinė pamoka</strong><small>Vienas apsilankymas · 10 € už pamoką.</small></span><span class="class-option-price">10 €</span></label>
@@ -893,12 +893,12 @@ const events=[
 {d:0,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:0},
 {d:1,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'gold',kind:'class',group:'kids',option:1},
 {d:1,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai · 13–18 m.',c:'gold',kind:'class',group:'kids',option:2},
-{d:1,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–6 m.',c:'plum',kind:'class',group:'kids',option:3},
+{d:1,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–7 m.',c:'plum',kind:'class',group:'kids',option:3},
 {d:2,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'',kind:'class',group:'kids',option:0},
 {d:2,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:0},
 {d:3,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai · 7–12 m.',c:'',kind:'class',group:'kids',option:1},
 {d:3,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai · 13–18 m.',c:'',kind:'class',group:'kids',option:2},
-{d:3,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–6 m.',c:'',kind:'class',group:'kids',option:3},
+{d:3,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai · 5–7 m.',c:'',kind:'class',group:'kids',option:3},
 {d:4,h:16,len:1,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
 {d:5,h:10,len:1.5,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
 {d:6,h:19,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusiesiems',c:'pink',kind:'class',group:'adult',option:1}
