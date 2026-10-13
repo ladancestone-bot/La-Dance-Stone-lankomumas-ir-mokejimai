@@ -994,11 +994,18 @@ body:has(#homeView.active){background:#f3e7da}
 }
 
 
-/* Keep the three landing-page arrows vertically centered in their pill cards */
+/* Keep landing-page arrow circles centered against each full pill card */
 #homeView .choice .arrow{
+  position:absolute;
+  right:24px;
   top:50%;
   bottom:auto;
   transform:translateY(-50%);
+  grid-row:auto;
+  align-self:auto;
+}
+@media(max-width:760px){
+  #homeView .choice .arrow{right:20px;top:50%;bottom:auto;transform:translateY(-50%)}
 }
 
 </style>
