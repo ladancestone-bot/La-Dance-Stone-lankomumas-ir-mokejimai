@@ -826,6 +826,17 @@ body:has(#homeView.active){background:#f3e7da}
 
 
 
+
+/* Prioritize full age-group visibility inside compact weekly calendar cards */
+.timetable-panel .calendar .event.class-event{height:calc(100% - 6px);min-height:0;justify-content:flex-start;gap:2px;padding:4px 3px!important;overflow:hidden}
+.timetable-panel .calendar .event.class-event .event-name{font-size:clamp(6px, .62vw, 8px);line-height:1.05;letter-spacing:-.02em;overflow-wrap:normal;word-break:normal}
+.timetable-panel .calendar .event.class-event .event-audience{display:block;font-size:clamp(6.5px, .66vw, 8px);line-height:1.08;font-weight:700;letter-spacing:-.025em;white-space:normal;overflow-wrap:anywhere;margin-top:1px}
+.timetable-panel .calendar .event.rental-event .event-name,.timetable-panel .calendar .event.rental-event .event-audience{font-size:clamp(6.5px, .66vw, 8px);line-height:1.08}
+@media(max-width:760px){
+ .timetable-panel .calendar .event.class-event{padding:3px 2px!important;gap:2px}
+ .timetable-panel .calendar .event.class-event .event-name{font-size:6.5px;line-height:1.02}
+ .timetable-panel .calendar .event.class-event .event-audience{font-size:7px;line-height:1.05;letter-spacing:-.04em}
+}
 /* Clearer, compact timetable event cards: show age groups at a glance */
 .timetable-panel .calendar .event{justify-content:flex-start;align-items:flex-start;gap:2px;padding:5px 4px;min-width:0;overflow:hidden;word-break:normal}
 .timetable-panel .calendar .event b{font-size:9px;line-height:1.1;white-space:nowrap}
@@ -1030,7 +1041,7 @@ function renderCalendar(){
  $('calTitle').textContent=week.getFullYear()+' m. '+week.toLocaleDateString('lt-LT',{month:'long'})+' '+week.getDate()+'–'+end.getDate()+' d.';
  let html='<div></div>';
  for(let d=0;d<7;d++){let dt=new Date(week);dt.setDate(dt.getDate()+d);html+='<div class="day">'+days[d]+'<strong>'+dt.getDate()+'</strong></div>'}
- for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');const audience=e.kind==='class'?e.s.replace(' · ','<br>'):'Pavyzdinis laikas';inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" aria-label="'+startTime+'–'+finish+' · '+e.n+' · '+e.s+' · Paspauskite registracijai" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'</b><span class="event-name">'+(e.kind==='rental'?'Studijos nuoma':'Šiuolaikinis šokis')+'</span><span class="event-audience">'+audience+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
+ for(let h=8;h<=21;h++){html+='<div class="time">'+String(h).padStart(2,'0')+':00</div>';for(let d=0;d<7;d++){let e=events.find(x=>x.d===d&&Math.floor(x.h)===h);let inner='';if(e){const startTime=String(Math.floor(e.h)).padStart(2,'0')+':'+String(Math.round((e.h%1)*60)).padStart(2,'0');const endHour=e.h+e.len;const finish=String(Math.floor(endHour)).padStart(2,'0')+':'+String(Math.round((endHour%1)*60)).padStart(2,'0');const cls=e.kind==='rental'?'event rental-event':'event class-event '+(e.c||'');const audience=e.kind==='class'?e.s.replace(' · ',' '):'Pavyzdinis laikas';inner='<div class="'+cls+'" '+(e.kind==='class'?'role="button" tabindex="0" aria-label="'+startTime+'–'+finish+' · '+e.n+' · '+e.s+' · Paspauskite registracijai" data-class-event="'+events.indexOf(e)+'"':'')+'><b>'+startTime+'</b><span class="event-name">'+(e.kind==='rental'?'Studijos nuoma':'Šiuolaikinis šokis')+'</span><span class="event-audience">'+audience+'</span></div>'}html+='<div class="cell">'+inner+'</div>'}}
  $('calendar').innerHTML=html;
  $('calendar').querySelectorAll('[data-class-event]').forEach(el=>{el.addEventListener('click',()=>openClassEvent(el));el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openClassEvent(el)}})});
  let agenda='<div class="calendar-day-tabs" role="group" aria-label="Pasirinkite savaitės dieną">';
