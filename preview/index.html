@@ -1120,6 +1120,25 @@ html,body{max-width:100%;overflow-x:hidden}
   }
 }
 
+
+/* Final containment for the native iOS birth-date control in class registration */
+#classRegistrationPanel .fields>label:nth-child(3){
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden;
+}
+#classRegistrationPanel .fields>label:nth-child(3) input[type="date"]{
+  display:block!important;
+  width:calc(100% - 2px)!important;
+  inline-size:calc(100% - 2px)!important;
+  min-width:0!important;
+  max-width:calc(100% - 2px)!important;
+  box-sizing:border-box!important;
+  margin-right:2px!important;
+}
+
 </style>
 </head>
 <body>
