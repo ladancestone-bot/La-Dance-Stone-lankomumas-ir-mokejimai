@@ -750,6 +750,39 @@ body:has(#homeView.active){background:#f3e7da}
 .class-choice-head p{max-width:560px}
 .class-detail-back:focus-visible,#classSubmit:focus-visible{outline:3px solid #b59655;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.class-choices .choice,.class-choices .choice .arrow{transition:none}.class-choices .choice:hover{transform:none}}
+
+/* Fix legibility of the four registration cards on mobile and desktop */
+.class-choices .choice,
+.class-choices .choice:visited{
+  color:#4a1725!important;
+  background:linear-gradient(145deg,#fffaf2 0%,#f0e3d1 100%)!important;
+  border-color:#c6a66a!important;
+}
+.class-choices .choice h3,
+.class-choices .choice p,
+.class-choices .choice .num,
+.class-choices .choice .arrow{
+  color:#4a1725!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.class-choices .choice h3{font-weight:600!important}
+.class-choices .choice p{font-weight:400!important}
+.class-choices .choice .iconbox{
+  color:#8a6b42!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.class-choices .choice .arrow{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border:1px solid #c6a66a;border-radius:50%;
+  background:#fffaf2!important;font-family:Arial,sans-serif;font-size:20px;
+}
+.class-choices .choice:hover,.class-choices .choice:focus-visible{
+  background:linear-gradient(145deg,#fffdf8 0%,#ead8bf 100%)!important;
+  border-color:#8a6b42!important;
+}
 </style>
 </head>
 <body>
