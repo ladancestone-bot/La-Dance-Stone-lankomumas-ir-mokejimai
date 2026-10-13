@@ -738,17 +738,25 @@ body:has(#homeView.active){background:#f3e7da}
 @media(max-width:760px){.class-choices-four{grid-template-columns:1fr;gap:12px}.class-choices-four .choice{min-height:180px}}
 
 
-/* Premium registration-card polish; weekly timetable intentionally unchanged */
-.class-choices .choice{position:relative;overflow:hidden;text-align:left;border:1px solid #dfc9a9;border-radius:8px 24px 8px 24px;background:linear-gradient(145deg,#fffdf9 0%,#f5ecdf 100%);box-shadow:0 8px 24px #3828210a;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
-.class-choices .choice:hover,.class-choices .choice:focus-visible{transform:translateY(-4px);border-color:#b59655;box-shadow:0 16px 32px #38282118}
+/* Elegant, compact and interactive group cards; timetable content stays unchanged */
+.class-choices .choice{position:relative;overflow:hidden;text-align:left;border:1px solid #dfc9a9;border-radius:8px 20px 8px 20px;background:linear-gradient(145deg,#fffdf9 0%,#f5ecdf 100%);box-shadow:0 5px 16px #3828210a;transition:background .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease,border-color .2s ease;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.class-choices .choice:hover,.class-choices .choice:focus-visible{transform:translateY(-2px);border-color:#b59655;box-shadow:0 10px 22px #38282116}
+.class-choices .choice:active,.class-choices .choice.is-selected{background:linear-gradient(145deg,#f0e0e3 0%,#e9d4d9 100%);border-color:#8c4c5b;box-shadow:inset 0 0 0 1px #8c4c5b,0 8px 20px #48182418}
+.class-choices .choice.is-selected h3,.class-choices .choice.is-selected .num,.class-choices .choice.is-selected .iconbox,.class-choices .choice.is-selected .arrow{color:#481824}
 .class-choices .choice:focus-visible{outline:3px solid #b59655;outline-offset:3px}
 .class-choices .choice .num{color:#8a6b42;letter-spacing:.14em}
-.class-choices .choice .iconbox{background:transparent!important;border:0!important;color:#8a6b42;font-size:25px}
-.class-choices .choice .arrow{color:#8a6b42;transition:transform .22s ease}
-.class-choices .choice:hover .arrow{transform:translate(3px,-3px)}
+.class-choices .choice .iconbox{background:transparent!important;border:0!important;color:#8a6b42;font-size:23px}
+.class-choices .choice .arrow{color:#8a6b42;transition:transform .2s ease;font-family:Arial,sans-serif;font-size:22px}
+.class-choices .choice:hover .arrow,.class-choices .choice.is-selected .arrow{transform:translateX(3px)}
+.class-choices-four .choice{min-height:150px;padding:60px 52px 18px 20px}
+.class-choices-four .choice .iconbox{left:18px;top:14px}
+.class-choices-four .choice .arrow{top:16px;right:18px;transform:none}
+.class-choices-four .choice h3{font-size:21px;margin:5px 0}
+.class-choices-four .choice p{font-size:12px;line-height:1.5}
 .class-choice-head h2{color:var(--wine)}
 .class-choice-head p{max-width:560px}
 .class-detail-back:focus-visible,#classSubmit:focus-visible{outline:3px solid #b59655;outline-offset:3px}
+@media(max-width:760px){.class-choices-four .choice{min-height:0;padding:17px 46px 17px 68px;border-radius:8px 18px 8px 18px}.class-choices-four .choice .iconbox{left:15px;top:50%;transform:translateY(-50%);font-size:20px}.class-choices-four .choice .arrow{right:14px;top:50%;transform:translateY(-50%);font-size:20px}.class-choices-four .choice h3{font-size:19px;margin:5px 0}.class-choices-four .choice p{font-size:11px;line-height:1.45}.class-choices-four .choice .num{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.class-choices .choice,.class-choices .choice .arrow{transition:none}.class-choices .choice:hover{transform:none}}
 
 /* Fix legibility of the four registration cards on mobile and desktop */
@@ -897,10 +905,10 @@ body:has(#homeView.active){background:#f3e7da}
 </div>
 <div class="choice-head class-choice-head"><h2>Pasirinkite savo grupę</h2><p>Pasirinkite amžiaus grupę — atsidarys jos tvarkaraštis, kainos ir registracijos forma.</p></div>
 <div class="choices class-choices class-choices-four">
-<button class="choice" data-class="kids57"><span class="num">01 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>5–7 metų vaikams · Antradieniais ir ketvirtadieniais.</p><span class="arrow">↗</span></button>
-<button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams · Galimi du savaitės grafikai.</p><span class="arrow">↗</span></button>
-<button class="choice" data-class="teens"><span class="num">03 / PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>13–18 metų paaugliams · Antradieniais ir ketvirtadieniais.</p><span class="arrow">↗</span></button>
-<button class="choice" data-class="adult"><span class="num">04 / SUAUGUSIEMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>Pasirinkite 1, 2 arba 3 treniruotes per savaitę.</p><span class="arrow">↗</span></button>
+<button class="choice" data-class="kids57"><span class="num">01 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>5–7 metų vaikams · Antradieniais ir ketvirtadieniais.</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams · Galimi du savaitės grafikai.</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="teens"><span class="num">03 / PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>13–18 metų paaugliams · Antradieniais ir ketvirtadieniais.</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="adult"><span class="num">04 / SUAUGUSIEMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>Pasirinkite 1, 2 arba 3 treniruotes per savaitę.</p><span class="arrow" aria-hidden="true">→</span></button>
 </div>
 </div>
 <div id="classDetail" class="class-detail" style="display:none">
@@ -938,7 +946,9 @@ teens:{title:'Šiuolaikinis šokis · 13–18 m.',desc:'Pasirinkite Jums tinkant
 adult:{title:'Šiuolaikinis šokis suaugusiesiems',desc:'Pasirinkite 1, 2 arba 3 treniruotes per savaitę ir Jums patogiausias dienas.',options:['Suaugusiųjų grupė · pasirinkite dienas žemiau'],schedule:[['Pirmadieniais','Suaugusiųjų grupė','19:15'],['Trečiadieniais','Suaugusiųjų grupė','19:15'],['Sekmadieniais','Suaugusiųjų grupė','19:00']]}
 };
 let classCurrentGroupKey='kids';function showClassDetail(key){const g=groups[key];if(!g)return;classCurrentGroupKey=key;$('classOverview').style.display='none';$('classDetail').style.display='block';$('classTitle').textContent=g.title;$('classDescription').textContent=g.desc;$('classGroup').innerHTML=g.options.map((x,i)=>'<option value="'+i+'">'+x+'</option>').join('');$('classScheduleRows').innerHTML=g.schedule.map(r=>'<div class="class-schedule-row"><div><strong>'+r[0]+'</strong><small>'+r[1]+'</small></div><time>'+r[2]+'</time></div>').join('');$('classAdultOffer').style.display=key==='adult'?'flex':'none';$('adultPlanFields').style.display=key==='adult'?'block':'none';$('classRegistrationPanel').style.display='';$('classConfirmation').style.display='none';$('classRegistrationPanel').querySelectorAll(':scope > .eyebrow,:scope > h3,:scope > p,:scope > .class-option-cards,:scope > .fields,:scope > .class-single-note,:scope > .class-payment-note,:scope > .class-adult-offer,:scope > #adultPlanFields,:scope > #classSubmit').forEach(el=>el.style.display='');$('classAdultOffer').style.display=key==='adult'?'flex':'none';$('adultPlanFields').style.display=key==='adult'?'block':'none';$('classRegistrationPanel').querySelector('.class-option-cards .class-option-copy small').textContent=key==='adult'?'1 kartas per savaitę – 40 €, 2 kartai – 50 €, 3 kartai – 60 €.':'2 treniruotės per savaitę · 50 € / mėn. Papildomas 5 € registracijos mokestis.';document.querySelectorAll('input[name="classBookingType"]').forEach(r=>r.checked=r.value==='group');$('adultFrequency').value='2';updateAdultPlan();$('classGroupLabel').style.display='';$('classSingleNote').style.display='none';$('classPaymentNote').style.display='block';$('classPaymentNote').textContent=key==='adult'?'Pasirinkite savaitės dažnumą ir dienas. Abonementui taikomas papildomas 5 € registracijos mokestis.':'Abonementas kainuoja 50 € per mėnesį, papildomai taikomas 5 € registracijos mokestis. Vaikams registruojantis iš anksto mokėti nebūtina.';$('classToast').classList.remove('show');$('classDetail').scrollIntoView({behavior:'smooth',block:'start'})}
-document.querySelectorAll('[data-class]').forEach(b=>b.addEventListener('click',()=>{classReturnView='home';$('classContextBackLabel').textContent='GRĮŽTI Į PASIRINKIMĄ';showClassDetail(b.dataset.class)}));
+function openGroupCard(key,button){if(!groups[key])return;document.querySelectorAll('.class-choices [data-class]').forEach(card=>{card.classList.toggle('is-selected',card===button);card.setAttribute('aria-pressed',card===button?'true':'false')});classReturnView='classes';$('classContextBackLabel').textContent='GRĮŽTI PRIE GRUPIŲ';showView('classes');showClassDetail(key);}
+window.openGroupCard=openGroupCard;
+document.querySelectorAll('.class-choices [data-class]').forEach(b=>{b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>openGroupCard(b.dataset.class,b));b.addEventListener('keydown',ev=>{if((ev.key==='Enter'||ev.key===' ')&&ev.target!==b){ev.preventDefault();openGroupCard(b.dataset.class,b)}})});
 $('classBack').onclick=()=>{$('classDetail').style.display='none';$('classOverview').style.display='block';$('classOverview').scrollIntoView({behavior:'smooth',block:'start'})};
 function updateAdultPlan(){const freq=Number($('adultFrequency').value);$('classAdultPrice').textContent=({1:'40 € / mėn.',2:'50 € / mėn.',3:'60 € / mėn.'})[freq];$('adultDaysHint').textContent='Pasirinkite '+freq+' '+(freq===1?'dieną':freq===2?'dienas':'dienas')+' per savaitę.';document.querySelectorAll('input[name="adultDay"]').forEach(cb=>{cb.checked=false;cb.disabled=false});}
 $('adultFrequency').addEventListener('change',updateAdultPlan);
