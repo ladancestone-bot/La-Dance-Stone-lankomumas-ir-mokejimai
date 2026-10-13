@@ -1076,6 +1076,50 @@ html,body{max-width:100%;overflow-x:hidden}
 .view input[type="date"],.view input[type="email"],.view input[type="tel"],.view input[type="text"],.view input[type="time"],.view select,.view textarea{display:block;width:100%!important;box-sizing:border-box!important}
 .view .fields input,.view .fields select,.view .email-label input{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
 .view .panel,.view .booking-panel{overflow-wrap:anywhere}
+
+/* iOS date-field overflow fix in class registration */
+#classRegistrationPanel,
+#classRegistrationPanel .fields,
+#classRegistrationPanel .fields>label{
+  min-width:0!important;
+  max-width:100%!important;
+}
+#classRegistrationPanel .fields>label{
+  display:block;
+  width:100%;
+}
+#classRegistrationPanel .fields input,
+#classRegistrationPanel .fields select{
+  display:block;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+#classRegistrationPanel .fields input[type="date"]{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  inline-size:100%!important;
+  box-sizing:border-box!important;
+  padding:13px!important;
+  overflow:hidden;
+}
+@media(max-width:760px){
+  #classRegistrationPanel .fields{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  #classRegistrationPanel .fields>label,
+  #classRegistrationPanel .fields input,
+  #classRegistrationPanel .fields select{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+}
+
 </style>
 </head>
 <body>
