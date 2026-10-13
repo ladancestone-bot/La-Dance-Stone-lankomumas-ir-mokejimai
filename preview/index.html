@@ -153,6 +153,37 @@
  .timetable-panel .timetable-legend{gap:8px;font-size:9px}
 }
 
+
+/* Modern editorial group cards: soft tonal backgrounds, strong typography, clear action */
+.class-choices{grid-template-columns:1fr;gap:12px;max-width:860px;margin:0 auto}
+.class-choices .choice{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;grid-template-rows:auto auto auto;align-items:center;column-gap:15px;min-height:0;padding:20px 20px 20px 18px;border:1px solid #e7dcd2;border-left:4px solid #8d7a6c;border-radius:18px;background:#fbf7f1;box-shadow:0 5px 16px rgba(72,24,36,.045);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.class-choices .choice:nth-child(2){background:#f5f0e9;border-left-color:#8d7a6c}
+.class-choices .choice:nth-child(3){background:#f7edf0;border-left-color:#805767}
+.class-choices .choice:nth-child(4){background:#f0f1eb;border-left-color:#607765}
+.class-choices .choice:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(72,24,36,.09);border-color:#c9b6a4}
+.class-choices .choice .num{grid-column:2;grid-row:1;font-size:9px;line-height:1.3;letter-spacing:.15em;color:#8d7a6c;font-weight:700}
+.class-choices .choice .iconbox{position:static;grid-column:1;grid-row:1 / span 3;width:38px;height:38px;border:0;border-radius:12px;background:#8d7a6c;color:#fffaf4;font-size:19px;align-self:center}
+.class-choices .choice:nth-child(3) .iconbox{background:#805767}
+.class-choices .choice:nth-child(4) .iconbox{background:#607765}
+.class-choices .choice h3{grid-column:2;grid-row:2;font:600 25px/1.08 'Cormorant Garamond',serif;color:#4b1d2a;margin:5px 0 4px}
+.class-choices .choice p{grid-column:2;grid-row:3;font-size:12px;line-height:1.45;color:#786b63;margin:0}
+.class-choices .choice .arrow{position:static;grid-column:3;grid-row:1 / span 3;transform:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid #d5c2a8;background:#fffaf4;color:#4b1d2a;font-size:21px;transition:background .18s,color .18s}
+.class-choices .choice:hover .arrow{background:#4b1d2a;color:#fff8f4;border-color:#4b1d2a}
+.class-choice-head{margin-top:28px;margin-bottom:16px}
+.class-choice-head h2{font-size:24px}
+.class-choice-head p{max-width:44ch;margin:7px auto 0;line-height:1.5}
+@media(max-width:760px){
+ .class-choices{gap:10px}
+ .class-choices .choice{grid-template-columns:34px minmax(0,1fr) 34px;column-gap:11px;padding:16px 13px 16px 12px;border-radius:16px}
+ .class-choices .choice .iconbox{width:32px;height:32px;border-radius:10px;font-size:17px}
+ .class-choices .choice .num{font-size:8px}
+ .class-choices .choice h3{font-size:23px;margin:4px 0}
+ .class-choices .choice p{font-size:11px;line-height:1.4}
+ .class-choices .choice .arrow{width:32px;height:32px;font-size:18px}
+ .class-week-heading{align-items:flex-start;flex-direction:column;gap:8px}
+ .class-week-heading h3{font-size:27px}
+ .class-choice-head{margin-top:26px}
+}
 /* Harmonized class-card palette: muted botanical, rose, lilac and wine */
 .timetable-panel .calendar .event.class-event{background:#e4e9df;color:#455440;border-color:#c6d0bd}
 .timetable-panel .calendar .event.class-event.gold{background:#f0e1d8;color:#795044;border-color:#dfc0b1}
@@ -921,9 +952,9 @@ body:has(#homeView.active){background:#f3e7da}
 <section id="classesView" class="view">
 <button class="back" data-view="home"><span>←</span>GRĮŽTI Į PASIRINKIMĄ</button>
 <div id="classOverview">
-<div class="viewhead"><div><div class="eyebrow">02 · Šokių pamokos</div><h2>Raskite savo ritmą.</h2><p>Pasirinkite grupę ir peržiūrėkite jos tvarkaraštį, registracijos galimybes bei vienkartinės pamokos kainą.</p></div><span class="pill">Vaikams · paaugliams · suaugusiesiems</span></div>
+<div class="viewhead"><div><div class="eyebrow">02 · Šokių pamokos</div><h2>Šokių pamokos</h2><p>Peržiūrėkite savaitės tvarkaraštį ir žemiau pasirinkite savo grupę.</p></div><span class="pill">Vaikams · paaugliams · suaugusiesiems</span></div>
 <div class="class-week-preview">
-<div class="class-week-heading"><div><div class="eyebrow">Savaitės ritmas</div><h3>Judėjimui skirta savaitė.</h3><p>Trumpa tvarkaraščio apžvalga — visas dienas ir laikus matysite iš karto.</p></div><span class="pill">Pavyzdinis tvarkaraštis</span></div>
+<div class="class-week-heading"><div><div class="eyebrow">Savaitės tvarkaraštis</div><h3>Pamokų laikai</h3><p>Trumpa savaitės apžvalga. Pasirinkite grupę žemiau.</p></div><span class="pill">Pavyzdinis tvarkaraštis</span></div>
 <div class="class-week-scroll class-week-calendar-scroll" aria-label="Savaitės tvarkaraštis. Slinkite į šoną, kad pamatytumėte visas dienas.">
 <div class="class-calendar-grid">
 <div class="class-calendar-corner">LAIKAS</div>
