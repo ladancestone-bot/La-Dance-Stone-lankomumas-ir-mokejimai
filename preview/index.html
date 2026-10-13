@@ -945,6 +945,19 @@ body:has(#homeView.active){background:#f3e7da}
 .class-choices.class-choices-four>.choice .arrow{color:#5d1f30!important}
 .class-choices.class-choices-four>.choice:hover .arrow{background:#e6cea7!important;color:#5d1f30!important}
 
+
+/* Final refinement: deeper, muted burgundy and consistent full weekday labels */
+.class-choices.class-choices-four>.choice,
+.class-choices.class-choices-four>.choice:nth-child(n){background:#4b1725!important;background-image:none!important;border-color:#6c3544!important;border-left-color:#bda078!important}
+.class-choices.class-choices-four>.choice h3{color:#fff8f0!important}
+.class-choices.class-choices-four>.choice p{color:#f0e3e2!important;line-height:1.5!important}
+.class-choices.class-choices-four>.choice .choice-schedule-label{display:inline-block;color:#e2c99e!important;font-weight:600!important;margin-top:4px}
+.class-choices.class-choices-four>.choice .arrow{color:#4b1725!important}
+@media(max-width:760px){
+ .class-choices.class-choices-four>.choice p{font-size:12px!important;line-height:1.5!important}
+ .class-choices.class-choices-four>.choice .choice-schedule-label{margin-top:3px}
+}
+
 </style>
 </head>
 <body>
@@ -1030,8 +1043,8 @@ body:has(#homeView.active){background:#f3e7da}
 <div class="choice-head class-choice-head"><h2>Pasirinkite savo grupę</h2><p>Pasirinkite amžiaus grupę — atsidarys jos tvarkaraštis, kainos ir registracijos forma.</p></div>
 <div class="choices class-choices class-choices-four">
 <button class="choice" data-class="kids57"><span class="num">01 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>5–7 metų vaikams · Antradieniais ir ketvirtadieniais.</p><span class="arrow" aria-hidden="true">→</span></button>
-<button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams · Galimi du savaitės grafikai.</p><span class="arrow" aria-hidden="true">→</span></button>
-<button class="choice" data-class="teens"><span class="num">03 / PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>13–18 metų paaugliams · I–III arba II–IV, 17:00–18:00.</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="kids712"><span class="num">02 / VAIKAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>7–12 metų vaikams<br><span class="choice-schedule-label">Galimi du variantai:</span><br>Pirmadieniais ir trečiadieniais · 16:00–17:00<br>Antradieniais ir ketvirtadieniais · 16:00–17:00</p><span class="arrow" aria-hidden="true">→</span></button>
+<button class="choice" data-class="teens"><span class="num">03 / PAAUGLIAMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>13–18 metų paaugliams<br><span class="choice-schedule-label">Galimi du variantai:</span><br>Pirmadieniais ir trečiadieniais · 17:00–18:00<br>Antradieniais ir ketvirtadieniais · 17:00–18:00</p><span class="arrow" aria-hidden="true">→</span></button>
 <button class="choice" data-class="adult"><span class="num">04 / SUAUGUSIEMS</span><span class="iconbox" aria-hidden="true">✦</span><h3>Šiuolaikinis šokis</h3><p>Pasirinkite 1, 2 arba 3 treniruotes per savaitę.</p><span class="arrow" aria-hidden="true">→</span></button>
 </div>
 </div>
