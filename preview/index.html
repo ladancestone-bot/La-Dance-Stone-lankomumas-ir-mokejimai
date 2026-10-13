@@ -1068,6 +1068,14 @@ body:has(#homeView.active){background:#f3e7da}
 #rentalView .rental-checkin-steps>div:first-child b{background:#b65a69}
 @media(max-width:760px){#rentalView .rental-hero h2{font-size:clamp(48px,11vw,66px)}#rentalView .rental-amenities{gap:4px;margin-bottom:19px}#rentalView .rental-amenity{font-size:8px;letter-spacing:0}#rentalView .rental-amenity-icon{width:clamp(50px,13vw,70px);height:clamp(50px,13vw,70px)}#rentalView .rental-checkin{grid-template-columns:1fr;gap:15px;padding:19px 17px;border-radius:20px}#rentalView .rental-checkin-title{gap:14px}#rentalView .rental-checkin h3{font-size:34px}#rentalView .rental-checkin-steps{border-left:0;border-top:1px solid #cfa9a6;padding:14px 0 0;gap:8px}#rentalView .rental-checkin-steps>div{font-size:13px}#rentalView .rental-checkin-steps b{flex-basis:25px;height:25px;font-size:12px}}
 @media(max-width:390px){#rentalView .rental-site-home{padding:13px 17px;font-size:13px}#rentalView .rental-back{margin-bottom:20px}#rentalView .rental-amenity{font-size:7px}#rentalView .rental-amenity-icon{width:49px;height:49px}}
+
+/* GLOBAL MOBILE FIELD CONTAINMENT FIX */
+html,body{max-width:100%;overflow-x:hidden}
+.view,.view>* ,.view .panel,.view .booking-panel,.view .rental-layout,.view .service-grid,.view .fields,.view .fields>*,.view .email-label{min-width:0;max-width:100%}
+.view input,.view select,.view textarea{box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
+.view input[type="date"],.view input[type="email"],.view input[type="tel"],.view input[type="text"],.view input[type="time"],.view select,.view textarea{display:block;width:100%!important;box-sizing:border-box!important}
+.view .fields input,.view .fields select,.view .email-label input{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+.view .panel,.view .booking-panel{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -1113,7 +1121,7 @@ body:has(#homeView.active){background:#f3e7da}
     <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M20 4v32M6 12l28 16M6 28l28-16M20 4l-4 5m4-5 4 5M20 36l-4-5m4 5 4-5M6 12l6 1m-6-1 2 6m26 10-6-1m6 1-2-6M6 28l6-1m-6 1 2-6m26-10-6 1m6-1-2 6"/></svg></span><span>Kondicionierius</span></div>
     <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M5 16h8l12-8v24l-12-8H5zM30 15q7 5 0 10M32 10q12 10 0 20"/></svg></span><span>Audio<br>sistema</span></div>
     <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40"><path d="M20 7c-5-1-7 4-5 7l5 5-13 9q-3 3 1 5h24q4-2 0-5L20 19"/></svg></span><span>Rūbinė</span></div>
-    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40" role="img" aria-label="Automobilis"><path d="M4.5 25.5 6.5 19q.5-2 2.8-2.5l4-7q1-2 3.2-2h8.8q2.2 0 3.4 2l4.2 7 2.5 1.2q2.1 1 2.1 3.5v7.3H4.5z"/><path d="M10 16.5h20M14 9.5l-2 7m14-7 4 7M5 23h5m20 0h5"/><circle cx="11" cy="28.5" r="3"/><circle cx="29" cy="28.5" r="3"/></svg></span><span>Parkavimas<br>iki 3 val. nemokamai</span></div>
+    <div class="rental-amenity"><span class="rental-amenity-icon"><svg viewBox="0 0 40 40" role="img" aria-label="Automobilis"><path d="M4 24v-3q0-2 2-3l4-1 4-7q1-2 3-2h7q2 0 3 2l4 7 3 1q2 1 2 3v6H4z"/><path d="M10 17h20M13 17l3-7h9l4 7M5 22h5m20 0h5"/><circle cx="11" cy="28" r="3"/><circle cx="29" cy="28" r="3"/></svg></span><span>Parkavimas<br>iki 3 val. nemokamai</span></div>
   </div>
 </div>
 <div class="rental-gallery">
