@@ -783,6 +783,36 @@ body:has(#homeView.active){background:#f3e7da}
   background:linear-gradient(145deg,#fffdf8 0%,#ead8bf 100%)!important;
   border-color:#8a6b42!important;
 }
+
+/* Booking weekly timetable: compact, elegant cells; keep all days and time axis */
+.class-calendar-grid{
+  grid-template-columns:58px repeat(7,minmax(122px,1fr))!important;
+  grid-template-rows:40px repeat(6,minmax(58px,auto))!important;
+  min-width:912px!important;
+}
+.class-calendar-corner,.class-calendar-dayhead{
+  padding:6px 4px!important;font-size:9px!important;letter-spacing:.06em!important;
+}
+.class-calendar-time{
+  padding:8px 3px!important;font-size:10px!important;
+}
+.class-calendar-slot{
+  padding:6px 7px!important;gap:3px!important;font-size:10px!important;line-height:1.28!important;
+}
+.class-calendar-slot strong{font-size:10px!important;line-height:1.25!important}
+.class-calendar-slot span{font-size:10px!important}
+.class-calendar-slot small{font-size:9px!important;line-height:1.25!important}
+.class-week-calendar-scroll{
+  border:1px solid #d9c4ae;border-radius:16px;box-shadow:0 5px 18px #4a17250a;
+}
+@media(max-width:760px){
+  .class-calendar-grid{
+    grid-template-columns:52px repeat(7,minmax(116px,1fr))!important;
+    grid-template-rows:38px repeat(6,minmax(54px,auto))!important;
+    min-width:864px!important;
+  }
+  .class-calendar-slot{padding:5px 6px!important}
+}
 </style>
 </head>
 <body>
