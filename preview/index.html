@@ -909,6 +909,33 @@ body:has(#homeView.active){background:#f3e7da}
 .back span{font-size:15px;vertical-align:middle;margin-right:0}
 .timetable-back{margin-top:8px;margin-bottom:22px}
 @media(max-width:760px){.top{padding:15px 0 6px}.site-link{padding:12px 20px}.back,.timetable-back{margin:8px auto 20px}}
+
+/* Final mobile-first group card correction: consistent burgundy, aligned text, no legacy cream styles */
+.class-choices.class-choices-four{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px!important;max-width:860px!important;margin:0 auto!important}
+.class-choices.class-choices-four>.choice{box-sizing:border-box!important;display:grid!important;grid-template-columns:44px minmax(0,1fr) 42px!important;grid-template-rows:auto auto auto!important;align-items:center!important;column-gap:16px!important;row-gap:2px!important;min-height:0!important;height:auto!important;padding:22px 22px 22px 20px!important;background:#70283a!important;background-image:none!important;color:#fff7ef!important;border:1px solid #8b4a59!important;border-left:4px solid #c8aa7a!important;border-radius:16px!important;box-shadow:0 7px 18px rgba(72,24,36,.10)!important;text-align:left!important}
+.class-choices.class-choices-four>.choice:nth-child(n){background:#70283a!important;background-image:none!important}
+.class-choices.class-choices-four>.choice .num{position:static!important;grid-column:2!important;grid-row:1!important;display:block!important;margin:0 0 4px!important;color:#e6cea7!important;font:700 10px/1.35 Jost,Arial,sans-serif!important;letter-spacing:.14em!important}
+.class-choices.class-choices-four>.choice .iconbox{position:static!important;grid-column:1!important;grid-row:1 / span 3!important;align-self:center!important;justify-self:center!important;width:38px!important;height:38px!important;display:grid!important;place-items:center!important;margin:0!important;border:1px solid #c8aa7a!important;border-radius:50%!important;background:transparent!important;color:#e6cea7!important;font-size:20px!important}
+.class-choices.class-choices-four>.choice h3{position:static!important;grid-column:2!important;grid-row:2!important;margin:0 0 5px!important;color:#fff7ef!important;font:600 27px/1.12 'Cormorant Garamond',Georgia,serif!important;letter-spacing:0!important;text-align:left!important}
+.class-choices.class-choices-four>.choice p{position:static!important;grid-column:2!important;grid-row:3!important;margin:0!important;max-width:none!important;color:#f0dfdf!important;font:400 13px/1.5 Jost,Arial,sans-serif!important;overflow-wrap:normal!important;word-break:normal!important;text-align:left!important}
+.class-choices.class-choices-four>.choice .arrow{position:static!important;grid-column:3!important;grid-row:1 / span 3!important;align-self:center!important;justify-self:center!important;display:grid!important;place-items:center!important;width:38px!important;height:38px!important;margin:0!important;transform:none!important;border:1px solid #d0b184!important;border-radius:50%!important;background:#fff8ef!important;color:#70283a!important;font:400 22px/1 Arial,sans-serif!important}
+.class-choices.class-choices-four>.choice:hover{transform:translateY(-2px)!important;border-color:#d0b184!important;box-shadow:0 10px 24px rgba(72,24,36,.17)!important}
+.class-choices.class-choices-four>.choice:hover .arrow{background:#e6cea7!important}
+.class-choice-head{margin:30px auto 18px!important;text-align:center!important}
+.class-choice-head h2{margin:0!important;color:#4b1d2a!important}
+.class-choice-head p{max-width:46ch!important;margin:8px auto 0!important;font-size:14px!important;line-height:1.5!important}
+@media(max-width:760px){
+ .class-choices.class-choices-four{gap:11px!important}
+ .class-choices.class-choices-four>.choice{grid-template-columns:30px minmax(0,1fr) 30px!important;column-gap:10px!important;padding:17px 12px!important;border-radius:14px!important}
+ .class-choices.class-choices-four>.choice .iconbox{width:28px!important;height:28px!important;font-size:15px!important}
+ .class-choices.class-choices-four>.choice .num{font-size:8px!important;letter-spacing:.12em!important;margin-bottom:4px!important}
+ .class-choices.class-choices-four>.choice h3{font-size:23px!important;line-height:1.1!important;margin-bottom:4px!important}
+ .class-choices.class-choices-four>.choice p{font-size:12px!important;line-height:1.45!important}
+ .class-choices.class-choices-four>.choice .arrow{width:29px!important;height:29px!important;font-size:18px!important}
+ .class-choice-head{margin:25px auto 15px!important}
+ .class-choice-head p{font-size:13px!important}
+}
+
 </style>
 </head>
 <body>
