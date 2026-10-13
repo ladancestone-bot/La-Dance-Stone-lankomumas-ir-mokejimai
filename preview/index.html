@@ -837,6 +837,14 @@ body:has(#homeView.active){background:#f3e7da}
  .timetable-panel .calendar .event .event-name{font-size:7.5px;line-height:1.05}
  .timetable-panel .calendar .event .event-audience{font-size:7.5px;line-height:1.08;margin-top:2px}
 }
+
+/* Keep the two navigation links close together on every view */
+.view{padding-top:8px}
+.view .back,.view .timetable-back{margin-top:2px;margin-bottom:14px}
+@media(max-width:760px){
+ .view{padding-top:6px}
+ .view .back,.view .timetable-back{margin-top:0;margin-bottom:12px}
+}
 /* Tighten the vertical spacing between the main and contextual navigation */
 #timetableView.active{padding-top:8px}
 #timetableView .timetable-back{margin-top:4px;margin-bottom:14px}
