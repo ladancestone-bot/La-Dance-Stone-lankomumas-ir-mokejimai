@@ -103,6 +103,62 @@ Deno.serve(async (req) => {
     updated_at: new Date().toISOString(),
   }, { onConflict: "stripe_payment_id" });
 
+  // Handle class registration payments before the generic €5 early return.
+  // The €5 group registration fee and €10 single lesson must update website_orders.
+  if (
+    (metadata.payment_kind === "reservation_fee" || metadata.payment_kind === "single_lesson") &&
+    metadata.registration_id
+  ) {
+    const expectedAmount = metadata.payment_kind === "reservation_fee" ? 5 : 10;
+    if (session.payment_status !== "paid") {
+      return Response.json({ received: true, class_registration_payment_status: session.payment_status });
+    }
+    if (Math.abs(amountTotal - expectedAmount) > 0.01) {
+      console.error("Class registration payment amount mismatch", {
+        registration_id: metadata.registration_id,
+        expectedAmount,
+        amountTotal,
+      });
+      return new Response("class registration payment amount mismatch", { status: 400 });
+    }
+    const sourceKey = "class-registration:" + String(metadata.registration_id);
+    const { data: order, error: orderLookupError } = await supabaseAdmin
+      .from("website_orders")
+      .select("id,raw_data,paid_text")
+      .eq("source_key", sourceKey)
+      .eq("order_type", "class_registration")
+      .maybeSingle();
+    if (orderLookupError) {
+      console.error("Class registration order lookup failed", orderLookupError);
+      return new Response("class registration order lookup failed", { status: 500 });
+    }
+    if (!order) {
+      console.error("Class registration order not found", sourceKey);
+      return new Response("class registration order not found", { status: 404 });
+    }
+    const existingRawData = order.raw_data && typeof order.raw_data === "object" ? order.raw_data : {};
+    const { error: orderUpdateError } = await supabaseAdmin
+      .from("website_orders")
+      .update({
+        paid_text: "Apmokėta",
+        status: "paid",
+        raw_data: {
+          ...existingRawData,
+          stripe_payment_id: stripePaymentId,
+          stripe_checkout_session_id: session.id,
+          stripe_payment_status: session.payment_status,
+          paid_at: new Date().toISOString(),
+          payment_kind: metadata.payment_kind,
+        },
+      })
+      .eq("id", order.id);
+    if (orderUpdateError) {
+      console.error("Class registration payment update failed", orderUpdateError);
+      return new Response("class registration payment update failed", { status: 500 });
+    }
+    return Response.json({ received: true, class_registration_paid: true, registration_id: metadata.registration_id });
+  }
+
   // €5 is the group reservation fee, not the one-off lesson payment.
   if (amountTotal === 5) {
     return Response.json({ received: true, reservation_fee: true });
@@ -192,13 +248,13 @@ Deno.serve(async (req) => {
     return Response.json({ received: true, duplicate: true });
   }
 
-  const details = session.customer_details;
-  const email = details?.email ?? session.customer_email ?? null;
-  const name = details?.name?.trim() || "Website participant";
+  const dropInDetails = session.customer_details;
+  const email = dropInDetails?.email ?? session.customer_email ?? null;
+  const name = dropInDetails?.name?.trim() || "Website participant";
   const parts = name.split(/\s+/);
   const firstName = parts.shift() || "Website";
   const lastName = parts.join(" ") || "participant";
-  const phone = details?.phone ?? null;
+  const phone = dropInDetails?.phone ?? null;
 
   let studentId = metadata.student_id || null;
 
