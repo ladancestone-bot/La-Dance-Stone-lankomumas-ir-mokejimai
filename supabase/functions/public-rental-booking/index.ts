@@ -26,19 +26,6 @@ const response = (body: unknown, status: number, origin: string | null) =>
 const clean = (v: unknown) => String(v ?? "").trim();
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
-const GUIDE_ID = "1vjPK0VMwq0Kuxk5lIQfucvHcBPLJ9paa";
-const GUIDE_URL = "https://drive.google.com/file/d/" + GUIDE_ID + "/view?usp=sharing";
-async function getGuideAttachment(): Promise<{filename:string;content:string}|null> {
-  try {
-    const res = await fetch("https://drive.google.com/uc?export=download&id=" + GUIDE_ID);
-    if (!res.ok) return null;
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    if (bytes.length < 4 || String.fromCharCode(...bytes.subarray(0, 4)) !== "%PDF") return null;
-    let binary = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    return { filename: "La-Dance-Stone-atmintine.pdf", content: btoa(binary) };
-  } catch (error) { console.error("Could not attach studio guide; email will include its link.", error); return null; }
-}
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
@@ -155,7 +142,6 @@ Deno.serve(async (req: Request) => {
     }
 
     const payUrl = String(session.url);
-    const guideAttachment = await getGuideAttachment();
     const cashUrl = SITE_URL + "?rental_cash=" + encodeURIComponent(bookingId) + "&email=" + encodeURIComponent(email);
     const mail = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -165,8 +151,7 @@ Deno.serve(async (req: Request) => {
         to: [email],
         reply_to: "info@ladancestone.lt",
         subject: "Studijos nuomos rezervacija – apmokėjimas",
-        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#30271f;line-height:1.6"><div style="padding:8px 0 22px;border-bottom:1px solid #e5d8c7;margin-bottom:24px;text-align:center"><div style="font-family:Georgia,serif;font-size:25px;line-height:1.15;font-weight:700;letter-spacing:-.02em;color:#481824">La Dance Stone</div><div style="margin-top:6px;font-family:Arial,sans-serif;font-size:11px;line-height:1.4;font-weight:700;letter-spacing:2px;color:#a9894d;text-transform:uppercase;text-align:center">Šokių studija</div></div><p>Sveiki, ${safeName}!</p><p>Gavome jūsų studijos nuomos rezervaciją. Kad rezervacija būtų patvirtinta, atlikite apmokėjimą per 24 valandas.</p><div style="background:#f7f2ec;padding:18px;border-radius:12px"><p><strong>Data:</strong> ${escapeHtml(dateText)}</p><p><strong>Laikas:</strong> ${escapeHtml(timeText)}</p><p><strong>Trukmė:</strong> ${duration} val.</p><p><strong>Rezervacijos kaina:</strong> ${price} €</p><p><strong>Būsena:</strong> Laukiama apmokėjimo</p></div><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;margin:28px 0 24px;border-collapse:separate"><tr><td align="center" style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate"><tr><td align="center" bgcolor="#481824" style="background:#481824;border-radius:12px"><a href="${escapeHtml(payUrl)}" style="display:block;padding:16px 20px;border:1px solid #481824;border-radius:12px;color:#ffffff;font-family:Arial,sans-serif;font-size:16px;line-height:22px;font-weight:bold;text-decoration:none;text-align:center">Apmokėti internetu · ${price} €</a></td></tr></table></td></tr><tr><td align="center" style="padding:0"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate"><tr><td align="center" bgcolor="#ffffff" style="background:#ffffff;border:1px solid #d8c8b5;border-radius:12px"><a href="${escapeHtml(cashUrl)}" style="display:block;padding:15px 20px;border-radius:12px;color:#481824;font-family:Arial,sans-serif;font-size:15px;line-height:22px;font-weight:bold;text-decoration:none;text-align:center">Pasirinkti mokėjimą grynaisiais</a></td></tr></table></td></tr></table><p><strong>Studijos adresas:</strong> V. Krėvės pr. 57, Kaunas.</p><p>Klausimais kreipkitės į <a href="mailto:info@ladancestone.lt">info@ladancestone.lt</a> arba atsakykite į šį laišką.</p><p>Prieš atvykstant rekomenduojame perskaityti <a href="${GUIDE_URL}" style="color:#481824;font-weight:bold">studijos naudojimosi atmintinę</a>. ${guideAttachment ? "Atmintinė taip pat pridėta prie šio laiško PDF formatu." : "Jei PDF priedo nematote, atidarykite atmintinę paspaudę nuorodą."}</p></div>`,
-        attachments: guideAttachment ? [guideAttachment] : undefined,
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#30271f;line-height:1.6"><div style="padding:8px 0 22px;border-bottom:1px solid #e5d8c7;margin-bottom:24px;text-align:center"><div style="font-family:Georgia,serif;font-size:25px;line-height:1.15;font-weight:700;letter-spacing:-.02em;color:#481824">La Dance Stone</div><div style="margin-top:6px;font-family:Arial,sans-serif;font-size:11px;line-height:1.4;font-weight:700;letter-spacing:2px;color:#a9894d;text-transform:uppercase;text-align:center">Šokių studija</div></div><p>Sveiki, ${safeName}!</p><p>Gavome jūsų studijos nuomos rezervaciją. Kad rezervacija būtų patvirtinta, atlikite apmokėjimą per 24 valandas.</p><div style="background:#f7f2ec;padding:18px;border-radius:12px"><p><strong>Data:</strong> ${escapeHtml(dateText)}</p><p><strong>Laikas:</strong> ${escapeHtml(timeText)}</p><p><strong>Trukmė:</strong> ${duration} val.</p><p><strong>Rezervacijos kaina:</strong> ${price} €</p><p><strong>Būsena:</strong> Laukiama apmokėjimo</p></div><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;margin:28px 0 24px;border-collapse:separate"><tr><td align="center" style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate"><tr><td align="center" bgcolor="#481824" style="background:#481824;border-radius:12px"><a href="${escapeHtml(payUrl)}" style="display:block;padding:16px 20px;border:1px solid #481824;border-radius:12px;color:#ffffff;font-family:Arial,sans-serif;font-size:16px;line-height:22px;font-weight:bold;text-decoration:none;text-align:center">Apmokėti internetu · ${price} €</a></td></tr></table></td></tr><tr><td align="center" style="padding:0"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate"><tr><td align="center" bgcolor="#ffffff" style="background:#ffffff;border:1px solid #d8c8b5;border-radius:12px"><a href="${escapeHtml(cashUrl)}" style="display:block;padding:15px 20px;border-radius:12px;color:#481824;font-family:Arial,sans-serif;font-size:15px;line-height:22px;font-weight:bold;text-decoration:none;text-align:center">Pasirinkti mokėjimą grynaisiais</a></td></tr></table></td></tr></table><p><strong>Studijos adresas:</strong> V. Krėvės pr. 57, Kaunas.</p><p>Klausimais kreipkitės į <a href="mailto:info@ladancestone.lt">info@ladancestone.lt</a> arba atsakykite į šį laišką.</p></div>`,
       }),
     });
     if (!mail.ok) {
