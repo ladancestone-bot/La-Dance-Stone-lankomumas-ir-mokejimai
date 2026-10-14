@@ -1370,6 +1370,12 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 .class-group-choice{display:block;width:100%;margin:0 0 18px;}
 .class-group-choice select{display:block;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;}
 @media(max-width:760px){#classDatePicker{padding-left:clamp(12px,4vw,20px);padding-right:clamp(12px,4vw,20px);}#classDatePicker .class-date-toolbar input[type="month"]{font-size:16px!important;}#classDateOptions{width:100%;}#classDateOptions .class-date-option{width:100%;}}
+
+/* Make the class/day selector comfortable to tap on mobile */
+.class-group-choice{display:block;width:100%;margin:0 0 22px;font-size:18px;line-height:1.45;font-weight:600;color:var(--wine);}
+.class-group-choice span{display:block;margin-bottom:10px;}
+.class-group-choice select{display:block;width:100%!important;min-width:0!important;max-width:100%!important;min-height:56px!important;padding:15px 42px 15px 16px!important;font-size:16px!important;line-height:1.45!important;border:1px solid var(--line)!important;border-radius:14px!important;background:#fffdf8!important;color:var(--choc)!important;box-sizing:border-box!important;}
+@media(max-width:760px){.class-group-choice{font-size:18px;margin-bottom:24px}.class-group-choice span{margin-bottom:11px}.class-group-choice select{min-height:60px!important;padding:16px 40px 16px 14px!important;font-size:16px!important;}}
 </style>
 
 <style>
