@@ -1376,6 +1376,13 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 .class-group-choice span{display:block;margin-bottom:10px;}
 .class-group-choice select{display:block;width:100%!important;min-width:0!important;max-width:100%!important;min-height:56px!important;padding:15px 42px 15px 16px!important;font-size:16px!important;line-height:1.45!important;border:1px solid var(--line)!important;border-radius:14px!important;background:#fffdf8!important;color:var(--choc)!important;box-sizing:border-box!important;}
 @media(max-width:760px){.class-group-choice{font-size:18px;margin-bottom:24px}.class-group-choice span{margin-bottom:11px}.class-group-choice select{min-height:60px!important;padding:16px 40px 16px 14px!important;font-size:16px!important;}}
+
+/* Keep the month/year picker fully inside the date card on narrow screens */
+#classDatePicker{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;}
+#classDatePicker .class-date-toolbar{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
+#classDatePicker .class-date-toolbar label{display:block!important;width:100%!important;box-sizing:border-box!important;}
+#classDatePicker #classMonthChoice{display:block!important;appearance:none;-webkit-appearance:none;width:100%!important;max-width:100%!important;min-width:0!important;min-inline-size:0!important;inline-size:100%!important;box-sizing:border-box!important;margin:0!important;padding:14px 12px!important;border:1px solid var(--line)!important;border-radius:12px!important;font-size:16px!important;line-height:1.4!important;text-align:center!important;}
+@media(max-width:760px){#classDatePicker{padding-left:14px!important;padding-right:14px!important;}#classDatePicker .class-date-toolbar{padding:0!important;margin:0 0 14px!important;}#classDatePicker #classMonthChoice{width:100%!important;max-width:100%!important;padding-left:8px!important;padding-right:8px!important;font-size:16px!important;}}
 </style>
 
 <style>
