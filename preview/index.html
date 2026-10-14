@@ -1383,6 +1383,12 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 #classDatePicker .class-date-toolbar label{display:block!important;width:100%!important;box-sizing:border-box!important;}
 #classDatePicker #classMonthChoice{display:block!important;appearance:none;-webkit-appearance:none;width:100%!important;max-width:100%!important;min-width:0!important;min-inline-size:0!important;inline-size:100%!important;box-sizing:border-box!important;margin:0!important;padding:14px 12px!important;border:1px solid var(--line)!important;border-radius:12px!important;font-size:16px!important;line-height:1.4!important;text-align:center!important;}
 @media(max-width:760px){#classDatePicker{padding-left:14px!important;padding-right:14px!important;}#classDatePicker .class-date-toolbar{padding:0!important;margin:0 0 14px!important;}#classDatePicker #classMonthChoice{width:100%!important;max-width:100%!important;padding-left:8px!important;padding-right:8px!important;font-size:16px!important;}}
+
+/* Month selector: localized Lithuanian month names and proper mobile sizing */
+#classDatePicker{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;}
+#classDatePicker .class-date-toolbar{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
+#classDatePicker #classMonthChoice{display:block!important;appearance:auto!important;-webkit-appearance:menulist!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;min-width:0!important;box-sizing:border-box!important;margin:0 6px 0 0!important;padding:16px 12px!important;border:1px solid var(--line)!important;border-radius:12px!important;font-family:inherit!important;font-size:18px!important;line-height:1.4!important;text-align:center!important;background:#fff!important;color:var(--choc)!important;}
+@media(max-width:760px){#classDatePicker{padding-left:14px!important;padding-right:20px!important;}#classDatePicker .class-date-toolbar{padding:0!important;margin:0 0 14px!important;}#classDatePicker #classMonthChoice{width:calc(100% - 8px)!important;max-width:calc(100% - 8px)!important;margin-left:0!important;margin-right:8px!important;padding:16px 8px!important;font-size:18px!important;}}
 </style>
 
 <style>
@@ -1591,7 +1597,7 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 </div>
 <div id="classAdultOffer" class="class-adult-offer"><div class="class-offer-main"><span id="classOfferTitle">Mėnesio abonementas</span><strong id="classAdultPrice">50 € <small>/ mėn.</small></strong></div><div class="class-offer-fee" id="classOfferFee"><span>Registracijos mokestis</span><strong>+5 €</strong></div><small class="class-offer-note" id="classOfferNote">Reguliarios treniruotės pasirinktoje grupėje.</small></div><div id="adultPlanFields" class="adult-plan-fields" style="display:none"><label class="adult-plan-label" for="adultFrequency">Kiek kartų per savaitę?</label><select id="adultFrequency"><option value="1">1 kartas per savaitę · 40 €</option><option value="2" selected>2 kartai per savaitę · 50 €</option><option value="3">3 kartai per savaitę · 60 €</option></select><fieldset class="adult-days-field"><legend>Pasirinkite patogias dienas</legend><label><input type="checkbox" name="adultDay" value="Pirmadienis"> Pirmadienis · 19:15</label><label><input type="checkbox" name="adultDay" value="Trečiadienis"> Trečiadienis · 19:15</label><label><input type="checkbox" name="adultDay" value="Sekmadienis"> Sekmadienis · 19:00</label><small id="adultDaysHint">Pasirinkite 2 dienas per savaitę.</small></fieldset></div>
 <label id="classGroupLabel" class="class-group-choice"><span>Pasirinkite grupę / treniruočių dienas</span><select id="classGroup" required></select></label>
-<div class="class-date-picker" id="classDatePicker"><h4>Kada norėtumėte šokti?</h4><p>Pasirinkite mėnesį. Matysite tik pasirinktos grupės treniruočių dienas, datas ir laikus. Galima rinktis šį arba bet kurį būsimą mėnesį.</p><div class="class-date-toolbar"><label for="classMonthChoice">Pasirinkite mėnesį</label><input id="classMonthChoice" type="month" aria-label="Pasirinkite treniruočių mėnesį"></div><div id="classDateHelp" class="class-date-empty" style="display:none"></div><div id="classDateOptions" class="class-date-list"></div></div>
+<div class="class-date-picker" id="classDatePicker"><h4>Kada norėtumėte šokti?</h4><p>Pasirinkite mėnesį. Matysite tik pasirinktos grupės treniruočių dienas, datas ir laikus. Galima rinktis šį arba bet kurį būsimą mėnesį.</p><div class="class-date-toolbar"><label for="classMonthChoice">Pasirinkite mėnesį</label><select id="classMonthChoice" aria-label="Pasirinkite treniruočių mėnesį"></select></div><div id="classDateHelp" class="class-date-empty" style="display:none"></div><div id="classDateOptions" class="class-date-list"></div></div>
 <div class="fields"><label><span id="classFirstNameLabel">Vardas</span><input type="text" id="classFirstName" autocomplete="given-name" placeholder="Vardas" required></label><label><span id="classLastNameLabel">Pavardė</span><input type="text" id="classLastName" autocomplete="family-name" placeholder="Pavardė" required></label><label>Gimimo data<input type="date" id="classBirthDate" required></label><label><span id="classPhoneLabel">Telefono numeris</span><input type="tel" id="classPhone" autocomplete="tel" placeholder="+370..." required></label><label><span id="classEmailLabel">El. paštas registracijai</span><input type="email" id="classEmail" autocomplete="email" placeholder="vardas@pastas.lt" required></label></div>
 <div class="class-single-note" id="classSingleNote" style="display:none">Pasirinkta paslauga ir jos mokestis bus patvirtinti registracijos metu. Šiame prototipe vieta dar neužsakoma ir mokėjimas neatliekamas.</div>
 <div class="class-payment-note" id="classPaymentNote" style="display:none"></div>
@@ -1649,9 +1655,21 @@ function classLocalISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padS
 function classMondayOf(d){const m=new Date(d);m.setHours(12,0,0,0);m.setDate(m.getDate()-(m.getDay()+6)%7);return m}
 function classScheduleForSelection(){const key=classCurrentGroupKey,idx=Number($('classGroup').value||0);if(key==='kids57')return [{day:2,start:'18:00',end:'18:45'},{day:4,start:'18:00',end:'18:45'}];if(key==='kids712')return idx===1?[{day:2,start:'16:00',end:'17:00'},{day:4,start:'16:00',end:'17:00'}]:[{day:1,start:'16:00',end:'17:00'},{day:3,start:'16:00',end:'17:00'}];if(key==='teens')return idx===1?[{day:2,start:'17:00',end:'18:00'},{day:4,start:'17:00',end:'18:00'}]:[{day:1,start:'17:00',end:'18:00'},{day:3,start:'17:00',end:'18:00'}];return [{day:1,start:'19:15',end:'20:00',name:'Pirmadienis'},{day:3,start:'19:15',end:'20:00',name:'Trečiadienis'},{day:0,start:'19:00',end:'19:45',name:'Sekmadienis'}]}
 function classCurrentMonthISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function populateClassMonths(monthChoice){
+ if(!monthChoice||monthChoice.options.length)return;
+ const now=new Date(),months=['sausis','vasaris','kovas','balandis','gegužė','birželis','liepa','rugpjūtis','rugsėjis','spalis','lapkritis','gruodis'];
+ for(let offset=0;offset<36;offset++){
+  const d=new Date(now.getFullYear(),now.getMonth()+offset,1);
+  const value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const option=document.createElement('option');option.value=value;
+  option.textContent=months[d.getMonth()].charAt(0).toUpperCase()+months[d.getMonth()].slice(1)+' '+d.getFullYear();
+  monthChoice.appendChild(option);
+ }
+}
 function renderClassDates(){
  const host=$('classDateOptions'),help=$('classDateHelp'),monthChoice=$('classMonthChoice');
  if(!host||!monthChoice)return;
+ populateClassMonths(monthChoice);
  const type=document.querySelector('input[name="classBookingType"]:checked')?.value||'group';
  const adult=classCurrentGroupKey==='adult';
  const selectedAdultDays=[...document.querySelectorAll('input[name="adultDay"]:checked')].map(x=>x.value);
