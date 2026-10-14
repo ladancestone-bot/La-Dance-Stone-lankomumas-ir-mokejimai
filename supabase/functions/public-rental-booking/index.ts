@@ -26,6 +26,19 @@ const response = (body: unknown, status: number, origin: string | null) =>
 const clean = (v: unknown) => String(v ?? "").trim();
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
+const GUIDE_ID = "1vjPK0VMwq0Kuxk5lIQfucvHcBPLJ9paa";
+const GUIDE_URL = "https://drive.google.com/file/d/" + GUIDE_ID + "/view?usp=sharing";
+async function getGuideAttachment(): Promise<{filename:string;content:string}|null> {
+  try {
+    const res = await fetch("https://drive.google.com/uc?export=download&id=" + GUIDE_ID);
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.length < 4 || String.fromCharCode(...bytes.subarray(0, 4)) !== "%PDF") return null;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { filename: "La-Dance-Stone-atmintine.pdf", content: btoa(binary) };
+  } catch (error) { console.error("Could not attach studio guide; email will include its link.", error); return null; }
+}
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
@@ -143,6 +156,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const payUrl = String(session.url);
+    const guideAttachment = await getGuideAttachment();
     const cashUrl = SITE_URL + "?rental_cash=" + encodeURIComponent(bookingId) + "&email=" + encodeURIComponent(email);
     const mail = await fetch("https://api.resend.com/emails", {
       method: "POST",
