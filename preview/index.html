@@ -1015,6 +1015,29 @@ body:has(#homeView.active){background:#f3e7da}
 
 
 
+
+/* Prevent mobile horizontal overflow; keep every view and footer inside viewport */
+html,body{width:100%;max-width:100%;overflow-x:clip}
+body{position:relative}
+.view{width:100%;max-width:100%;min-width:0;overflow-x:clip}
+.view *{min-width:0}
+.brand-footer{width:auto;max-width:100%;box-sizing:border-box}
+.brand-footer-main{min-width:0}
+@media(max-width:600px){
+  .brand-footer{
+    width:auto;
+    max-width:calc(100% + 34px);
+    margin:38px -17px 0;
+    padding:28px 24px 26px;
+  }
+  .brand-footer-main{grid-template-columns:minmax(0,1fr);width:100%}
+  .brand-footer-copy,.brand-footer-logo{min-width:0;max-width:100%}
+  .brand-footer-copy p,.brand-footer-copy a,.brand-footer-copy small{
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+}
+
 /* Copyright line: consistent alignment and spacing in every view */
 .brand-footer-copy small{
   display:block;
