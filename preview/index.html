@@ -1309,6 +1309,10 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 /* Keep the booking card visually separate from the full-bleed brown footer. */
 .rental-layout{margin-bottom:44px!important}
 #rentalConfirmation,#rentalCashConfirm{margin-bottom:44px!important;position:relative;z-index:1}
+
+/* Keep every non-rental view's content clear of the brown footer, not just the rental form. */
+.view:not(#rentalView) > .brand-footer{margin-top:44px!important}
+@media(max-width:760px){.view:not(#rentalView) > .brand-footer{margin-top:32px!important}}
 </style>
 
 <style>
