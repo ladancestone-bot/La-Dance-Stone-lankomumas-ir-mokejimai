@@ -1626,6 +1626,54 @@ function renderClassDates(){
  host.innerHTML=sessions.map(s=>'<label class="class-date-option"><input type="radio" name="classChosenDate" value="'+s.date+'" '+(s.date===selected?'checked':'')+'><span><strong>'+dateLabel(s)+'</strong><small>'+s.start+'–'+s.end+'</small></span></label>').join('');
  host.querySelectorAll('input[name="classChosenDate"]').forEach(input=>input.addEventListener('change',()=>{const chosen=sessions.find(s=>s.date===input.value);classSelectedSessions=chosen?[chosen]:[]}));
 }
+
+function updateClassPricing(){
+ const adult=classCurrentGroupKey==='adult';
+ const type=document.querySelector('input[name="classBookingType"]:checked')?.value||'group';
+ const frequency=Number($('adultFrequency')?.value||2);
+ const price=({1:40,2:50,3:60})[frequency]||50;
+ $('adultPlanFields').style.display=adult&&type==='group'?'block':'none';
+ $('adultPriceTiers').style.display=adult&&type==='group'?'flex':'none';
+ $('classAdultOffer').style.display=type==='group'?'block':'none';
+ $('classGroupLabel').style.display=adult?'none':'';
+ $('classGroupOptionNote').textContent=adult?'Pasirinkite 1, 2 arba 3 treniruotes per savaitę.':'Reguliarios treniruotės pasirinktoje grupėje.';
+ $('classOfferTitle').textContent=type==='single'?'Vienkartinė pamoka':'Mėnesio abonementas';
+ $('classAdultPrice').innerHTML=type==='single'?'10 € <small>/ pamoka</small>':adult?price+' € <small>/ mėn.</small>':'50 € <small>/ mėn.</small>';
+ $('classOfferFee').style.display=type==='single'?'none':'';
+ $('classOfferFee').innerHTML=type==='single'?'':'<span>Registracijos mokestis</span><strong>+5 €</strong>';
+ $('classOfferNote').textContent=type==='single'?'Vienkartinės pamokos kaina – 10 €.':adult?'Pasirinktas '+frequency+' treniruočių'+(frequency===1?' per savaitę':' per savaitę')+'.':'Mėnesio abonementas – 50 €, registracijos mokestis – 5 €.';
+ $('classAsidePriceTitle').textContent=type==='single'?'Vienkartinė pamoka':'Mėnesio abonementas';
+ $('classAsidePriceAmount').textContent=type==='single'?'10 €':(adult?price:50)+' € / mėn.';
+ $('classAsidePriceNote').textContent=type==='single'?'Vienkartinės pamokos mokestis.':'Papildomas 5 € registracijos mokestis.';
+ if($('adultDaysHint'))$('adultDaysHint').textContent='Pasirinkite '+frequency+' '+(frequency===1?'dieną':'dienas')+' per savaitę.';
+}
+function showClassDetail(key){
+ const group=groups[key];if(!group)return;
+ classCurrentGroupKey=key;classSelectedSessions=[];
+ $('classOverview').style.display='none';$('classDetail').style.display='block';
+ $('classTitle').textContent=key==='adult'?'Šiuolaikinis šokis suaugusiesiems':key==='kids57'?'Šiuolaikinis šokis vaikams · 5–7 m.':key==='kids712'?'Šiuolaikinis šokis vaikams · 7–12 m.':'Šiuolaikinis šokis paaugliams · 13–18 m.';
+ $('classDescription').textContent=group.desc;
+ $('classGroup').innerHTML=group.options.map((option,i)=>'<option value="'+i+'">'+escapeClassText(option)+'</option>').join('');
+ $('classGroup').value='0';
+ $('classScheduleRows').innerHTML=group.schedule.map(row=>'<div class="class-schedule-row"><div><strong>'+escapeClassText(row[0])+'</strong><small>'+escapeClassText(row[1])+'</small></div><time>'+escapeClassText(row[2])+'</time></div>').join('');
+ document.querySelector('input[name="classBookingType"][value="group"]').checked=true;
+ document.querySelectorAll('input[name="adultDay"]').forEach(cb=>{cb.checked=false;cb.disabled=false});
+ $('adultFrequency').value='2';
+ $('classMonthChoice').value=classCurrentMonthISO();
+ $('classRegistrationPanel').querySelectorAll(':scope > .eyebrow,:scope > h3,:scope > p,:scope > .class-option-cards,:scope > .fields,:scope > .class-single-note,:scope > .class-payment-note,:scope > .class-adult-offer,:scope > #classSubmit,:scope > #classToast').forEach(el=>el.style.display='');
+ $('classRegistrationPanel').style.display='';
+ $('classConfirmation').style.display='none';
+ $('classSingleNote').style.display='none';$('classPaymentNote').style.display='none';$('classToast').classList.remove('show');
+ $('classBack').innerHTML='<span>←</span>Grįžti į pamokų pasirinkimą';
+ updateClassPricing();renderClassDates();
+ $('classDetail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+document.querySelectorAll('[data-class]').forEach(card=>card.addEventListener('click',()=>{classReturnView='classes';showView('classes');showClassDetail(card.dataset.class)}));
+$('classBack').addEventListener('click',()=>{$('classDetail').style.display='none';$('classOverview').style.display='block';$('classOverview').scrollIntoView({behavior:'smooth',block:'start'})});
+$('classGroup').addEventListener('change',()=>{updateClassPricing();renderClassDates()});
+$('adultFrequency').addEventListener('change',()=>{const max=Number($('adultFrequency').value);const checked=[...document.querySelectorAll('input[name="adultDay"]:checked')];checked.slice(max).forEach(cb=>cb.checked=false);document.querySelectorAll('input[name="adultDay"]').forEach(cb=>cb.disabled=!cb.checked&&[...document.querySelectorAll('input[name="adultDay"]:checked')].length>=max);updateClassPricing();renderClassDates()});
+document.querySelectorAll('input[name="classBookingType"]').forEach(r=>r.addEventListener('change',()=>{document.querySelectorAll('input[name="adultDay"]').forEach(cb=>{cb.checked=false;cb.disabled=false});updateClassPricing();renderClassDates();$('classToast').classList.remove('show')}));
+
 $('classMonthChoice').addEventListener('change',renderClassDates);
 $('classGroup').addEventListener('change',renderClassDates);
 document.querySelectorAll('input[name="adultDay"]').forEach(cb=>cb.addEventListener('change',()=>{const max=Number($('adultFrequency').value),checked=[...document.querySelectorAll('input[name="adultDay"]:checked')];if(checked.length>max)cb.checked=false;document.querySelectorAll('input[name="adultDay"]').forEach(day=>day.disabled=!day.checked&&[...document.querySelectorAll('input[name="adultDay"]:checked')].length>=max);}));
