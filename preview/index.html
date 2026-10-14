@@ -1326,6 +1326,22 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 #rentalConfirmation .rc-note{max-width:780px;margin:20px auto 0;padding:18px;border-radius:14px;background:#eadfd0;color:#594633;text-align:left;font-size:14px;line-height:1.7}
 #rentalConfirmation .rc-back{border:0;border-radius:999px;padding:18px 22px;background:#481824;color:#fffaf5;font-weight:700;font-size:15px;width:100%;max-width:780px;margin-top:24px}
 @media(max-width:520px){#rentalConfirmation{padding:28px 18px;border-radius:23px 23px 8px 23px;min-height:0}#rentalConfirmation .rc-details{padding:8px 15px}#rentalConfirmation .rc-row{font-size:13px;gap:12px;padding:14px 0}#rentalConfirmation .rc-row span{flex-basis:38%}}
+
+/* Match the dedicated cash-confirmation screen to the existing success screen. */
+#rentalCashConfirm{display:none;width:100%;min-height:48vh;margin:28px 0 38px;padding:clamp(26px,5vw,54px);background:linear-gradient(145deg,#fffaf3,#f2e4d3);border:1.5px solid #d9c4a8;border-radius:28px 28px 8px 28px;text-align:center;color:#382821;box-shadow:0 18px 45px #38282112}
+#rentalCashConfirm .rc-check{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 20px;border-radius:50%;background:#481824;color:#fff7ee;font-size:43px}
+#rentalCashConfirm .rc-brand{font-size:12px;font-weight:700;letter-spacing:.24em;color:#a9894d}
+#rentalCashConfirm h3{font:700 clamp(38px,7vw,60px)/1.04 'Cormorant Garamond',serif;color:#481824;margin:15px 0}
+#rentalCashConfirm .rc-intro{font-size:clamp(15px,2vw,18px);line-height:1.7;color:#6f6056;margin:0 auto 26px;max-width:650px}
+#rentalCashConfirm .rc-details{background:#f2e7d9;border:1px solid #d9c4a8;border-radius:20px;padding:18px 26px;text-align:left;max-width:780px;margin:0 auto}
+#rentalCashConfirm .rc-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:16px 0;border-bottom:1px solid #dfcfbd;font-size:clamp(14px,1.8vw,16px)}
+#rentalCashConfirm .rc-row:last-child{border-bottom:0}
+#rentalCashConfirm .rc-row span{color:#75675d;flex:0 0 40%}
+#rentalCashConfirm .rc-row strong{color:#481824;text-align:right;overflow-wrap:anywhere}
+#rentalCashConfirm .rc-note{max-width:780px;margin:20px auto 0;padding:18px;border-radius:14px;background:#eadfd0;color:#594633;text-align:left;font-size:14px;line-height:1.7}
+#rentalCashConfirm .rc-back{border:0;border-radius:999px;padding:18px 22px;background:#481824;color:#fffaf5;font-weight:700;font-size:15px;width:100%;max-width:780px;margin-top:24px}
+@media(max-width:520px){#rentalCashConfirm{padding:28px 18px;border-radius:23px 23px 8px 23px;min-height:0}#rentalCashConfirm .rc-details{padding:8px 15px}#rentalCashConfirm .rc-row{font-size:13px;gap:12px;padding:14px 0}#rentalCashConfirm .rc-row span{flex-basis:38%}}
+
 </style>
 </head>
 <body>
