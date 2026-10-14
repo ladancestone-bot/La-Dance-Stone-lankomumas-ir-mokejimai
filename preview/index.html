@@ -1143,19 +1143,19 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <style>
 /* Rental booking success card — matches the class registration confirmation */
-#rentalConfirmation{display:none;margin:24px 0 34px;padding:clamp(22px,5vw,46px);background:linear-gradient(145deg,#fffaf3,#f5eadc);border:1px solid #d9c4a8;border-radius:28px 28px 8px 28px;text-align:center;color:#382821;box-shadow:0 18px 45px #3828210c}
-#rentalConfirmation .rc-check{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 24px;border-radius:50%;background:#481824;color:#fff7ee;font-size:43px}
-#rentalConfirmation .rc-brand{font-size:11px;font-weight:700;letter-spacing:.24em;color:#b59655}
-#rentalConfirmation h3{font:700 clamp(36px,7vw,56px)/1.04 'Cormorant Garamond',serif;color:#481824;margin:17px 0}
-#rentalConfirmation .rc-intro{font-size:15px;line-height:1.7;color:#887a70;margin:0 auto 26px;max-width:580px}
-#rentalConfirmation .rc-details{background:#f2e7d9;border:1px solid #e2d0bc;border-radius:20px;padding:14px 22px;text-align:left}
-#rentalConfirmation .rc-row{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #dfcfbd;font-size:13px}
+#rentalConfirmation{display:none;width:100%;min-height:48vh;margin:28px 0 38px;padding:clamp(26px,5vw,54px);background:linear-gradient(145deg,#fffaf3,#f2e4d3);border:1.5px solid #d9c4a8;border-radius:28px 28px 8px 28px;text-align:center;color:#382821;box-shadow:0 18px 45px #38282112}
+#rentalConfirmation .rc-check{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 20px;border-radius:50%;background:#481824;color:#fff7ee;font-size:43px}
+#rentalConfirmation .rc-brand{font-size:12px;font-weight:700;letter-spacing:.24em;color:#a9894d}
+#rentalConfirmation h3{font:700 clamp(38px,7vw,60px)/1.04 'Cormorant Garamond',serif;color:#481824;margin:15px 0}
+#rentalConfirmation .rc-intro{font-size:clamp(15px,2vw,18px);line-height:1.7;color:#6f6056;margin:0 auto 26px;max-width:650px}
+#rentalConfirmation .rc-details{background:#f2e7d9;border:1px solid #d9c4a8;border-radius:20px;padding:18px 26px;text-align:left;max-width:780px;margin:0 auto}
+#rentalConfirmation .rc-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:16px 0;border-bottom:1px solid #dfcfbd;font-size:clamp(14px,1.8vw,16px)}
 #rentalConfirmation .rc-row:last-child{border-bottom:0}
-#rentalConfirmation .rc-row span{color:#887a70;flex:0 0 40%}
+#rentalConfirmation .rc-row span{color:#75675d;flex:0 0 40%}
 #rentalConfirmation .rc-row strong{color:#481824;text-align:right;overflow-wrap:anywhere}
-#rentalConfirmation .rc-note{margin:18px 0 0;padding:16px;border-radius:14px;background:#eadfd0;color:#66533e;text-align:left;font-size:12px;line-height:1.65}
-#rentalConfirmation .rc-back{border:0;border-radius:999px;padding:16px 22px;background:#481824;color:#fffaf5;font-weight:700;width:100%;margin-top:22px}
-@media(max-width:520px){#rentalConfirmation{padding:24px 17px;border-radius:23px 23px 8px 23px}#rentalConfirmation .rc-details{padding:8px 14px}#rentalConfirmation .rc-row{font-size:12px;gap:10px}#rentalConfirmation .rc-row span{flex-basis:36%}}
+#rentalConfirmation .rc-note{max-width:780px;margin:20px auto 0;padding:18px;border-radius:14px;background:#eadfd0;color:#594633;text-align:left;font-size:14px;line-height:1.7}
+#rentalConfirmation .rc-back{border:0;border-radius:999px;padding:18px 22px;background:#481824;color:#fffaf5;font-weight:700;font-size:15px;width:100%;max-width:780px;margin-top:24px}
+@media(max-width:520px){#rentalConfirmation{padding:28px 18px;border-radius:23px 23px 8px 23px;min-height:0}#rentalConfirmation .rc-details{padding:8px 15px}#rentalConfirmation .rc-row{font-size:13px;gap:12px;padding:14px 0}#rentalConfirmation .rc-row span{flex-basis:38%}}
 </style>
 </head>
 <body>
@@ -1171,15 +1171,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <button class="choice" data-view="rental"><span class="num">STUDIJOS ERDVĖ</span><span class="home-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 14.5 16 4l12.5 10.5M7 12v16h18V12M13 28v-9h6v9"/></svg></span><h3>Studijos nuoma</h3><p>Laisvi laikai ir rezervacija</p><span class="arrow">→</span></button>
 <button class="choice" data-view="classes"><span class="num">ŠOKIŲ PAMOKOS</span><span class="home-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 10h10M11 15h10M11 20h5"/><path d="m19 22 2 2 4-5"/></svg></span><h3>Registracija į pamokas</h3><p>Grupės ir registracija</p><span class="arrow">→</span></button>
 </div>
-<section id="rentalConfirmation" aria-live="polite" aria-labelledby="rentalConfirmationTitle">
-  <div class="rc-check" aria-hidden="true">✓</div>
-  <div class="rc-brand">LA DANCE STONE</div>
-  <h3 id="rentalConfirmationTitle">Rezervacija sėkminga!</h3>
-  <p class="rc-intro" id="rentalConfirmationIntro">Ačiū! Jūsų studijos nuomos rezervacija išsaugota.</p>
-  <div class="rc-details" id="rentalConfirmationDetails"></div>
-  <div class="rc-note" id="rentalConfirmationNote">Rezervacija laukia apmokėjimo. Patikrinkite el. paštą dėl tolesnės informacijos.</div>
-  <button type="button" class="rc-back" id="rentalConfirmationBack">Grįžti į studijos nuomą</button>
-</section>
+
 <div class="brand-footer">
   <div class="brand-footer-main">
     <div class="brand-footer-copy">
@@ -1238,6 +1230,15 @@ html,body{max-width:100%;overflow-x:hidden}
 </div>
 <aside class="price-card"><div><div class="eyebrow">Studijos nuoma</div><h3>Jūsų erdvė,<br>jūsų idėjos.</h3><div class="amount" id="rentPrice">20 €</div><p id="priceExplanation">1 valanda vienoje rezervacijoje.</p></div><div class="rule">Pirmos 3 val. – 20 €/val.<br>Kiekviena papildoma valanda – 15 €.</div><button class="action" id="rentSubmit">Tęsti rezervaciją</button></aside>
 </div>
+<section id="rentalConfirmation" aria-live="polite" aria-labelledby="rentalConfirmationTitle">
+  <div class="rc-check" aria-hidden="true">✓</div>
+  <div class="rc-brand">LA DANCE STONE</div>
+  <h3 id="rentalConfirmationTitle">Rezervacija sėkminga!</h3>
+  <p class="rc-intro" id="rentalConfirmationIntro">Ačiū! Jūsų studijos nuomos rezervacija išsaugota.</p>
+  <div class="rc-details" id="rentalConfirmationDetails"></div>
+  <div class="rc-note" id="rentalConfirmationNote">Rezervacija laukia apmokėjimo. Patikrinkite el. paštą dėl tolesnės informacijos.</div>
+  <button type="button" class="rc-back" id="rentalConfirmationBack">Grįžti į studijos nuomą</button>
+</section>
 <div class="brand-footer">
   <div class="brand-footer-main">
     <div class="brand-footer-copy">
