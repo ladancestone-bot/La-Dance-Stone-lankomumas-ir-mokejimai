@@ -190,9 +190,9 @@ Deno.serve(async (req) => {
       return new Response("rental payment amount mismatch", { status: 400 });
     }
 
-    const details = session.customer_details;
-    const email = details?.email ?? session.customer_email ?? rental.customer_email ?? null;
-    const phone = details?.phone ?? rental.customer_phone ?? null;
+    const rentalDetails = session.customer_details;
+    const email = rentalDetails?.email ?? session.customer_email ?? rental.customer_email ?? null;
+    const phone = rentalDetails?.phone ?? rental.customer_phone ?? null;
 
     const { error: updateError } = await supabaseAdmin.from("studio_rentals").update({
       payment_status: "paid",
