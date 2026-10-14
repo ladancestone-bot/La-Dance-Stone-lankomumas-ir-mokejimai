@@ -11,6 +11,32 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+const GUIDE_ID = "1vjPK0VMwq0Kuxk5lIQfucvHcBPLJ9paa";
+const GUIDE_URL = "https://drive.google.com/file/d/" + GUIDE_ID + "/view?usp=sharing";
+async function getGuideAttachment(): Promise<{filename:string;content:string}|null> {
+  try {
+    const res = await fetch("https://drive.google.com/uc?export=download&id=" + GUIDE_ID);
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.length < 4 || String.fromCharCode(...bytes.subarray(0, 4)) !== "%PDF") return null;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { filename: "La-Dance-Stone-atmintine.pdf", content: btoa(binary) };
+  } catch (error) { console.error("Could not attach studio guide", error); return null; }
+}
+async function sendRentalPaidConfirmation(rental: any, email: string | null): Promise<boolean> {
+  if (!email) return false;
+  const guideAttachment = await getGuideAttachment();
+  const name = String(rental.customer_name || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const html = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#30271f;line-height:1.7;text-align:left'><div style='text-align:center;padding:8px 0 22px;border-bottom:1px solid #e5d8c7;margin-bottom:24px'><div style='font-family:Georgia,serif;font-size:25px;color:#481824'>La Dance Stone</div><div style='margin-top:6px;font-size:11px;font-weight:bold;letter-spacing:2px;color:#a9894d'>ŠOKIŲ STUDIJA</div></div><p>Sveiki, " + name + "!</p><h2 style='font-family:Georgia,serif;color:#481824'>Rezervacija patvirtinta</h2><p>Gavome jūsų apmokėjimą. Jūsų studijos nuomos rezervacija patvirtinta.</p><p><strong>Studijos adresas:</strong> V. Krėvės pr. 57, Kaunas.</p><p>Atvykimo ir naudojimosi studija instrukcijas rasite pridedamoje PDF atmintinėje. Rekomenduojame ją perskaityti prieš atvykstant.</p><p>Jei turite klausimų, rašykite <a href='mailto:info@ladancestone.lt'>info@ladancestone.lt</a> arba atsakykite į šį laišką.</p><p>Iki susitikimo!<br><strong>La Dance Stone šokių studija</strong></p>" + (guideAttachment ? "" : "<p><a href='" + GUIDE_URL + "'>Atidaryti studijos naudojimosi atmintinę</a></p>") + "</div>";
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + (Deno.env.get("RESEND_API_KEY") ?? ""), "Content-Type": "application/json", "Idempotency-Key": "rental-paid-" + rental.id },
+    body: JSON.stringify({ from: "La Dance Stone šokių studija <info@ladancestone.lt>", to: [email], reply_to: "info@ladancestone.lt", subject: "Nuomos rezervacija patvirtinta – La Dance Stone šokių studija", html, attachments: guideAttachment ? [guideAttachment] : undefined }),
+  });
+  if (!res.ok) { console.error("Paid rental confirmation email failed", rental.id, res.status, (await res.text()).slice(0, 500)); return false; }
+  return true;
+}
 Deno.serve(async (req) => {
   const signature = req.headers.get("stripe-signature") ?? "";
   const body = await req.text();
@@ -91,7 +117,10 @@ Deno.serve(async (req) => {
 
     if (rentalError || !rental) return new Response("rental not found", { status: 404 });
     if (rental.stripe_payment_id === stripePaymentId || rental.payment_status === "paid") {
-      return Response.json({ received: true, duplicate: true });
+      const duplicateEmail = details?.email ?? session.customer_email ?? rental.customer_email ?? null;
+      const sent = await sendRentalPaidConfirmation(rental, duplicateEmail);
+      if (!sent) return new Response("paid rental confirmation email failed", { status: 500 });
+      return Response.json({ received: true, duplicate: true, confirmation_email_sent: true });
     }
 
     const paymentStatus = session.payment_status || "paid";
@@ -120,7 +149,9 @@ Deno.serve(async (req) => {
     }).eq("id", rental.id);
 
     if (updateError) return new Response("rental update failed", { status: 500 });
-    return Response.json({ received: true, rental_paid: true });
+    const sent = await sendRentalPaidConfirmation(rental, email);
+    if (!sent) return new Response("paid rental confirmation email failed", { status: 500 });
+    return Response.json({ received: true, rental_paid: true, confirmation_email_sent: true });
   }
   if (metadata.payment_kind === "monthly_charge" && metadata.monthly_charge_id) {
     const { data: charge, error: chargeError } = await supabaseAdmin
