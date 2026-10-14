@@ -1014,6 +1014,31 @@ body:has(#homeView.active){background:#f3e7da}
 }
 
 
+
+/* Copyright line: consistent alignment and spacing in every view */
+.brand-footer-copy small{
+  display:block;
+  width:100%;
+  max-width:100%;
+  margin:14px 0 0;
+  padding:0;
+  line-height:1.5;
+  text-align:left;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  box-sizing:border-box;
+}
+.brand-footer-copy{width:100%;box-sizing:border-box}
+.brand-footer-main{width:100%;box-sizing:border-box}
+@media(max-width:600px){
+  .brand-footer-copy small{
+    margin-top:12px;
+    font-size:12px;
+    line-height:1.6;
+    text-align:left;
+  }
+}
+
 /* Consistent studio information footer on every app screen */
 .brand-footer{
  margin:48px calc(-1 * max(0px, (100vw - 1120px)/2)) 0;
