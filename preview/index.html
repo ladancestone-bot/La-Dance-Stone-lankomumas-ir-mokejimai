@@ -1859,7 +1859,7 @@ function timetableOption(group,day){
  if(group==='adult')return day===2?1:(day===6?2:0);
  return 0;
 }
-function renderPublicClassPreview(schedule){
+function renderPublicClassPreview(schedule,occupied){
  const grid=document.querySelector('.class-calendar-grid');
  if(!grid)return;
  const dayNames=['Pirmadienis','Antradienis','Trečiadienis','Ketvirtadienis','Penktadienis','Šeštadienis','Sekmadienis'];
@@ -1879,10 +1879,21 @@ function renderPublicClassPreview(schedule){
     const age=String(lesson.ageGroup||'');
     const label=age.includes('13–18')||age.includes('13-18')?'Paaugliai':(age.includes('Suaug')?'Suaugusieji':'Vaikai');
     html+='<div class="class-calendar-slot booked"><strong>'+start+'–'+end+'</strong><span>'+label+'</span><small>'+age+'</small></div>';
-   }else if((day===1||day===3)&&(hour===19||hour===20)){
-    html+='<div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div>';
    }else{
-    html+='<div class="class-calendar-slot free">Laisvas laikas</div>';
+    const blocked=(occupied||[]).find(item=>{
+     const d=timetableDayIndex(item.day);
+     const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
+     const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+     if(d!==day||!start||!end)return false;
+     const startMinutes=Number(start[1])*60+Number(start[2]);
+     const endMinutes=Number(end[1])*60+Number(end[2]);
+     return hour*60<endMinutes&&(hour+1)*60>startMinutes;
+    });
+    if(blocked){
+     html+='<div class="class-calendar-slot occupied"><strong>'+blocked.start+'–'+blocked.end+'</strong><span>UŽIMTA</span></div>';
+    }else{
+     html+='<div class="class-calendar-slot free">Laisvas laikas</div>';
+    }
    }
   }
  });
@@ -1907,7 +1918,7 @@ function loadLiveTimetable(){
    showTimetableStatus('Tvarkaraščio duomenų šiuo metu gauti nepavyko.',true);
    events.length=0;renderCalendar();return;
   }
-  renderPublicClassPreview(data.schedule);
+  renderPublicClassPreview(data.schedule,data.occupied||[]);
   events.length=0;
   data.schedule.forEach(item=>{
    const day=timetableDayIndex(item.day);
