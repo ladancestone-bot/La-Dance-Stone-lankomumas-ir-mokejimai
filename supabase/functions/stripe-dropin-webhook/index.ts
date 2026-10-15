@@ -11,8 +11,25 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+async function autoCreateInvoiceIfFullyPaid(monthlyChargeId: string) {
+  try {
+    const { data: charge, error } = await supabaseAdmin.from("monthly_charges").select("amount_due,amount_paid").eq("id", monthlyChargeId).maybeSingle();
+    if (error || !charge || Number(charge.amount_paid || 0) + 0.00001 < Number(charge.amount_due || 0)) return;
+    const response = await fetch(SUPABASE_URL + "/functions/v1/create-saskaita123-invoice", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + SUPABASE_SERVICE_ROLE_KEY, apikey: SUPABASE_SERVICE_ROLE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ monthly_charge_id: monthlyChargeId }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.error) console.error("Automatic Sąskaita123 invoice creation failed", monthlyChargeId, response.status, result);
+  } catch (error) {
+    console.error("Automatic Sąskaita123 invoice call failed", monthlyChargeId, error);
+  }
+}
 const GUIDE_ID = "1vjPK0VMwq0Kuxk5lIQfucvHcBPLJ9paa";
-const GUIDE_URL = "https://drive.google.com/file/d/" + GUIDE_ID + "/view?usp=sharing";
+const GUIDE_URL = "https://drive.google.com/uc?export=download&id=" + GUIDE_ID;
 async function getGuideAttachment(): Promise<{filename:string;content:string}|null> {
   try {
     const res = await fetch("https://drive.google.com/uc?export=download&id=" + GUIDE_ID);
@@ -21,18 +38,50 @@ async function getGuideAttachment(): Promise<{filename:string;content:string}|nu
     if (bytes.length < 4 || String.fromCharCode(...bytes.subarray(0, 4)) !== "%PDF") return null;
     let binary = "";
     for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    return { filename: "La-Dance-Stone-atmintine.pdf", content: btoa(binary) };
+    return { filename: "STUDIJOS NAUDOJIMOSI ATMINTINĖ.pdf", content: btoa(binary) };
   } catch (error) { console.error("Could not attach studio guide", error); return null; }
 }
 async function sendRentalPaidConfirmation(rental: any, email: string | null): Promise<boolean> {
   if (!email) return false;
-  const guideAttachment = await getGuideAttachment();
   const name = String(rental.customer_name || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const html = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#30271f;line-height:1.7;text-align:left'><div style='text-align:center;padding:8px 0 22px;border-bottom:1px solid #e5d8c7;margin-bottom:24px'><div style='font-family:Georgia,serif;font-size:25px;color:#481824'>La Dance Stone</div><div style='margin-top:6px;font-size:11px;font-weight:bold;letter-spacing:2px;color:#a9894d'>ŠOKIŲ STUDIJA</div></div><p>Sveiki, " + name + "!</p><h2 style='font-family:Georgia,serif;color:#481824'>Rezervacija patvirtinta</h2><p>Gavome jūsų apmokėjimą. Jūsų studijos nuomos rezervacija patvirtinta.</p><p><strong>Studijos adresas:</strong> V. Krėvės pr. 57, Kaunas.</p><p>Atvykimo ir naudojimosi studija instrukcijas rasite pridedamoje PDF atmintinėje. Rekomenduojame ją perskaityti prieš atvykstant.</p><p>Jei turite klausimų, rašykite <a href='mailto:info@ladancestone.lt'>info@ladancestone.lt</a> arba atsakykite į šį laišką.</p><p>Iki susitikimo!<br><strong>La Dance Stone šokių studija</strong></p>" + (guideAttachment ? "" : "<p><a href='" + GUIDE_URL + "'>Atidaryti studijos naudojimosi atmintinę</a></p>") + "</div>";
+  const dateText = rental.starts_at
+    ? new Intl.DateTimeFormat("lt-LT", { timeZone: "Europe/Vilnius", year: "numeric", month: "long", day: "numeric" }).format(new Date(rental.starts_at))
+    : "—";
+  const timeFmt = (value: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Vilnius", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
+  const timeText = rental.starts_at && rental.ends_at ? timeFmt(rental.starts_at) + "–" + timeFmt(rental.ends_at) : "—";
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#30271f;line-height:1.7">
+    <div style="padding:8px 0 22px;border-bottom:1px solid #e5d8c7;margin-bottom:24px;text-align:center">
+      <div style="font-family:Georgia,serif;font-size:25px;line-height:1.15;font-weight:700;letter-spacing:-.02em;color:#481824">La Dance Stone</div>
+      <div style="margin-top:6px;font-family:Arial,sans-serif;font-size:11px;line-height:1.4;font-weight:700;letter-spacing:2px;color:#a9894d;text-transform:uppercase;text-align:center">ŠOKIŲ STUDIJA</div>
+    </div>
+    <p>Sveiki, ${name}!</p>
+    <h2 style="font-family:Georgia,serif;color:#481824">Rezervacija patvirtinta</h2>
+    <p>Gavome jūsų apmokėjimą. Jūsų studijos nuomos rezervacija patvirtinta.</p>
+    <div style="background:#f7f2ec;padding:18px;border-radius:12px">
+      <p><strong>Data:</strong> ${dateText}</p>
+      <p><strong>Laikas:</strong> ${timeText}</p>
+      <p><strong>Rezervacijos kaina:</strong> ${Number(rental.price)} €</p>
+      <p><strong>Rezervacijos būsena:</strong> Patvirtinta</p>
+      <p><strong>Apmokėjimo būsena:</strong> Apmokėta internetu</p>
+    </div>
+    <div style="border:2px solid #b59655;border-radius:12px;padding:16px;margin:22px 0">
+      <p style="font-size:17px;font-weight:bold;color:#481824;margin-top:0">SVARBU: prieš vykstant į studiją būtina perskaityti atmintinę.</p>
+      <p>Atmintinėje rasite instrukcijas, kaip patekti į studiją, naudotis patalpomis ir ką atlikti prieš išeinant. Prašome ją perskaityti dar prieš atvykstant.</p>
+      <p><a href="${GUIDE_URL}" style="display:inline-block;background:#481824;color:#fff;padding:13px 20px;border-radius:24px;text-decoration:none;font-weight:bold">Perskaityti studijos atmintinę</a></p>
+    </div>
+    <p>Atmintinė pasiekiama paspaudus aukščiau esantį mygtuką.</p>
+    <p><strong>Studijos adresas:</strong> V. Krėvės pr. 57, Kaunas.</p>
+    <p>Klausimais kreipkitės į <a href="mailto:info@ladancestone.lt">info@ladancestone.lt</a>.</p>
+    <div style="margin-top:28px;padding-top:18px;border-top:1px solid #e5d8c7">
+      <p style="margin-bottom:2px">Iki susitikimo!</p>
+      <p style="margin-top:0;font-weight:700;font-size:18px">La Dance Stone šokių studija</p>
+    </div>
+  </div>`;
+  const attachment = await getGuideAttachment();
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: "Bearer " + (Deno.env.get("RESEND_API_KEY") ?? ""), "Content-Type": "application/json", "Idempotency-Key": "rental-paid-" + rental.id },
-    body: JSON.stringify({ from: "La Dance Stone šokių studija <info@ladancestone.lt>", to: [email], reply_to: "info@ladancestone.lt", subject: "Nuomos rezervacija patvirtinta – La Dance Stone šokių studija", html, attachments: guideAttachment ? [guideAttachment] : undefined }),
+    body: JSON.stringify({ from: "La Dance Stone šokių studija <info@ladancestone.lt>", to: [email], reply_to: "info@ladancestone.lt", subject: "Rezervacija patvirtinta – svarbi studijos atmintinė", html, ...(attachment ? { attachments: [attachment] } : {}) }),
   });
   if (!res.ok) { console.error("Paid rental confirmation email failed", rental.id, res.status, (await res.text()).slice(0, 500)); return false; }
   return true;
@@ -72,6 +121,7 @@ Deno.serve(async (req) => {
       if(updateError)return new Response("charge update failed",{status:500});
       const {error:paymentError}=await supabaseAdmin.from("payments").insert({monthly_charge_id:charge.id,student_id:charge.student_id,amount,payment_method:"stripe",paid_at:new Date().toISOString(),stripe_payment_id:stripePaymentId,received_by:null,payer_id:charge.payer_id||null,notes:"Stripe Invoice"});
       if(paymentError)return new Response("payment creation failed",{status:500});
+          if (status === "paid") await autoCreateInvoiceIfFullyPaid(charge.id);
     }
     return Response.json({received:true});
   }
@@ -141,7 +191,7 @@ Deno.serve(async (req) => {
       .from("website_orders")
       .update({
         paid_text: "Apmokėta",
-        status: "paid",
+        status: "processed",
         raw_data: {
           ...existingRawData,
           stripe_payment_id: stripePaymentId,
@@ -167,7 +217,7 @@ Deno.serve(async (req) => {
   if (metadata.payment_kind === "rental" && metadata.rental_id) {
     const { data: rental, error: rentalError } = await supabaseAdmin
       .from("studio_rentals")
-      .select("id,customer_name,customer_email,customer_phone,price,payment_status,stripe_payment_id")
+      .select("id,customer_name,customer_email,customer_phone,starts_at,ends_at,price,payment_status,stripe_payment_id")
       .eq("id", metadata.rental_id)
       .maybeSingle();
 
@@ -231,7 +281,8 @@ Deno.serve(async (req) => {
       payer_id: metadata.payer_id || charge.payer_id || null, notes: "Stripe Checkout"
     });
     if (paymentError) return new Response("payment creation failed", { status: 500 });
-    return Response.json({ received: true });
+         if (status === "paid") await autoCreateInvoiceIfFullyPaid(charge.id);
+     return Response.json({ received: true });
   }
 
   if (metadata.payment_kind !== "drop_in" || !metadata.drop_in_lesson_id) {
