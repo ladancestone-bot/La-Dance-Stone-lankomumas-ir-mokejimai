@@ -1621,7 +1621,7 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
   </div>
 </div>
 </section>
-<section id="timetableView" class="view"><button class="back timetable-back" data-view="home"><span>←</span>Grįžti į pasirinkimą</button><div class="timetable-heading"><h2>Užsiėmimų tvarkaraštis</h2><p>Paspauskite šokių pamokos laiką, jei norite registruotis.</p></div><div class="calendar-panel timetable-panel"><div class="cal-toolbar"><button id="prevWeek" aria-label="Ankstesnė savaitė">‹</button><div class="cal-title" id="calTitle">2026 m. spalio 12–18 d.</div><button id="nextWeek" aria-label="Kita savaitė">›</button></div><div class="cal-scroll"><div id="calendar" class="calendar"></div></div><div id="calendarAgenda" class="calendar-agenda"></div><div class="calendar-help"><div class="timetable-legend"><span><i class="tt-legend-class"></i>Šokių pamoka · paspauskite registracijai</span><span><i class="tt-legend-free"></i>Laisvas laikas</span><span><i class="tt-legend-rental"></i>Studijos nuoma</span></div><p>Tvarkaraščio laikai yra peržiūros pavyzdys. Prieš įjungiant tikrą registraciją, jie bus susieti su bendra užimtumo duomenų baze.</p></div></div>
+<section id="timetableView" class="view"><button class="back timetable-back" data-view="home"><span>←</span>Grįžti į pasirinkimą</button><div class="timetable-heading"><h2>Užsiėmimų tvarkaraštis</h2><p>Paspauskite šokių pamokos laiką, jei norite registruotis.</p></div><div class="calendar-panel timetable-panel"><div class="cal-toolbar"><button id="prevWeek" aria-label="Ankstesnė savaitė">‹</button><div class="cal-title" id="calTitle">2026 m. spalio 12–18 d.</div><button id="nextWeek" aria-label="Kita savaitė">›</button></div><div class="cal-scroll"><div id="calendar" class="calendar"></div></div><div id="calendarAgenda" class="calendar-agenda"></div><div class="calendar-help"><div class="timetable-legend"><span><i class="tt-legend-class"></i>Šokių pamoka · paspauskite registracijai</span><span><i class="tt-legend-free"></i>Laisvas laikas</span><span><i class="tt-legend-rental"></i>Studijos nuoma</span></div><p>Tvarkaraštis sinchronizuojamas su studijos tvarkaraščio lentele.<span id="timetableSyncStatus" role="status">Gaunami naujausi duomenys…</span></p></div></div>
 <div class="brand-footer">
   <div class="brand-footer-main">
     <div class="brand-footer-copy">
@@ -1828,21 +1828,84 @@ try{
 
 try{updateBookingSummary();loadRentalAvailability(true)}catch(error){console.error('Nuomos kalendoriaus inicializavimo klaida:',error)}
 const days=['Pr','An','Tr','Kt','Pn','Št','Sk'];let week=new Date(2026,9,12);let mobileDay=0;
-const events=[
-{d:0,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai 7–12 m.',c:'green',kind:'class',group:'kids712',option:0},
-{d:0,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusieji 18+',c:'pink',kind:'class',group:'adult',option:0},
-{d:1,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai 7–12 m.',c:'gold',kind:'class',group:'kids712',option:1},
-{d:1,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai 13–18 m.',c:'gold',kind:'class',group:'teens',option:0},
-{d:1,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai 5–7 m.',c:'plum',kind:'class',group:'kids57',option:0},
-{d:2,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai 7–12 m.',c:'',kind:'class',group:'kids712',option:0},
-{d:2,h:19.25,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusieji 18+',c:'pink',kind:'class',group:'adult',option:1},
-{d:3,h:16,len:1,n:'Šiuolaikinis šokis',s:'Vaikai 7–12 m.',c:'',kind:'class',group:'kids712',option:1},
-{d:3,h:17,len:1,n:'Šiuolaikinis šokis',s:'Paaugliai 13–18 m.',c:'',kind:'class',group:'teens',option:1},
-{d:3,h:18,len:.75,n:'Šiuolaikinis šokis',s:'Vaikai 5–7 m.',c:'',kind:'class',group:'kids57',option:0},
-{d:4,h:16,len:1,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
-{d:5,h:10,len:1.5,n:'Studijos nuoma',s:'Pavyzdinis laikas',c:'',kind:'rental'},
-{d:6,h:19,len:.75,n:'Šiuolaikinis šokis',s:'Suaugusieji 18+',c:'pink',kind:'class',group:'adult',option:2}
-];
+const events=[];
+const TIMETABLE_API_URL='https://script.google.com/macros/s/AKfycbzcuGPMyDEsTK8sUTx9QdksaEJqd1xmKQ-9foUkIqH9UdM3b-kkmPxI27EpumBdI_Ey/exec';
+
+function timetableDayIndex(value){
+ const day=String(value||'').trim().toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+ const map={
+  'pirmadienis':0,'pirmadieniais':0,
+  'antradienis':1,'antradieniais':1,
+  'treciadienis':2,'treciadieniais':2,
+  'ketvirtadienis':3,'ketvirtadieniais':3,
+  'penktadienis':4,'penktadieniais':4,
+  'sestadienis':5,'sestadieniais':5,
+  'sekmadienis':6,'sekmadieniais':6
+ };
+ return Object.prototype.hasOwnProperty.call(map,day)?map[day]:-1;
+}
+function timetableGroup(ageGroup){
+ const age=String(ageGroup||'').toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\s/g,'');
+ if(age.includes('5–7')||age.includes('5-7')||age.includes('5–7m')||age.includes('5-7m'))return 'kids57';
+ if(age.includes('7–12')||age.includes('7-12'))return 'kids712';
+ if(age.includes('13–18')||age.includes('13-18')||age.includes('paaugl'))return 'teens';
+ if(age.includes('suaug'))return 'adult';
+ return '';
+}
+function timetableOption(group,day){
+ if(group==='kids57')return 0;
+ if(group==='kids712'||group==='teens')return (day===1||day===3)?1:0;
+ if(group==='adult')return day===2?1:(day===6?2:0);
+ return 0;
+}
+function showTimetableStatus(message,isError){
+ const note=document.getElementById('timetableSyncStatus');
+ if(note){note.textContent=message;note.style.color=isError?'#9a2e3d':'';}
+}
+function loadLiveTimetable(){
+ let finished=false;
+ const timeout=setTimeout(()=>{
+  if(finished)return;finished=true;
+  showTimetableStatus('Nepavyko gauti naujausio tvarkaraščio. Patikrinkite duomenų ryšį.',true);
+  renderCalendar();
+ },12000);
+ window.handleLiveTimetable=function(data){
+  if(finished)return;finished=true;clearTimeout(timeout);
+  if(!data||data.ok!==true||!Array.isArray(data.schedule)){
+   showTimetableStatus('Tvarkaraščio duomenų šiuo metu gauti nepavyko.',true);
+   events.length=0;renderCalendar();return;
+  }
+  events.length=0;
+  data.schedule.forEach(item=>{
+   const day=timetableDayIndex(item.day);
+   const group=timetableGroup(item.ageGroup);
+   const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   if(day<0||!start||!end||!group)return;
+   const startMinutes=Number(start[1])*60+Number(start[2]);
+   const endMinutes=Number(end[1])*60+Number(end[2]);
+   if(endMinutes<=startMinutes)return;
+   const ageLabel=String(item.ageGroup||'').trim();
+   const color=group==='adult'?'pink':(group==='kids57'?'plum':(group==='kids712'?'green':'gold'));
+   events.push({
+    d:day,h:startMinutes/60,len:(endMinutes-startMinutes)/60,
+    n:String(item.name||'Šiuolaikinis šokis'),s:ageLabel,c:color,
+    kind:'class',group:group,option:timetableOption(group,day)
+   });
+  });
+  events.sort((a,b)=>a.d-b.d||a.h-b.h);
+  showTimetableStatus('Tvarkaraštis atnaujintas pagal studijos tvarkaraščio lentelę.',false);
+  renderCalendar();
+ };
+ const script=document.createElement('script');
+ script.src=TIMETABLE_API_URL+'?callback=handleLiveTimetable&v='+Date.now();
+ script.onerror=()=>{
+  if(finished)return;finished=true;clearTimeout(timeout);
+  showTimetableStatus('Nepavyko prisijungti prie tvarkaraščio duomenų šaltinio.',true);
+  renderCalendar();
+ };
+ document.head.appendChild(script);
+}
 function renderCalendar(){
  let end=new Date(week);end.setDate(end.getDate()+6);
  $('calTitle').textContent=week.getFullYear()+' m. '+week.toLocaleDateString('lt-LT',{month:'long'})+' '+week.getDate()+'–'+end.getDate()+' d.';
@@ -1870,7 +1933,7 @@ function renderCalendar(){
  $('calendarAgenda').querySelectorAll('[data-class-event]').forEach(el=>{const open=()=>openClassEvent(el);el.addEventListener('click',open);el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}})});
 }
 function openClassEvent(el){const e=events[Number(el.dataset.classEvent)];if(!e||e.kind!=='class'||!groups[e.group])return;classReturnView='timetable';showView('classes');showClassDetail(e.group);$('classGroup').value=String(e.option);document.querySelector('input[name="classBookingType"][value="group"]').checked=true;$('classGroupLabel').style.display=e.group==='adult'?'none':'';$('classSingleNote').style.display='none';$('classPaymentNote').style.display='none';$('classToast').classList.remove('show');const back=$('classBack');back.innerHTML='<span>←</span>Grįžti į tvarkaraštį';$('classDetail').scrollIntoView({behavior:'smooth',block:'start'})}
-$('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('nextWeek').onclick=()=>{week.setDate(week.getDate()+7);renderCalendar()};renderCalendar();
+$('prevWeek').onclick=()=>{week.setDate(week.getDate()-7);renderCalendar()};$('nextWeek').onclick=()=>{week.setDate(week.getDate()+7);renderCalendar()};loadLiveTimetable();
 </script>
 <!-- Preview deployment refresh: 2026-10-12; mobile agenda, varied class colors, contextual navigation, corrected fees -->
 </body></html>
