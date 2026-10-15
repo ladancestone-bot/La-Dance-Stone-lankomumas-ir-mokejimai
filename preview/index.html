@@ -1871,7 +1871,7 @@ function renderPublicClassPreview(schedule,occupied){
   for(let day=0;day<7;day++){
    const lesson=(schedule||[]).find(item=>{
     const d=timetableDayIndex(item.day);
-    const m=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
+    const m=String(item.start||'').match(/^(\d{1,2}):(\d{2})$/);
     return d===day&&m&&Number(m[1])===hour;
    });
    if(lesson){
@@ -1882,8 +1882,8 @@ function renderPublicClassPreview(schedule,occupied){
    }else{
     const blocked=(occupied||[]).find(item=>{
      const d=timetableDayIndex(item.day);
-     const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
-     const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+     const start=String(item.start||'').match(/^(\d{1,2}):(\d{2})$/);
+     const end=String(item.end||'').match(/^(\d{1,2}):(\d{2})$/);
      if(d!==day||!start||!end)return false;
      const startMinutes=Number(start[1])*60+Number(start[2]);
      const endMinutes=Number(end[1])*60+Number(end[2]);
@@ -1940,8 +1940,8 @@ function loadLiveTimetable(){
   // Užimtumo blokai imami iš tos pačios Google Sheets lentelės API atsakymo.
   (Array.isArray(data.occupied)?data.occupied:[]).forEach(item=>{
    const day=timetableDayIndex(item.day);
-   const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
-   const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   const start=String(item.start||'').match(/^(\d{1,2}):(\d{2})$/);
+   const end=String(item.end||'').match(/^(\d{1,2}):(\d{2})$/);
    if(day<0||!start||!end)return;
    const startMinutes=Number(start[1])*60+Number(start[2]);
    const endMinutes=Number(end[1])*60+Number(end[2]);
