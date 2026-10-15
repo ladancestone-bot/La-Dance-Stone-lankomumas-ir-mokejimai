@@ -1427,6 +1427,24 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 #rentalView .closing-notice:not(.closing-notice-compact) .notice-line{display:block;margin-top:4px}
 #rentalView .closing-notice:not(.closing-notice-compact) .notice-time{color:#7b263b;font-weight:700;white-space:nowrap}
 
+
+/* Keep every time and its unit together in both reminder cards on mobile. */
+#rentalView .closing-notice .notice-time{
+  display:inline-block!important;
+  white-space:nowrap!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+  color:#7b263b!important;
+  font-weight:700!important;
+}
+#rentalView .closing-notice .notice-line{
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+#rentalView .closing-notice strong .notice-time{
+  display:inline-block!important;
+}
+
 </style>
 
 <style>
