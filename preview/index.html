@@ -1926,12 +1926,16 @@ function loadLiveTimetable(){
     kind:'class',group:group,option:timetableOption(group,day)
    });
   });
-  // Užimtumo blokai pagal šiuo metu lentelėje nurodytus pasikartojančius laikus.
-  // Antradienį ir ketvirtadienį studija užimta 19:00–21:00.
-  [1,3].forEach(day=>{
-   [19,20].forEach(hour=>{
-    events.push({d:day,h:hour,len:1,n:'UŽIMTA',s:'Studija užimta · 19:00–21:00',c:'occupied',kind:'occupied',group:'',option:0});
-   });
+  // Užimtumo blokai imami iš tos pačios Google Sheets lentelės API atsakymo.
+  (Array.isArray(data.occupied)?data.occupied:[]).forEach(item=>{
+   const day=timetableDayIndex(item.day);
+   const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   if(day<0||!start||!end)return;
+   const startMinutes=Number(start[1])*60+Number(start[2]);
+   const endMinutes=Number(end[1])*60+Number(end[2]);
+   if(endMinutes<=startMinutes)return;
+   events.push({d:day,h:startMinutes/60,len:(endMinutes-startMinutes)/60,n:'UŽIMTA',s:'Studija užimta · '+item.start+'–'+item.end,c:'occupied',kind:'occupied',group:'',option:0});
   });
   events.sort((a,b)=>a.d-b.d||a.h-b.h);
   showTimetableStatus('Tvarkaraštis atnaujintas pagal studijos tvarkaraščio lentelę.',false);
