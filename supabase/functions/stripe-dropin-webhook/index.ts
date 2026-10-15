@@ -112,7 +112,10 @@ Deno.serve(async (req) => {
       const { data: charge } = await supabaseAdmin.from("monthly_charges").select("id,student_id,amount_due,amount_paid,payer_id").eq("id",metadata.monthly_charge_id).maybeSingle();
       if (!charge) return new Response("charge not found",{status:404});
       const { data: existingPayment } = await supabaseAdmin.from("payments").select("id").eq("stripe_payment_id",stripePaymentId).maybeSingle();
-      if (existingPayment) return Response.json({received:true,duplicate:true});
+      if (existingPayment) {
+        if (Number(charge.amount_paid || 0) + 0.00001 >= Number(charge.amount_due || 0)) await autoCreateInvoiceIfFullyPaid(charge.id);
+        return Response.json({received:true,duplicate:true});
+      }
       const amount=Math.min(Number(invoice.amount_paid||0)/100,Math.max(0,Number(charge.amount_due)-Number(charge.amount_paid)));
       if(amount<=0)return Response.json({received:true,already_paid:true});
       const newPaid=Number(charge.amount_paid)+amount;
@@ -266,7 +269,10 @@ Deno.serve(async (req) => {
       .eq("id", metadata.monthly_charge_id)
       .maybeSingle();
     if (chargeError || !charge) return new Response("charge not found", { status: 404 });
-    if (Number(charge.amount_due) <= Number(charge.amount_paid)) return Response.json({ received: true, already_paid: true });
+    if (Number(charge.amount_due) <= Number(charge.amount_paid)) {
+       await autoCreateInvoiceIfFullyPaid(charge.id);
+       return Response.json({ received: true, already_paid: true });
+     }
     const amount = Number(charge.amount_due) - Number(charge.amount_paid);
     const { data: existingPayment } = await supabaseAdmin.from("payments").select("id").eq("stripe_payment_id", stripePaymentId).maybeSingle();
     if (existingPayment) return Response.json({ received: true, duplicate: true });
