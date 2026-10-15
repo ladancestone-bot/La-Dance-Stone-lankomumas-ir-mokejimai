@@ -1356,19 +1356,19 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 }
 
 
-/* Pricing card on successful registration */
-.class-confirmation-price{margin-top:16px;padding:16px;border:1px solid #d9c08c;border-radius:14px;background:linear-gradient(135deg,#fffaf0,#f7eee8);box-sizing:border-box;max-width:100%;overflow:hidden}
-.class-confirmation-price-main{display:flex;flex-direction:column;gap:5px;min-width:0}
-.class-confirmation-price-main>span{font-size:10px;font-weight:700;letter-spacing:1.1px;color:#887a70}
-.class-confirmation-price-main>strong{font:600 32px/1.15 'Cormorant Garamond',serif;color:#481824;overflow-wrap:anywhere}
-.class-confirmation-price-main>strong small{font:500 13px/1.3 Arial,sans-serif;color:#887a70}
-.class-confirmation-price-main>em{font-size:12px;font-style:normal;color:#887a70}
-.class-confirmation-price-fee{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:7px 12px;margin-top:12px;padding:11px 12px;background:#f1e3df;border:1px solid #e7d0cb;border-radius:10px;box-sizing:border-box}
-.class-confirmation-price-fee span{font-size:12px;line-height:1.45;color:#481824;min-width:0;flex:1 1 140px}
-.class-confirmation-price-fee strong{font:600 21px/1 'Cormorant Garamond',serif;color:#8c263e;white-space:nowrap}
-.class-confirmation-price>p{margin:10px 0 0;font-size:11px;line-height:1.6;color:#887a70}
+/* Pricing card on successful registration — La Dance Stone burgundy palette */
+.class-confirmation-price{margin-top:16px;padding:18px;border:1px solid #b99a5b;border-radius:16px;background:linear-gradient(145deg,#401923 0%,#51202d 100%);box-sizing:border-box;max-width:100%;overflow:hidden;color:#fff7f0;box-shadow:0 8px 22px rgba(64,25,35,.12)}
+.class-confirmation-price-main{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"label label" "frequency amount";align-items:end;column-gap:12px;row-gap:5px;min-width:0}
+.class-confirmation-price-main>span{grid-area:label;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#d9c18a}
+.class-confirmation-price-main>strong{grid-area:amount;font:600 32px/1.05 'Cormorant Garamond',serif;color:#fff7f0;white-space:nowrap}
+.class-confirmation-price-main>strong small{font:500 13px/1.3 Arial,sans-serif;color:#eadbd4}
+.class-confirmation-price-main>em{grid-area:frequency;font-size:13px;font-weight:600;font-style:normal;color:#f1d9dc;min-width:0}
+.class-confirmation-price-fee{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;margin-top:15px;padding:13px 14px;background:#f4dfe2;border:1px solid #e8c4cb;border-radius:12px;box-sizing:border-box}
+.class-confirmation-price-fee span{font-size:12px;line-height:1.4;color:#57202d;min-width:0}
+.class-confirmation-price-fee strong{font:700 25px/1 'Cormorant Garamond',serif;color:#8b2944;white-space:nowrap;justify-self:end}
+.class-confirmation-price>p{margin:11px 0 0;font-size:11px;line-height:1.6;color:#e1d0ca}
 .class-confirmation-payment-note{margin-top:14px;font-size:12px;line-height:1.7;color:#481824;font-weight:600}
-@media(max-width:420px){.class-confirmation-price{padding:13px}.class-confirmation-price-main>strong{font-size:29px}.class-confirmation-price-fee{padding:10px}}
+@media(max-width:420px){.class-confirmation-price{padding:14px}.class-confirmation-price-main>strong{font-size:28px}.class-confirmation-price-fee{padding:11px 12px;gap:8px}.class-confirmation-price-fee span{font-size:11px}.class-confirmation-price-fee strong{font-size:23px}}
 
 
 /* Mobile layout fixes: keep month picker inside its card and put child/teen group choice before dates */
