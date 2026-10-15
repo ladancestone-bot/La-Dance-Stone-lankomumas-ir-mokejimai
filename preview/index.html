@@ -1859,6 +1859,37 @@ function timetableOption(group,day){
  if(group==='adult')return day===2?1:(day===6?2:0);
  return 0;
 }
+function renderPublicClassPreview(schedule){
+ const grid=document.querySelector('.class-calendar-grid');
+ if(!grid)return;
+ const dayNames=['Pirmadienis','Antradienis','Trečiadienis','Ketvirtadienis','Penktadienis','Šeštadienis','Sekmadienis'];
+ const dayLabels=['PIRMADIENIS','ANTRADIENIS','TREČIADIENIS','KETVIRTADIENIS','PENKTADIENIS','ŠEŠTADIENIS','SEKMADIENIS'];
+ const hours=[16,17,18,19,20,21];
+ let html='<div class="class-calendar-corner">LAIKAS</div>'+dayLabels.map(day=>'<div class="class-calendar-dayhead">'+day+'</div>').join('');
+ hours.forEach(hour=>{
+  html+='<div class="class-calendar-time">'+String(hour).padStart(2,'0')+':00</div>';
+  for(let day=0;day<7;day++){
+   const lesson=(schedule||[]).find(item=>{
+    const d=timetableDayIndex(item.day);
+    const m=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
+    return d===day&&m&&Number(m[1])===hour;
+   });
+   if(lesson){
+    const start=String(lesson.start||'');const end=String(lesson.end||'');
+    const age=String(lesson.ageGroup||'');
+    const label=age.includes('13–18')||age.includes('13-18')?'Paaugliai':(age.includes('Suaug')?'Suaugusieji':'Vaikai');
+    html+='<div class="class-calendar-slot booked"><strong>'+start+'–'+end+'</strong><span>'+label+'</span><small>'+age+'</small></div>';
+   }else if((day===1||day===3)&&(hour===19||hour===20)){
+    html+='<div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div>';
+   }else{
+    html+='<div class="class-calendar-slot free">Laisvas laikas</div>';
+   }
+  }
+ });
+ grid.innerHTML=html;
+ const label=document.querySelector('.class-week-heading .pill');
+ if(label)label.textContent='Atnaujinama iš studijos tvarkaraščio';
+}
 function showTimetableStatus(message,isError){
  const note=document.getElementById('timetableSyncStatus');
  if(note){note.textContent=message;note.style.color=isError?'#9a2e3d':'';}
@@ -1876,6 +1907,7 @@ function loadLiveTimetable(){
    showTimetableStatus('Tvarkaraščio duomenų šiuo metu gauti nepavyko.',true);
    events.length=0;renderCalendar();return;
   }
+  renderPublicClassPreview(data.schedule);
   events.length=0;
   data.schedule.forEach(item=>{
    const day=timetableDayIndex(item.day);
