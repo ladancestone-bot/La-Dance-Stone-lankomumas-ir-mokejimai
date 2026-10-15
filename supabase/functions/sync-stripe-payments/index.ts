@@ -2,6 +2,23 @@ import Stripe from "npm:stripe@^22";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+async function autoCreateInvoiceIfFullyPaid(monthlyChargeId: string) {
+  try {
+    const { data: charge, error } = await supabaseAdmin.from("monthly_charges").select("amount_due,amount_paid").eq("id", monthlyChargeId).maybeSingle();
+    if (error || !charge || Number(charge.amount_paid || 0) + 0.00001 < Number(charge.amount_due || 0)) return;
+    const response = await fetch(SUPABASE_URL + "/functions/v1/create-saskaita123-invoice", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + SUPABASE_SERVICE_ROLE_KEY, apikey: SUPABASE_SERVICE_ROLE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ monthly_charge_id: monthlyChargeId }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.error) console.error("Automatic Sąskaita123 invoice creation failed", monthlyChargeId, response.status, result);
+  } catch (error) {
+    console.error("Automatic Sąskaita123 invoice call failed", monthlyChargeId, error);
+  }
+}
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: "2025-03-31.basil" }) : null;
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -108,20 +125,36 @@ async function findMonthlyCharge(
   return best;
 }
 
-async function findRental(payerEmail: string, amount: number, paidAt: string) {
-  if (!payerEmail) return null;
+async function findRental(payerEmail: string, payerName: string, amount: number, paidAt: string) {
+  const email = normalizeEmail(payerEmail);
+  const name = normalizeName(payerName);
+  if (!email && !name) return null;
   const { data: rows } = await supabaseAdmin
     .from("studio_rentals")
-    .select("id,price,payment_status,starts_at,customer_email")
-    .ilike("customer_email", payerEmail)
+    .select("id,price,payment_status,starts_at,customer_email,customer_name")
     .eq("payment_status", "pending")
     .eq("is_active", true)
-    .order("starts_at", { ascending: false })
-    .limit(30);
+    .order("starts_at", { ascending: true })
+    .limit(200);
+
   const paidTime = new Date(paidAt).getTime();
   return (rows ?? [])
     .filter(r => Math.abs(Number(r.price) - amount) < 0.01)
-    .sort((a, b) => Math.abs(new Date(a.starts_at).getTime() - paidTime) - Math.abs(new Date(b.starts_at).getTime() - paidTime))[0] ?? null;
+    .map(r => {
+      const rentalEmail = normalizeEmail(r.customer_email);
+      const rentalName = normalizeName(r.customer_name);
+      const exactEmail = !!email && !!rentalEmail && email === rentalEmail;
+      const exactName = !!name && !!rentalName && name === rentalName;
+      if (email && rentalEmail && !exactEmail) return null;
+      if (!exactEmail && !exactName) return null;
+      const distanceDays = Math.abs(new Date(r.starts_at).getTime() - paidTime) / 86400000;
+      if (distanceDays > 90) return null;
+      let score = exactEmail ? 1000 : 800;
+      score += 100 / (1 + distanceDays);
+      return { row: r, score };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)[0]?.row ?? null;
 }
 
 async function listSucceededPaymentIntents(since: number) {
@@ -229,6 +262,7 @@ Deno.serve(async (req) => {
               notes: "Stripe Checkout",
             });
           }
+          if (newPaid + 0.00001 >= Number(chargeRow.amount_due)) await autoCreateInvoiceIfFullyPaid(monthlyChargeId);
           linked++;
           matchedMonthly++;
         }
@@ -265,12 +299,13 @@ Deno.serve(async (req) => {
                 notes: "Stripe istorinio mokėjimo sutikrinimas",
               });
             }
+            if (newPaid + 0.00001 >= Number(monthly.amount_due)) await autoCreateInvoiceIfFullyPaid(monthly.id);
             linked++;
             matchedMonthly++;
             matchedKind = "monthly_charge";
           }
         } else {
-          const rental = await findRental(payerEmail, amount, paidAt);
+          const rental = await findRental(payerEmail, payerName || "", amount, paidAt);
           if (rental) {
             rentalId = rental.id;
             await supabaseAdmin.from("studio_rentals").update({
