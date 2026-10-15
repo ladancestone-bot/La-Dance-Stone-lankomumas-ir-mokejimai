@@ -17,23 +17,32 @@ Deno.serve(async (req: Request) => {
     const auth = req.headers.get("Authorization");
     if (!auth || !auth.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const userResult = await admin.auth.getUser(auth.slice(7));
-    const user = userResult.data.user;
-    if (userResult.error || !user) return json({ error: "Unauthorized" }, 401);
-
-    const roleResult = await admin.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = roleResult.data || [];
-    const isAdmin = roles.some((r: any) => r.role === "admin");
-    const isTeacher = roles.some((r: any) => r.role === "teacher");
-    if (!isAdmin && !isTeacher) return json({ error: "Studio role required" }, 403);
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
+    const token = auth.slice(7);
+    const isInternal = token === serviceKey;
+    let user: any = null;
+    let isAdmin = false;
+    let isTeacher = false;
+    if (isInternal) {
+      // Trusted server-to-server call from payment webhooks/sync jobs.
+    } else {
+      const userResult = await admin.auth.getUser(token);
+      user = userResult.data.user;
+      if (userResult.error || !user) return json({ error: "Unauthorized" }, 401);
+      const roleResult = await admin.from("user_roles").select("role").eq("user_id", user.id);
+      const roles = roleResult.data || [];
+      isAdmin = roles.some((r: any) => r.role === "admin");
+      isTeacher = roles.some((r: any) => r.role === "teacher");
+      if (!isAdmin && !isTeacher) return json({ error: "Studio role required" }, 403);
+    }
 
     const body = await req.json();
     const monthlyChargeId = String(body?.monthly_charge_id || "");
     if (!monthlyChargeId) return json({ error: "monthly_charge_id is required" }, 400);
 
     const chargeResult = await admin.from("monthly_charges").select(
-      "id,student_id,group_id,month,amount_due,amount_paid,due_date,description,saskaita123_invoice_id,saskaita123_invoice_number,saskaita123_invoice_url,invoice123_id,invoice123_number,invoice123_url,invoice_created_at,students(first_name,last_name,email,phone,parent_name,parent_email,parent_phone,payment_preference),groups(name)"
+      "id,student_id,group_id,month,amount_due,amount_paid,status,due_date,description,saskaita123_invoice_id,saskaita123_invoice_number,saskaita123_invoice_url,invoice123_id,invoice123_number,invoice123_url,invoice_created_at,students(first_name,last_name,email,phone,parent_name,parent_email,parent_phone,payment_preference),groups(name)"
     ).eq("id", monthlyChargeId).single();
     const charge = chargeResult.data;
     if (chargeResult.error || !charge) return json({ error: "Monthly charge not found" }, 404);
@@ -48,6 +57,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const existingId = charge.saskaita123_invoice_id || charge.invoice123_id;
+    if (Number(charge.amount_paid || 0) + 0.00001 < Number(charge.amount_due || 0) && !existingId) {
+      return json({ ok: true, skipped: true, reason: "not_fully_paid", message: "Sąskaita kuriama tik tada, kai mokestis visiškai apmokėtas." });
+    }
 
     const apiKey = Deno.env.get("INVOICE123_API_KEY");
     if (!apiKey) return json({ error: "INVOICE123_API_KEY is not configured" }, 500);
