@@ -1832,7 +1832,7 @@ const events=[];
 const TIMETABLE_API_URL='https://script.google.com/macros/s/AKfycbzcuGPMyDEsTK8sUTx9QdksaEJqd1xmKQ-9foUkIqH9UdM3b-kkmPxI27EpumBdI_Ey/exec';
 
 function timetableDayIndex(value){
- const day=String(value||'').trim().toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+ const day=String(value||'').trim().toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  const map={
   'pirmadienis':0,'pirmadieniais':0,
   'antradienis':1,'antradieniais':1,
@@ -1845,7 +1845,7 @@ function timetableDayIndex(value){
  return Object.prototype.hasOwnProperty.call(map,day)?map[day]:-1;
 }
 function timetableGroup(ageGroup){
- const age=String(ageGroup||'').toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\s/g,'');
+ const age=String(ageGroup||'').toLocaleLowerCase('lt-LT').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s/g,'');
  if(age.includes('5–7')||age.includes('5-7')||age.includes('5–7m')||age.includes('5-7m'))return 'kids57';
  if(age.includes('7–12')||age.includes('7-12'))return 'kids712';
  if(age.includes('13–18')||age.includes('13-18')||age.includes('paaugl'))return 'teens';
@@ -1879,8 +1879,8 @@ function loadLiveTimetable(){
   data.schedule.forEach(item=>{
    const day=timetableDayIndex(item.day);
    const group=timetableGroup(item.ageGroup);
-   const start=String(item.start||'').match(/^(\\d{1,2}):(\\d{2})$/);
-   const end=String(item.end||'').match(/^(\\d{1,2}):(\\d{2})$/);
+   const start=String(item.start||'').match(/^(\d{1,2}):(\d{2})$/);
+   const end=String(item.end||'').match(/^(\d{1,2}):(\d{2})$/);
    if(day<0||!start||!end||!group)return;
    const startMinutes=Number(start[1])*60+Number(start[2]);
    const endMinutes=Number(end[1])*60+Number(end[2]);
