@@ -754,6 +754,7 @@ body:has(#homeView.active){background:#f3e7da}
 .class-calendar-slot small{font-size:10px;color:#756258}
 .class-calendar-slot.booked{background:#e8eee5;border-left:3px solid #82947b}
 .class-calendar-slot.free{background:#fbf5ee;color:#958274;font-style:italic}
+.class-calendar-slot.occupied{background:#f3e4df;border-left:3px solid #9b4a50;color:#6b202b;font-style:normal}.class-calendar-slot.occupied span{color:#6b202b;font-weight:800;letter-spacing:.04em}
 .class-calendar-slot.free small{font-style:normal}
 @media(max-width:760px){.class-week-preview{padding:18px 14px}.class-calendar-grid{grid-template-columns:56px repeat(7,minmax(132px,1fr));min-width:980px}.class-calendar-dayhead{font-size:9px;padding:7px 4px}.class-calendar-slot{padding:8px 7px}}
 
@@ -1540,7 +1541,7 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 <div id="classOverview">
 <div class="viewhead"><div><p>Peržiūrėkite savaitės tvarkaraštį ir žemiau pasirinkite savo grupę.</p></div><span class="pill">Vaikams · paaugliams · suaugusiesiems</span></div>
 <div class="class-week-preview">
-<div class="class-week-heading"><div><div class="eyebrow">Savaitės tvarkaraštis</div><h3>Pamokų laikai</h3><p>Trumpa savaitės apžvalga. Pasirinkite grupę žemiau.</p></div><span class="pill">Pavyzdinis tvarkaraštis</span></div>
+<div class="class-week-heading"><div><div class="eyebrow">Savaitės tvarkaraštis</div><h3>Pamokų laikai</h3><p>Trumpa savaitės apžvalga. Pasirinkite grupę žemiau.</p></div><span class="pill">Studijos tvarkaraštis</span></div>
 <div class="class-week-scroll class-week-calendar-scroll" aria-label="Savaitės tvarkaraštis. Slinkite į šoną, kad pamatytumėte visas dienas.">
 <div class="class-calendar-grid">
 <div class="class-calendar-corner">LAIKAS</div>
@@ -1565,13 +1566,13 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 <div class="class-calendar-time">19:00</div>
 <div class="class-calendar-slot booked"><strong>19:15–20:00</strong><span>Suaugusieji</span></div>
-<div class="class-calendar-slot free">Laisvas laikas</div>
+<div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div>
 <div class="class-calendar-slot booked"><strong>19:15–20:00</strong><span>Suaugusieji</span></div>
-<div class="class-calendar-slot free">Laisvas laikas</div>
+<div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div>
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 <div class="class-calendar-slot booked"><strong>19:00–19:45</strong><span>Suaugusieji</span></div>
 <div class="class-calendar-time">20:00</div>
-<div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
+<div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot occupied"><strong>19:00–21:00</strong><span>UŽIMTA</span></div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 <div class="class-calendar-time">21:00</div>
 <div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div><div class="class-calendar-slot free">Laisvas laikas</div>
 </div></div>
