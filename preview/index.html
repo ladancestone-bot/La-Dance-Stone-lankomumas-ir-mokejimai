@@ -1398,6 +1398,16 @@ html,body{margin:0 !important;padding:0 !important;width:100% !important;max-wid
 #classDatePicker .class-date-toolbar{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
 #classDatePicker #classMonthChoice{display:block!important;appearance:auto!important;-webkit-appearance:menulist!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;min-width:0!important;box-sizing:border-box!important;margin:0 6px 0 0!important;padding:16px 12px!important;border:1px solid var(--line)!important;border-radius:12px!important;font-family:inherit!important;font-size:18px!important;line-height:1.4!important;text-align:center!important;background:#fff!important;color:var(--choc)!important;}
 @media(max-width:760px){#classDatePicker{padding-left:14px!important;padding-right:20px!important;}#classDatePicker .class-date-toolbar{padding:0!important;margin:0 0 14px!important;}#classDatePicker #classMonthChoice{width:calc(100% - 8px)!important;max-width:calc(100% - 8px)!important;margin-left:0!important;margin-right:8px!important;padding:16px 8px!important;font-size:18px!important;}}
+
+/* Improve wrapping on narrow screens and emphasize closing-time notices */
+.closing-notice p{ text-wrap:pretty; overflow-wrap:normal; word-break:normal; }
+.closing-notice strong{ line-height:1.25; }
+.booking-summary #rentInterval{ display:block; line-height:1.45; overflow-wrap:normal; word-break:normal; }
+.booking-summary .summary-note{ color:#7b263b; font-weight:700; white-space:normal; }
+#rentalConfirmation .rc-note{ background:#f8e3e8; border:1px solid #e5b8c4; border-left:5px solid #c66f8b; color:#481824; }
+#rentalConfirmation .rc-row strong{ color:#7b263b; }
+@media(max-width:600px){ .closing-notice p{line-height:1.7;} .closing-notice strong{line-height:1.25;} }
+
 </style>
 
 <style>
