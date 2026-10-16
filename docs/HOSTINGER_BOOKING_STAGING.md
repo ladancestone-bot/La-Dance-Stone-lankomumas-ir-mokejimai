@@ -23,7 +23,7 @@ Prepare a separate staging deployment of the existing La Dance Stone booking pro
 - `public-rental-booking` currently sets success/cancel URLs to the GitHub Pages preview URL.
 - `public-class-registration` currently sets success/cancel URLs to the GitHub Pages preview URL.
 - The booking and availability functions currently allow the production domain and GitHub Pages origin, but the final Hostinger staging origin has not yet been confirmed.
-- The class registration form has a UI note stating that registration/payment may not yet be completed in the prototype; verify the actual submit handler and server function together before claiming this flow is fully live.
+- The class-registration frontend calls the active `public-class-registration` function, which saves the registration and creates a Stripe Checkout session for the registration fee or single lesson. The frontend displays a confirmation; the recurring monthly subscription is not automatically charged by this checkout flow and is described as being billed separately after the first class. Verify this distinction during staging tests.
 - The compact design branch is not a safe replacement for the integration-enabled `main` preview file.
 
 ## Deployment sequence
